@@ -1,0 +1,364 @@
+package validator;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.events.XMLEvent;
+
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
+
+import validator.Rule.Match;
+
+public class Config
+{
+	static final Pattern int_range_pattern = Pattern.compile("([0-9]*)\\s*-\\s*([0-9]*)");
+	
+	ArrayList<Rule> rules = new ArrayList<>();
+	
+	static Match read_match(XMLEventReader event_reader) throws Exception
+	{
+		String match_type = null;
+		Match result = null;
+		
+		class Method_match implements Match
+		{
+			Method getter;
+			Pattern pattern;
+			
+			public Method_match(Method getter, Pattern match)
+			{
+				super();
+				this.getter = getter;
+				this.pattern = match;
+			}
+			
+			public boolean matches(RpmInfo rpm_info)
+			{
+				try
+				{
+					return pattern.matcher((String) getter.invoke(rpm_info)).matches();
+				}
+				catch (Exception e)
+				{
+					throw new RuntimeException(e);
+				}
+			}
+		}
+		
+		loop: while (event_reader.hasNext())
+		{
+			XMLEvent event = event_reader.nextEvent();
+			
+			switch (event.getEventType())
+			{
+			case XMLStreamConstants.START_ELEMENT:
+				var start_name = event.asStartElement().getName().getLocalPart();
+				
+				if (match_type == null)
+				{
+					match_type = start_name;
+				}
+				else
+				{
+					throw new RuntimeException("<match> can contain at most one element");
+				}
+				
+				break;
+				
+			case XMLStreamConstants.END_ELEMENT:
+				var end_name = event.asEndElement().getName().getLocalPart();
+				
+				if (end_name.equals("match"))
+				{
+					break loop;
+				}
+				
+				break;
+				
+			case XMLStreamConstants.CHARACTERS:
+				var content = event.asCharacters().getData().strip();
+				
+				if (match_type == null || result != null)
+				{
+					continue;
+				}
+				
+				switch (match_type)
+				{
+				case "name":
+					result = new Method_match(RpmInfo.class.getMethod("getName"), Pattern.compile(content));
+					break;
+				}
+				
+				break;
+			}
+		}
+		
+		return result;
+	}
+	
+	static Validator read_validator(String end, XMLEventReader event_reader) throws Exception
+	{
+		String match_type = null;
+		Validator result = null;
+		
+		
+		loop: while (event_reader.hasNext())
+		{
+			XMLEvent event = event_reader.nextEvent();
+			
+			switch (event.getEventType())
+			{
+			case XMLStreamConstants.START_ELEMENT:
+				var start_name = event.asStartElement().getName().getLocalPart();
+				
+				if (match_type == null)
+				{
+					match_type = start_name;
+				}
+				else
+				{
+					throw new RuntimeException("rule can contain at most one validator");
+				}
+				
+				switch (start_name)
+				{
+				case "whitelist":
+					result = new Validator.Whitelist_validator(read_validator_list(start_name, event_reader));
+					break;
+				case "blacklist":
+					result = new Validator.Blacklist_validator(read_validator_list(start_name, event_reader));
+					break;
+				}
+				
+				break;
+				
+			case XMLStreamConstants.END_ELEMENT:
+				var end_name = event.asEndElement().getName().getLocalPart();
+				
+				if (end_name.equals(end))
+				{
+					break loop;
+				}
+				
+				break;
+				
+			case XMLStreamConstants.CHARACTERS:
+				var content = event.asCharacters().getData().strip();
+				
+				if (match_type == null || result != null)
+				{
+					continue;
+				}
+				
+				switch (match_type)
+				{
+				case "regex":
+					result = new Validator.Regex_validator(Pattern.compile(content));
+					break;
+				case "int-range":
+					var matcher = int_range_pattern.matcher(content);
+					
+					if (! matcher.matches())
+					{
+						throw new RuntimeException("Could not match <int-range>");
+					}
+					
+					var min_group = matcher.group(1);
+					var min = min_group.equals("") ? Long.MIN_VALUE : Long.parseLong(min_group);
+					
+					var max_group = matcher.group(2);
+					var max = max_group.equals("") ? Long.MAX_VALUE : Long.parseLong(max_group);
+					
+					result = new Validator.Int_range_validator(min, max);
+					break;
+				}
+				
+				break;
+			}
+		}
+		
+		return result;
+	}
+	
+	static List<Validator> read_validator_list(String end, XMLEventReader event_reader) throws Exception
+	{
+		var result = new ArrayList<Validator>();
+		
+		loop: while (event_reader.hasNext())
+		{
+			XMLEvent event = event_reader.nextEvent();
+			
+			
+			switch (event.getEventType())
+			{
+			case XMLStreamConstants.START_ELEMENT:
+				var start_name = event.asStartElement().getName().getLocalPart();
+				
+				result.add(read_validator(start_name, event_reader));
+				
+				break;
+				
+			case XMLStreamConstants.END_ELEMENT:
+				var end_name = event.asEndElement().getName().getLocalPart();
+				
+				if (end_name.equals(end))
+				{
+					break loop;
+				}
+				
+				break;
+			}
+		}
+		
+		if (result.isEmpty())
+		{
+			throw new RuntimeException("Trying to read an empty list");
+		}
+		
+		return result;
+	}
+	
+	public static Rule read_rule(XMLEventReader event_reader) throws Exception
+	{
+		Rule result = new Rule();
+		
+		loop: while (event_reader.hasNext())
+		{
+			XMLEvent event = event_reader.nextEvent();
+			
+			switch (event.getEventType())
+			{
+			case XMLStreamConstants.START_ELEMENT:
+				var start_name = event.asStartElement().getName().getLocalPart();
+				
+				switch (start_name)
+				{
+				case "match":
+					result.match = read_match(event_reader);
+					break;
+				case "requires":
+					result.requires = read_validator(start_name, event_reader);
+					break;
+				case "provides":
+					result.provides = read_validator(start_name, event_reader);
+					break;
+				case "java-bytecode":
+					result.jar_validator = new Jar_validator.Jar_class_validator(
+							new Jar_validator.Class_bytecode_validator(
+									read_validator(start_name, event_reader)));
+					break;
+				}
+				
+				if (start_name.startsWith("filesize-"))
+				{
+					final var validator = read_validator(start_name, event_reader);
+					
+					if (start_name.endsWith("-b"))
+					{
+						result.rpm_file_size = validator;
+					}
+					else if (start_name.endsWith("-kb"))
+					{
+						result.rpm_file_size = new Validator.Transforming_validator(validator)
+						{
+							@Override
+							protected String transform(String value)
+							{
+								return Long.toString(Long.parseLong(value) / 1024);
+							}
+						};
+					}
+					else if (start_name.endsWith("-mb"))
+					{
+						result.rpm_file_size = new Validator.Transforming_validator(validator)
+						{
+							@Override
+							protected String transform(String value)
+							{
+								return Long.toString(Long.parseLong(value) / (1024 * 1024));
+							}
+						};
+					}
+					else
+					{
+						throw new RuntimeException("Invalid filesize suffix");
+					}
+				}
+				
+				break;
+				
+			case XMLStreamConstants.END_ELEMENT:
+				var end_name = event.asEndElement().getName().getLocalPart();
+				
+				if (end_name.equals("rule"))
+				{
+					break loop;
+				}
+				
+				break;
+			}
+		}
+		
+		return result;
+	}
+	
+	public Config(InputStream is) throws Exception
+	{
+		try (var br = new BufferedReader(new InputStreamReader(is)))
+		{
+			var event_reader = XMLInputFactory.newInstance().createXMLEventReader(br);
+			
+			try
+			{
+				loop: while (event_reader.hasNext())
+				{
+					XMLEvent event = event_reader.nextEvent();
+					
+					switch (event.getEventType())
+					{
+					case XMLStreamConstants.START_ELEMENT:
+						var start_name = event.asStartElement().getName().getLocalPart();
+						
+						switch (start_name)
+						{
+						case "rule":
+							rules.add(read_rule(event_reader));
+						}
+						
+						break;
+						
+					case XMLStreamConstants.END_ELEMENT:
+						var end_name = event.asEndElement().getName().getLocalPart();
+						
+						if (end_name.equals("config"))
+						{
+							break loop;
+						}
+						
+						break;
+						
+					default:
+						continue;
+					}
+				}
+			}
+			finally
+			{
+				event_reader.close();
+			}
+		}
+	}
+	
+	public List<Rule> rules()
+	{
+		return rules;
+	}
+}
