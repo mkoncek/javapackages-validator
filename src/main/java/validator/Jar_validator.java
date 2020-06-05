@@ -40,7 +40,7 @@ public interface Jar_validator
 			super();
 			this.class_validator = class_validator;
 		}
-
+		
 		@Override
 		public boolean validate(JarArchiveInputStream jar)
 		{
