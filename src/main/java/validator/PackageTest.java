@@ -65,19 +65,22 @@ public class PackageTest
 	public static void main(String[] args) throws Exception
 	{
 		var arguments = new Arguments();
-		JCommander.newBuilder().addObject(arguments).build().parse(args);
+		var jcommander = JCommander.newBuilder().addObject(arguments).build();
+		jcommander.parse(args);
 		
 		if (arguments.help)
 		{
-			System.out.println("javapackage-validator version 0.0.1");
+			System.out.println("javapackage-validator");
 			System.out.println("Options:");
 			System.out.println("  -h, --help                  " +
 					"Display help."
 			);
+			System.out.println();
 			System.out.println("  -o, --output=FILE           " +
 					"The file to write the output to. " +
-					"If not provided outputs to standard output."
+					"If not provided then outputs to the standard output."
 			);
+			System.out.println();
 			System.out.println("  -c, --config=FILE           " +
 					"The file to read the configuration from."
 			);
@@ -89,7 +92,7 @@ public class PackageTest
 					"The file to read the list of input files from."
 			);
 			System.out.println("                              " +
-					"If neither -i nor -f is provided read the list of " +
+					"If neither -i nor -f is provided then the list of " +
 					"validated files is read from the standard input."
 			);
 			

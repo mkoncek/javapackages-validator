@@ -27,7 +27,7 @@ Supported sizes:
       <name>.*</name>
     </match>
     <filesize-kb>
-      <int-range>-1800</int-range>
+      <int-range>-100</int-range>
     </filesize-kb>
     <java-bytecode>
       <int-range>-50</int-range>

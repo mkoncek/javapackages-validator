@@ -30,6 +30,10 @@ public interface Jar_validator
 	boolean validate(JarArchiveInputStream jar);
 	String info();
 	
+	/**
+	 * Applies its member validator on all of the contained .class files
+	 * accumulating error messages
+	 */
 	static class Jar_class_validator implements Jar_validator
 	{
 		Jar_validator class_validator;

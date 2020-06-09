@@ -279,36 +279,47 @@ public class Config
 				{
 					final var validator = read_validator(start_name, event_reader);
 					
+					long divisor;
+					String suffix;
+					
 					if (start_name.endsWith("-b"))
 					{
-						result.rpm_file_size = validator;
+						divisor = 1;
+						suffix = "bytes";
 					}
 					else if (start_name.endsWith("-kb"))
 					{
-						result.rpm_file_size = new Validator.Transforming_validator(validator)
-						{
-							@Override
-							protected String transform(String value)
-							{
-								return Long.toString(Long.parseLong(value) / 1024);
-							}
-						};
+						divisor = 1024;
+						suffix = "kilobytes";
 					}
 					else if (start_name.endsWith("-mb"))
 					{
-						result.rpm_file_size = new Validator.Transforming_validator(validator)
-						{
-							@Override
-							protected String transform(String value)
-							{
-								return Long.toString(Long.parseLong(value) / (1024 * 1024));
-							}
-						};
+						divisor = 1024 * 1024;
+						suffix = "megabytes";
 					}
 					else
 					{
 						throw new RuntimeException("Invalid filesize suffix");
 					}
+					
+					result.rpm_file_size = new Validator.Transforming_validator(validator)
+					{
+						long file_size;
+						
+						@Override
+						protected String transform(String value)
+						{
+							file_size = Long.parseLong(value) / divisor;
+							return Long.toString(file_size);
+						}
+						
+						@Override
+						public String info()
+						{
+							return super.info() + " but the file size is " +
+									Long.toString(file_size) + " " + suffix;
+						}
+					};
 				}
 				
 				break;
