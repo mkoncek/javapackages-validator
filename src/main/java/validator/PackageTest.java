@@ -99,6 +99,12 @@ public class PackageTest
 			return;
 		}
 		
+		if (arguments.config_file == null)
+		{
+			System.err.println("error: Missing --config file");
+			return;
+		}
+		
 		try (PrintStream output = arguments.output_file != null ?
 				new PrintStream(arguments.output_file) : System.out)
 		{
@@ -216,7 +222,7 @@ public class PackageTest
 				test_results.add(new Test_result(result, message));
 			}
 			
-			int test_number = 1;
+			int test_number = test_results.isEmpty() ? 0 : 1;
 			
 			output.println(test_number + ".." + Integer.toString(test_results.size()));
 			

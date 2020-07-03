@@ -146,7 +146,9 @@ abstract public class Validator
 		Test_result validate(String value)
 		{
 			boolean result = false;
-			String message = "whitelist: {";
+			StringBuilder sb = new StringBuilder();
+			sb.append("whitelist ");
+			int offset = sb.length();
 			
 			for (final var val : list)
 			{
@@ -157,21 +159,23 @@ abstract public class Validator
 					result = true;
 				}
 				
-				message += test_result.message + "; ";
+				sb.append(test_result.message + "; ");
 			}
 			
-			if (list.size() > 0)
+			if (result)
 			{
-				message = message.substring(0, message.length() - 2);
+				sb.insert(offset, "accepted value \"" + value + "\": {");
+			}
+			else
+			{
+				sb.insert(offset, "rejected value \"" + value + "\": {");
 			}
 			
-			message += "}: ";
+			/// Remove the last "; ", list must contain at least one element
+			sb.delete(sb.length() - 2, sb.length());
+			sb.append("}");
 			
-			message += result ?
-					"whitelist accepted value \"" + value + "\"" :
-					"whitelist rejected value \"" + value + "\"";
-			
-			return new Test_result(result, message);
+			return new Test_result(result, sb.toString());
 		}
 	}
 	
@@ -186,7 +190,9 @@ abstract public class Validator
 		Test_result validate(String value)
 		{
 			boolean result = true;
-			String message = "blacklist: {";
+			StringBuilder sb = new StringBuilder();
+			sb.append("blacklist ");
+			int offset = sb.length();
 			
 			for (final var val : list)
 			{
@@ -197,21 +203,23 @@ abstract public class Validator
 					result = false;
 				}
 				
-				message += test_result.message + "; ";
+				sb.append(test_result.message + "; ");
 			}
 			
-			if (list.size() > 0)
+			if (result)
 			{
-				message = message.substring(0, message.length() - 2);
+				sb.insert(offset, "accepted value \"" + value + "\": {");
 			}
-
-			message += "}: ";
+			else
+			{
+				sb.insert(offset, "rejected value \"" + value + "\": {");
+			}
 			
-			message += result ?
-					"blacklist accepted value \"" + value + "\"" :
-					"blacklist rejected value \"" + value + "\"";
+			/// Remove the last "; ", list must contain at least one element
+			sb.delete(sb.length() - 2, sb.length());
+			sb.append("}");
 			
-			return new Test_result(result, message);
+			return new Test_result(result, sb.toString());
 		}
 	}
 }

@@ -8,7 +8,7 @@ Supported sizes:
 <config>
   <rule>
     <match>
-      <name>.*-javadoc</name>
+      <name>.*-javadoc.*</name>
     </match>
     <requires>
       <whitelist>

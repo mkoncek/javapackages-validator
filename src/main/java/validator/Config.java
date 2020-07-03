@@ -127,7 +127,6 @@ public class Config
 		String match_type = null;
 		Validator result = null;
 		
-		
 		loop: while (event_reader.hasNext())
 		{
 			XMLEvent event = event_reader.nextEvent();
@@ -143,7 +142,7 @@ public class Config
 				}
 				else
 				{
-					throw new RuntimeException("rule can contain at most one validator");
+					throw new RuntimeException("A rule can contain at most one validator");
 				}
 				
 				switch (start_name)
@@ -203,6 +202,11 @@ public class Config
 			}
 		}
 		
+		if (result == null)
+		{
+			throw new RuntimeException("internal error: function read_validator returned null");
+		}
+		
 		return result;
 	}
 	
@@ -212,19 +216,18 @@ public class Config
 		
 		loop: while (event_reader.hasNext())
 		{
-			XMLEvent event = event_reader.nextEvent();
-			
+			XMLEvent event = event_reader.peek();
 			
 			switch (event.getEventType())
 			{
 			case XMLStreamConstants.START_ELEMENT:
 				var start_name = event.asStartElement().getName().getLocalPart();
-				
 				result.add(read_validator(start_name, event_reader));
 				
 				break;
 				
 			case XMLStreamConstants.END_ELEMENT:
+				event = event_reader.nextEvent();
 				var end_name = event.asEndElement().getName().getLocalPart();
 				
 				if (end_name.equals(end))
@@ -233,6 +236,9 @@ public class Config
 				}
 				
 				break;
+			
+			default:
+				event = event_reader.nextEvent();
 			}
 		}
 		
@@ -320,7 +326,8 @@ public class Config
 						Test_result validate(String value)
 						{
 							final var r = delegate.validate(value);
-							return new Test_result(r.result, "File size (in " + suffix + "): " + r.message);
+							r.prefix("File size (in " + suffix + "): " + r.message);
+							return r;
 						}
 					};
 				}

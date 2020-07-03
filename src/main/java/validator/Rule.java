@@ -80,6 +80,7 @@ public class Rule
 	public List<Test_result> apply(Path rpm_path)
 	{
 		RpmInfo rpm_info;
+		
 		try
 		{
 			rpm_info = new RpmInfo(rpm_path);
@@ -96,7 +97,20 @@ public class Rule
 			return result;
 		}
 		
-		/// TODO provides and requires
+		if (provides != null)
+		{
+			rpm_info.getProvides().stream().map((s) -> provides.validate(s)).forEachOrdered(result::add);
+		}
+		
+		if (requires != null)
+		{
+			rpm_info.getRequires().stream().map((s) -> requires.validate(s)).forEachOrdered(result::add);
+		}
+		
+		if (obsoletes != null)
+		{
+			throw new RuntimeException("Obsoletes not implemented");
+		}
 		
 		if (rpm_file_size != null)
 		{
