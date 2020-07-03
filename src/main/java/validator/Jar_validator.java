@@ -18,7 +18,7 @@ package validator;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
-
+import java.util.ArrayList;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 
@@ -27,8 +27,12 @@ import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
  */
 public interface Jar_validator
 {
-	boolean validate(JarArchiveInputStream jar);
-	String info();
+	static interface Visitor
+	{
+		void visit(Validator.Test_result result, String entry);
+	}
+	
+	void accept(Visitor visitor, JarArchiveInputStream jar, String entry);
 	
 	/**
 	 * Applies its member validator on all of the contained .class files
@@ -37,7 +41,8 @@ public interface Jar_validator
 	static class Jar_class_validator implements Jar_validator
 	{
 		Jar_validator class_validator;
-		String message;
+		
+		ArrayList<String> messages = new ArrayList<>(0);
 		
 		public Jar_class_validator(Jar_validator class_validator)
 		{
@@ -46,7 +51,7 @@ public interface Jar_validator
 		}
 		
 		@Override
-		public boolean validate(JarArchiveInputStream jar)
+		public void accept(Visitor visitor, JarArchiveInputStream jar, String entry)
 		{
 			try
 			{
@@ -54,10 +59,10 @@ public interface Jar_validator
 				while ((jar_entry = jar.getNextJarEntry()) != null)
 				{
 					final String class_name = jar_entry.getName();
-					if (class_name.endsWith(".class") && ! class_validator.validate(jar))
+					
+					if (class_name.endsWith(".class"))
 					{
-						message = class_name + ": " + class_validator.info();
-						return false;
+						class_validator.accept(visitor, jar, entry + ": " + class_name);
 					}
 				}
 			}
@@ -65,14 +70,6 @@ public interface Jar_validator
 			{
 				throw new RuntimeException(e);
 			}
-			
-			return true;
-		}
-		
-		@Override
-		public String info()
-		{
-			return message;
 		}
 	}
 	
@@ -87,7 +84,7 @@ public interface Jar_validator
 		}
 		
 		@Override
-		public boolean validate(JarArchiveInputStream jar)
+		public void accept(Visitor visitor, JarArchiveInputStream jar, String entry)
 		{
 			/// Read 6-th and 7-th bytes which indicate the
 			/// .class bytecode version
@@ -97,21 +94,24 @@ public interface Jar_validator
 				var versionBuffer = ByteBuffer.allocate(2);
 				jar.read(versionBuffer.array());
 				
+				final var bt_validator = new Validator.Delegating_validator(bytecode_validator)
+				{
+					@Override
+					Test_result validate(String value)
+					{
+						final var r = delegate.validate(value);
+						return new Test_result(r.result, "Bytecode version: " + r.message);
+					}
+				};
+				
 				final var version = Short.toString(versionBuffer.getShort());
 				
-				return bytecode_validator.validate(version);
+				visitor.visit(bt_validator.validate(version), entry);
 			}
 			catch (IOException e)
 			{
 				throw new UncheckedIOException(e);
 			}
-		}
-		
-		@Override
-		public String info()
-		{
-			return "bytecode version validate failed: " + bytecode_validator.info() +
-					" but bytecode version is " + bytecode_validator.last_failed_value();
 		}
 	}
 }

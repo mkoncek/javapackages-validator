@@ -19,35 +19,41 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @author Marián Konček
  */
 abstract public class Validator
 {
-	private String last_failed_value;
-	
-	final boolean validate(String value)
+	static final class Test_result
 	{
-		if (do_validate(value))
+		boolean result;
+		String message;
+		
+		public Test_result(boolean result, String message)
 		{
-			return true;
+			this.result = result;
+			this.message = message;
 		}
-		else
+		
+		final void prefix(String prefix)
 		{
-			last_failed_value = value;
-			return false;
+			message = prefix + message;
 		}
 	}
 	
-	final String last_failed_value()
-	{
-		return last_failed_value;
-	}
+	abstract Test_result validate(String value);
 	
-	abstract protected boolean do_validate(String value);
-	abstract String info();
+	static abstract class Delegating_validator extends Validator
+	{
+		Validator delegate;
+		
+		public Delegating_validator(Validator delegate)
+		{
+			super();
+			this.delegate = delegate;
+		}
+	}
 	
 	static class Regex_validator extends Validator
 	{
@@ -59,40 +65,35 @@ abstract public class Validator
 		}
 		
 		@Override
-		public boolean do_validate(String value)
+		Test_result validate(String value)
 		{
-			return pattern.matcher(value).matches();
-		}
-		
-		@Override
-		public String info()
-		{
-			return "regex \"" + pattern.toString() + "\"";
+			final boolean result = pattern.matcher(value).matches();
+			
+			String message = "regex \"" + pattern.toString();
+			message += result ?
+					"\" matches value \"" + value + "\"" :
+					"\" does not match value \"" + value + "\"";
+					
+			return new Test_result(result, message);
 		}
 	}
 	
-	static abstract class Transforming_validator extends Validator
+	static abstract class Transforming_validator extends Delegating_validator
 	{
-		Validator delegate;
-		
 		public Transforming_validator(Validator delegate)
 		{
-			super();
-			this.delegate = delegate;
+			super(delegate);
 		}
 		
 		protected abstract String transform(String value);
 		
 		@Override
-		public boolean do_validate(String value)
+		Test_result validate(String value)
 		{
-			return delegate.validate(transform(value));
-		}
-		
-		@Override
-		public String info()
-		{
-			return delegate.info();
+			final String transformed = transform(value);
+			Test_result result = delegate.validate(transformed);
+			result.message = "(transforming " + "\"" + value + "\" -> \"" + transformed + "\"): " + result.message;
+			return result;
 		}
 	}
 	
@@ -108,18 +109,19 @@ abstract public class Validator
 		}
 		
 		@Override
-		public boolean do_validate(String value)
+		Test_result validate(String value)
 		{
-			var numeric = Long.parseLong(value);
-			return min <= numeric && numeric <= max;
-		}
-		
-		@Override
-		public String info()
-		{
-			return MessageFormat.format("int-range [{0} - {1}]",
+			final var numeric = Long.parseLong(value);
+			final boolean result = min <= numeric && numeric <= max;
+			
+			String message = MessageFormat.format("int-range [{0} - {1}]",
 					min == Long.MIN_VALUE ? "" : Long.toString(min),
 					max == Long.MAX_VALUE ? "" : Long.toString(max));
+			message += result ?
+					" contains value \"" + value + "\"" :
+					" does not contain value \"" + value + "\"";
+					
+			return new Test_result(result, message);
 		}
 	}
 	
@@ -131,11 +133,6 @@ abstract public class Validator
 		{
 			this.list = new ArrayList<Validator>(list);
 		}
-		
-		final protected String listinfo()
-		{
-			return list.stream().map(Validator::info).collect(Collectors.joining(", "));
-		}
 	}
 	
 	static class Whitelist_validator extends List_validator
@@ -144,17 +141,37 @@ abstract public class Validator
 		{
 			super(list);
 		}
-
-		@Override
-		public boolean do_validate(String value)
-		{
-			return list.stream().anyMatch((validator) -> validator.validate(value));
-		}
 		
 		@Override
-		public String info()
+		Test_result validate(String value)
 		{
-			return "whitelist: [" + listinfo() + "]";
+			boolean result = false;
+			String message = "whitelist: {";
+			
+			for (final var val : list)
+			{
+				final var test_result = val.validate(value);
+				
+				if (test_result.result)
+				{
+					result = true;
+				}
+				
+				message += test_result.message + "; ";
+			}
+			
+			if (list.size() > 0)
+			{
+				message = message.substring(0, message.length() - 2);
+			}
+			
+			message += "}: ";
+			
+			message += result ?
+					"whitelist accepted value \"" + value + "\"" :
+					"whitelist rejected value \"" + value + "\"";
+			
+			return new Test_result(result, message);
 		}
 	}
 	
@@ -164,17 +181,37 @@ abstract public class Validator
 		{
 			super(list);
 		}
-
-		@Override
-		public boolean do_validate(String value)
-		{
-			return ! list.stream().anyMatch((validator) -> validator.validate(value));
-		}
 		
 		@Override
-		public String info()
+		Test_result validate(String value)
 		{
-			return "blacklist: [" + listinfo() + "]";
+			boolean result = true;
+			String message = "blacklist: {";
+			
+			for (final var val : list)
+			{
+				final var test_result = val.validate(value);
+				
+				if (! test_result.result)
+				{
+					result = false;
+				}
+				
+				message += test_result.message + "; ";
+			}
+			
+			if (list.size() > 0)
+			{
+				message = message.substring(0, message.length() - 2);
+			}
+
+			message += "}: ";
+			
+			message += result ?
+					"blacklist accepted value \"" + value + "\"" :
+					"blacklist rejected value \"" + value + "\"";
+			
+			return new Test_result(result, message);
 		}
 	}
 }

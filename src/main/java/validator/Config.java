@@ -255,7 +255,7 @@ public class Config
 			switch (event.getEventType())
 			{
 			case XMLStreamConstants.START_ELEMENT:
-				var start_name = event.asStartElement().getName().getLocalPart();
+				final var start_name = event.asStartElement().getName().getLocalPart();
 				
 				switch (start_name)
 				{
@@ -302,7 +302,7 @@ public class Config
 						throw new RuntimeException("Invalid filesize suffix");
 					}
 					
-					result.rpm_file_size = new Validator.Transforming_validator(validator)
+					final var converting_validator = new Validator.Transforming_validator(validator)
 					{
 						long file_size;
 						
@@ -312,12 +312,15 @@ public class Config
 							file_size = Long.parseLong(value) / divisor;
 							return Long.toString(file_size);
 						}
-						
+					};
+					
+					result.rpm_file_size = new Validator.Delegating_validator(converting_validator)
+					{
 						@Override
-						public String info()
+						Test_result validate(String value)
 						{
-							return super.info() + " but the file size is " +
-									Long.toString(file_size) + " " + suffix;
+							final var r = delegate.validate(value);
+							return new Test_result(r.result, "File size (in " + suffix + "): " + r.message);
 						}
 					};
 				}

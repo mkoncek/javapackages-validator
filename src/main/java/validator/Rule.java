@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
+import validator.Validator.Test_result;
+
 /**
  * @author Marián Konček
  */
@@ -75,7 +77,7 @@ public class Rule
 		return match != null && match.matches(rpm_info);
 	}
 	
-	public List<String> apply(Path rpm_path)
+	public List<Test_result> apply(Path rpm_path)
 	{
 		RpmInfo rpm_info;
 		try
@@ -87,26 +89,18 @@ public class Rule
 			throw new RuntimeException(e);
 		}
 		
-		var result = new ArrayList<String>();
+		var result = new ArrayList<Test_result>();
 		
 		if (! applies(rpm_info))
 		{
 			return result;
 		}
 		
-		if (provides != null && ! rpm_info.getProvides().stream().allMatch((str) -> provides.validate(str)))
-		{
-			result.add("Provides does not match: " + provides.info());
-		}
+		/// TODO provides and requires
 		
-		if (requires != null && ! rpm_info.getRequires().stream().allMatch((str) -> requires.validate(str)))
+		if (rpm_file_size != null)
 		{
-			result.add("Requires does not match: " + requires.info());
-		}
-		
-		if (rpm_file_size != null && ! rpm_file_size.validate(Long.toString(rpm_path.toFile().length())))
-		{
-			result.add("File size does not match: " + rpm_file_size.info());
+			result.add(rpm_file_size.validate(Long.toString(rpm_path.toFile().length())));
 		}
 		
 		return result;

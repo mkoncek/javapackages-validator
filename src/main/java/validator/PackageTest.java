@@ -23,9 +23,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.TreeSet;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.text.MessageFormat;
 
@@ -36,6 +34,8 @@ import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+
+import validator.Validator.Test_result;
 
 /**
  * @author Marián Konček
@@ -118,29 +118,38 @@ public class PackageTest
 			
 			var config = new Config(new FileInputStream(arguments.config_file));
 			
-			output.println("1.." + Integer.toString(arguments.test_files.size() + 1));
-			
 			/// The union of file paths present in all rpm files
 			var files = new TreeSet<String>();
 			
 			/// The union of targets of all symbolic links present in rpm files
 			var symlinks = new TreeSet<String>();
+			var test_results = new ArrayList<Test_result>();
 			
-			int error_number = 1;
-			for (; error_number < arguments.test_files.size() + 1; ++error_number)
+			for (final String filename : arguments.test_files)
 			{
-				final String filename = arguments.test_files.get(error_number - 1);
 				final var rpm_path = Paths.get(filename);
+				final String rpm_name = rpm_path.getFileName().toString();
 				final var rpm_info = new RpmInfo(rpm_path);
-				var errors = new ArrayList<String>();
 				final var applicable_rules = config.rules().stream()
 						.filter((r) -> r.applies(rpm_info))
 						.collect(Collectors.toCollection(ArrayList::new));
 				
-				applicable_rules.stream()
-						.map((r) -> r.apply(rpm_path))
-						.filter(Predicate.not(List::isEmpty))
-						.forEachOrdered(errors::addAll);
+				for (var rule : applicable_rules)
+				{
+					var results = rule.apply(rpm_path);
+					
+					for (var tr : results)
+					{
+						tr.prefix(rpm_name + ": ");
+						test_results.add(tr);
+					}
+				}
+				
+				final var applicable_jar_validators = applicable_rules.stream()
+						.map((r) -> r.jar_validator)
+						.filter((jc) -> jc != null)
+						.collect(Collectors.toCollection(ArrayList::new));
+
 				
 				try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
 				{
@@ -162,57 +171,59 @@ public class PackageTest
 						{
 							if (rpm_entry.getName().endsWith(".jar"))
 							{
+								/// Remove leading dot
+								final String jar_name = rpm_entry.getName().substring(1);
+								
 								try (var jar_stream = new JarArchiveInputStream(
 										new ByteArrayInputStream(content)))
 								{
-									var jar_message = applicable_rules.stream()
-											.map((r) -> r.jar_validator)
-											.filter((jc) -> jc != null && ! jc.validate(jar_stream))
-											.map((jc) -> jc.info())
-											.collect(Collectors.joining(", "));
-									
-									if (! jar_message.isEmpty())
+									for (var jv : applicable_jar_validators)
 									{
-										errors.add(jar_message);
+										jv.accept(new Jar_validator.Visitor()
+										{
+											@Override
+											public void visit(Test_result result, String entry)
+											{
+												result.message = entry + ": " + result.message;
+												test_results.add(result);
+											}	
+										}, jar_stream, rpm_name + ": " + jar_name);
 									}
 								}
 							}
 						}
 					}
 				}
-				
-				if (errors.isEmpty())
-				{
-					output.println(MessageFormat.format("ok {0} - {1}",
-							Integer.toString(error_number), rpm_path.getFileName()));
-				}
-				else
-				{
-					output.print(MessageFormat.format("nok {0} - {1} - ",
-							Integer.toString(error_number), rpm_path.getFileName()));
-					output.println(errors.stream().collect(Collectors.joining(error_separator + " ")));
-				}
 			}
 			
+			
+			for (var symlink : symlinks)
 			{
-				final var symlink_errors = symlinks.stream()
-						.filter(Predicate.not(files::contains))
-						.map((str) -> MessageFormat.format("File {0} is a dangling symbolic link", str))
-						.collect(Collectors.joining(error_separator + " "));
+				String message;
+				boolean result = files.contains(symlink);
 				
-				if (symlink_errors.isEmpty())
+				if (result)
 				{
-					output.println(MessageFormat.format(
-							"ok {0} - All symbolic links have been resolved", error_number));
+					message = MessageFormat.format(
+							"File {0} is a symbolic link pointing to an existing file", symlink);
 				}
 				else
 				{
-					output.print(MessageFormat.format(
-							"nok {0} - dangling symbolic links - ", error_number));
-					output.println(symlink_errors);
+					message = MessageFormat.format(
+							"File {0} is a dangling symbolic link", symlink);
 				}
 				
-				++error_number;
+				test_results.add(new Test_result(result, message));
+			}
+			
+			int test_number = 1;
+			
+			output.println(test_number + ".." + Integer.toString(test_results.size()));
+			
+			for (var tr : test_results)
+			{
+				System.out.println((tr.result ? "ok " : "nok ") + test_number + " - " + tr.message);
+				++test_number;
 			}
 		}
 	}
