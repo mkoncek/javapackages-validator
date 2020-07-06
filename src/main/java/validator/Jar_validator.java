@@ -94,19 +94,18 @@ public interface Jar_validator
 				var versionBuffer = ByteBuffer.allocate(2);
 				jar.read(versionBuffer.array());
 				
-				final var bt_validator = new Validator.Delegating_validator(bytecode_validator)
+				final var bc_validator = new Validator.Delegating_validator(bytecode_validator)
 				{
 					@Override
 					Test_result validate(String value)
 					{
-						final var r = delegate.validate(value);
-						return new Test_result(r.result, "Bytecode version: " + r.message);
+						return delegate.validate(value).prefix("[Bytecode version]: ");
 					}
 				};
 				
 				final var version = Short.toString(versionBuffer.getShort());
 				
-				visitor.visit(bt_validator.validate(version), entry);
+				visitor.visit(bc_validator.validate(version), entry);
 			}
 			catch (IOException e)
 			{

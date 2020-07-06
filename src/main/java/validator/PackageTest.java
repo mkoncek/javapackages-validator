@@ -85,7 +85,7 @@ public class PackageTest
 					"The file to read the configuration from."
 			);
 			System.out.println();
-			System.out.println("  -f, --files=FILES           " +
+			System.out.println("  -f, --files=FILES...        " +
 					"The list of .rpm files to validate."
 			);
 			System.out.println("  -i, --input=FILE            " +
@@ -124,10 +124,10 @@ public class PackageTest
 			
 			var config = new Config(new FileInputStream(arguments.config_file));
 			
-			/// The union of file paths present in all rpm files
+			/// The union of file paths present in all RPM files
 			var files = new TreeSet<String>();
 			
-			/// The union of targets of all symbolic links present in rpm files
+			/// The union of targets of all symbolic links present in RPM files
 			var symlinks = new TreeSet<String>();
 			var test_results = new ArrayList<Test_result>();
 			
@@ -140,6 +140,7 @@ public class PackageTest
 						.filter((r) -> r.applies(rpm_info))
 						.collect(Collectors.toCollection(ArrayList::new));
 				
+				/// Prefix every message with the RPM file name
 				for (var rule : applicable_rules)
 				{
 					var results = rule.apply(rpm_path);
@@ -163,7 +164,9 @@ public class PackageTest
 					while ((rpm_entry = rpm_is.getNextEntry()) != null)
 					{
 						/// Remove the leading "."
-						files.add(rpm_entry.getName().substring(1));
+						final String rpm_entry_name = rpm_entry.getName().substring(1);
+						
+						files.add(rpm_entry_name);
 						
 						var content = new byte[(int) rpm_entry.getSize()];
 						rpm_is.read(content);
@@ -177,8 +180,7 @@ public class PackageTest
 						{
 							if (rpm_entry.getName().endsWith(".jar"))
 							{
-								/// Remove leading dot
-								final String jar_name = rpm_entry.getName().substring(1);
+								final String jar_name = rpm_entry_name;
 								
 								try (var jar_stream = new JarArchiveInputStream(
 										new ByteArrayInputStream(content)))
@@ -202,20 +204,19 @@ public class PackageTest
 				}
 			}
 			
-			
 			for (var symlink : symlinks)
 			{
-				String message;
-				boolean result = files.contains(symlink);
+				String message = "[Symlink]: ";
+				final boolean result = files.contains(symlink);
 				
 				if (result)
 				{
-					message = MessageFormat.format(
+					message += MessageFormat.format(
 							"File {0} is a symbolic link pointing to an existing file", symlink);
 				}
 				else
 				{
-					message = MessageFormat.format(
+					message += MessageFormat.format(
 							"File {0} is a dangling symbolic link", symlink);
 				}
 				
@@ -224,11 +225,12 @@ public class PackageTest
 			
 			int test_number = test_results.isEmpty() ? 0 : 1;
 			
-			output.println(test_number + ".." + Integer.toString(test_results.size()));
+			output.println(MessageFormat.format("{0}..{1}", test_number, Integer.toString(test_results.size())));
 			
 			for (var tr : test_results)
 			{
-				System.out.println((tr.result ? "ok " : "nok ") + test_number + " - " + tr.message);
+				output.println(MessageFormat.format("{0} {1} - {2}",
+						(tr.result ? "ok" : "nok"), Integer.toString(test_number), tr.message));
 				++test_number;
 			}
 		}

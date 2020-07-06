@@ -269,10 +269,24 @@ public class Config
 					result.match = read_match(event_reader);
 					break;
 				case "requires":
-					result.requires = read_validator(start_name, event_reader);
+					result.requires = new Validator.Delegating_validator(read_validator(start_name, event_reader))
+					{
+						@Override
+						Test_result validate(String value)
+						{
+							return delegate.validate(value).prefix("[Requires]: ");
+						}
+					};
 					break;
 				case "provides":
-					result.provides = read_validator(start_name, event_reader);
+					result.provides = new Validator.Delegating_validator(read_validator(start_name, event_reader))
+					{
+						@Override
+						Test_result validate(String value)
+						{
+							return delegate.validate(value).prefix("[Provides]: ");
+						}
+					};
 					break;
 				case "java-bytecode":
 					result.jar_validator = new Jar_validator.Jar_class_validator(
@@ -325,9 +339,7 @@ public class Config
 						@Override
 						Test_result validate(String value)
 						{
-							final var r = delegate.validate(value);
-							r.prefix("File size (in " + suffix + "): " + r.message);
-							return r;
+							return delegate.validate(value).prefix("[File size in " + suffix + "]: ");
 						}
 					};
 				}

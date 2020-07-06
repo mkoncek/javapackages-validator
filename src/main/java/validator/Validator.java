@@ -36,9 +36,10 @@ abstract public class Validator
 			this.message = message;
 		}
 		
-		final void prefix(String prefix)
+		final Test_result prefix(String prefix)
 		{
 			message = prefix + message;
+			return this;
 		}
 	}
 	
