@@ -1,0 +1,36 @@
+<!--
+Supported sizes:
+<filesize-b>
+<filesize-kb>
+<filesize-mb>
+-->
+
+<config>
+  <rule>
+    <match>
+      <name>.*-javadoc</name>
+    </match>
+    <requires>
+      <whitelist>
+        <regex>java-1.8.0-javadoc</regex>
+      </whitelist>
+    </requires>
+    <files>
+      <whitelist>
+        <regex>/usr/share/javadoc/.*</regex>
+      </whitelist>
+    </files>
+  </rule>
+  <!-- Rule matching all packages -->
+  <rule>
+    <match>
+      <name>.*</name>
+    </match>
+    <filesize-kb>
+      <int-range>-100</int-range>
+    </filesize-kb>
+    <java-bytecode>
+      <int-range>-50</int-range>
+    </java-bytecode>
+  </rule>
+</config>

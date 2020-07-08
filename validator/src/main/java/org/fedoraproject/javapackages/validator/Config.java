@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package validator;
+package org.fedoraproject.javapackages.validator;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -29,7 +29,7 @@ import javax.xml.stream.events.XMLEvent;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
-import validator.Rule.Match;
+import org.fedoraproject.javapackages.validator.Rule.Match;
 
 /**
  * @author Marián Konček

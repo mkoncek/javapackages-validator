@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package validator;
+package org.fedoraproject.javapackages.validator;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -35,12 +35,12 @@ import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 
-import validator.Validator.Test_result;
+import org.fedoraproject.javapackages.validator.Validator.Test_result;
 
 /**
  * @author Marián Konček
  */
-public class PackageTest
+public class Package_test
 {
 	static final String error_separator = ";";
 	
@@ -194,7 +194,7 @@ public class PackageTest
 											{
 												result.message = entry + ": " + result.message;
 												test_results.add(result);
-											}	
+											}
 										}, jar_stream, rpm_name + ": " + jar_name);
 									}
 								}

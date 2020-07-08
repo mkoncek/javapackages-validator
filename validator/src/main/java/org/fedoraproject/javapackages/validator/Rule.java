@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package validator;
+package org.fedoraproject.javapackages.validator;
 
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
-import validator.Validator.Test_result;
+import org.fedoraproject.javapackages.validator.Validator.Test_result;
 
 /**
  * @author Marián Konček
