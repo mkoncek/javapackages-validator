@@ -170,8 +170,12 @@ public class Package_test
 					CpioArchiveEntry rpm_entry;
 					while ((rpm_entry = rpm_is.getNextEntry()) != null)
 					{
-						/// Remove the leading "."
-						final String rpm_entry_name = rpm_entry.getName().substring(1);
+						String rpm_entry_name = rpm_entry.getName();
+						
+						if (rpm_entry_name.startsWith("./"))
+						{
+							rpm_entry_name = rpm_entry_name.substring(1);
+						}
 						
 						files.add(rpm_entry_name);
 						
