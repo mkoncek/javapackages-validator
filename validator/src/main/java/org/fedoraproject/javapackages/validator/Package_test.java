@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.text.MessageFormat;
@@ -127,8 +128,8 @@ public class Package_test
 			/// The union of file paths present in all RPM files
 			var files = new TreeSet<String>();
 			
-			/// The union of targets of all symbolic links present in RPM files
-			var symlinks = new TreeSet<String>();
+			/// The map of symbolic link names to their targets present in all RPM files
+			var symlinks = new TreeMap<String, String>();
 			var test_results = new ArrayList<Test_result>();
 			
 			for (final String filename : arguments.test_files)
@@ -156,7 +157,6 @@ public class Package_test
 						.map((r) -> r.jar_validator)
 						.filter((jc) -> jc != null)
 						.collect(Collectors.toCollection(ArrayList::new));
-
 				
 				try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
 				{
@@ -173,8 +173,9 @@ public class Package_test
 						
 						if (rpm_entry.isSymbolicLink())
 						{
-							final var target = new String(content, "UTF-8");
-							symlinks.add(target);
+							var target = new String(content, "UTF-8");
+							target = rpm_path.resolve(Paths.get(target)).normalize().toString();
+							symlinks.put(rpm_entry_name, target);
 						}
 						else
 						{
@@ -204,20 +205,22 @@ public class Package_test
 				}
 			}
 			
-			for (var symlink : symlinks)
+			for (var pair : symlinks.entrySet())
 			{
 				String message = "[Symlink]: ";
-				final boolean result = files.contains(symlink);
+				final boolean result = files.contains(pair.getValue());
 				
 				if (result)
 				{
 					message += MessageFormat.format(
-							"File {0} is a symbolic link pointing to an existing file", symlink);
+							"Symbolic link \"{0}\" points to \"{1}\" and the target file exists",
+							pair.getKey(), pair.getValue());
 				}
 				else
 				{
 					message += MessageFormat.format(
-							"File {0} is a dangling symbolic link", symlink);
+							"Symbolic link \"{0}\" points to \"{1}\" but the target file does not exist",
+							pair.getKey(), pair.getValue());
 				}
 				
 				test_results.add(new Test_result(result, message));
