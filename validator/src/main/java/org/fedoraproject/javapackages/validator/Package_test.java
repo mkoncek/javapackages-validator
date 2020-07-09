@@ -118,6 +118,13 @@ public class Package_test
 				{
 					br.lines().forEach((filename) ->
 					{
+						var path = Paths.get(filename);
+						
+						if (! path.isAbsolute())
+						{
+							filename = Paths.get(arguments.input_file).getParent().resolve(path).toString();
+						}
+						
 						arguments.test_files.add(filename);
 					});
 				}
@@ -174,7 +181,7 @@ public class Package_test
 						if (rpm_entry.isSymbolicLink())
 						{
 							var target = new String(content, "UTF-8");
-							target = rpm_path.resolve(Paths.get(target)).normalize().toString();
+							target = Paths.get(rpm_entry_name).getParent().resolve(Paths.get(target)).normalize().toString();
 							symlinks.put(rpm_entry_name, target);
 						}
 						else
