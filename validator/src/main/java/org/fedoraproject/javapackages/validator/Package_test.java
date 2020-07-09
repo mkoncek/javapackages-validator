@@ -134,7 +134,7 @@ public class Package_test
 			
 			for (final String filename : arguments.test_files)
 			{
-				final var rpm_path = Paths.get(filename);
+				final var rpm_path = Paths.get(filename).toAbsolutePath().normalize();
 				final String rpm_name = rpm_path.getFileName().toString();
 				final var rpm_info = new RpmInfo(rpm_path);
 				final var applicable_rules = config.rules().stream()
