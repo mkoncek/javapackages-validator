@@ -15,11 +15,15 @@
  */
 package org.fedoraproject.javapackages.validator;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
+import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
 import org.fedoraproject.javapackages.validator.Validator.Test_result;
@@ -66,6 +70,7 @@ public class Rule
 	
 	Match match;
 	
+	Validator files;
 	Validator provides;
 	Validator requires;
 	Validator obsoletes;
@@ -77,7 +82,7 @@ public class Rule
 		return match != null && match.matches(rpm_info);
 	}
 	
-	public List<Test_result> apply(Path rpm_path)
+	public List<Test_result> apply(Path rpm_path) throws IOException
 	{
 		RpmInfo rpm_info;
 		
@@ -95,6 +100,25 @@ public class Rule
 		if (! applies(rpm_info))
 		{
 			return result;
+		}
+		
+		if (files != null)
+		{
+			try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
+			{
+				CpioArchiveEntry rpm_entry;
+				while ((rpm_entry = rpm_is.getNextEntry()) != null)
+				{
+					String rpm_entry_name = rpm_entry.getName();
+					
+					if (rpm_entry_name.startsWith("./"))
+					{
+						rpm_entry_name = rpm_entry_name.substring(1);
+					}
+					
+					result.add(files.validate(rpm_entry_name));
+				}
+			}
 		}
 		
 		if (provides != null)

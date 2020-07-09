@@ -271,6 +271,16 @@ public class Config
 				case "match":
 					result.match = read_match(event_reader);
 					break;
+				case "files":
+					result.files = new Validator.Delegating_validator(read_validator(start_name, event_reader))
+					{
+						@Override
+						Test_result validate(String value)
+						{
+							return delegate.validate(value).prefix("[Files]: ");
+						}
+					};
+					break;
 				case "requires":
 					result.requires = new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
