@@ -113,6 +113,9 @@ public class Config
 				case "name":
 					result = new Method_match(RpmInfo.class.getMethod("getName"), Pattern.compile(content));
 					break;
+				case "arch":
+					result = new Method_match(RpmInfo.class.getMethod("getArch"), Pattern.compile(content));
+					break;
 				}
 				
 				break;
