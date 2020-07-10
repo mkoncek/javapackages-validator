@@ -32,22 +32,55 @@ abstract public class Validator
 	static final class Test_result
 	{
 		boolean result;
-		String message;
+		private StringBuilder message = new StringBuilder();
+		StringBuilder debug;
+		
+		public Test_result(boolean result)
+		{
+			this.result = result;
+		}
 		
 		public Test_result(boolean result, String message)
 		{
 			this.result = result;
-			this.message = message;
+			this.message.append(message);
 		}
 		
 		final Test_result prefix(String prefix)
 		{
-			message = prefix + message;
+			message.insert(0, prefix);
 			return this;
+		}
+		
+		final String message()
+		{
+			return message.toString();
 		}
 	}
 	
-	abstract Test_result validate(String value);
+	protected abstract Test_result do_validate(String value);
+	
+	public final Test_result validate(String value)
+	{
+		var result = do_validate(value);
+		
+		if (result.result)
+		{
+			result.message.append(decor.decorate("passed", Type.green, Type.bold));
+			result.message.append(" with value \"");
+			result.message.append(decor.decorate(value, Type.yellow));
+			result.message.append("\"");
+		}
+		else
+		{
+			result.message.append(decor.decorate("failed", Type.red, Type.bold));
+			result.message.append(" with value \"");
+			result.message.append(decor.decorate(value, Type.yellow));
+			result.message.append("\"");
+		}
+		
+		return result;
+	}
 	
 	static abstract class Delegating_validator extends Validator
 	{
@@ -70,23 +103,24 @@ abstract public class Validator
 		}
 		
 		@Override
-		Test_result validate(String value)
+		protected Test_result do_validate(String value)
 		{
-			final boolean result = pattern.matcher(value).matches();
+			Test_result result = new Test_result(pattern.matcher(value).matches());
+			result.debug = new StringBuilder("\t".repeat(Package_test.debug_nesting));
 			
-			var sb = new StringBuilder();
+			result.debug.append("regex \"");
+			result.debug.append(decor.decorate(pattern.toString(), Type.cyan));
+			result.debug.append("\" ");
 			
-			sb.append("regex \"");
-			sb.append(decor.decorate(pattern.toString(), Type.cyan));
-			sb.append("\" ");
-			sb.append(result ?
-					decor.decorate("matches", Type.green, Type.bold) :
-					decor.decorate("does not match", Type.red, Type.bold));
-			sb.append(" value \"");
-			sb.append(decor.decorate(value, Type.yellow));
-			sb.append("\"");
+			result.debug.append(result.result ?
+				decor.decorate("matches", Type.green, Type.bold) :
+				decor.decorate("does not match", Type.red, Type.bold));
+			
+			result.debug.append(" value \"");
+			result.debug.append(decor.decorate(value, Type.yellow));
+			result.debug.append("\"");
 					
-			return new Test_result(result, sb.toString());
+			return result;
 		}
 	}
 	
@@ -100,11 +134,23 @@ abstract public class Validator
 		protected abstract String transform(String value);
 		
 		@Override
-		Test_result validate(String value)
+		protected Test_result do_validate(String value)
 		{
 			final String transformed = transform(value);
-			Test_result result = delegate.validate(transformed);
-			result.message = "(transforming " + "\"" + value + "\" -> \"" + transformed + "\"): " + result.message;
+			++Package_test.debug_nesting;
+			Test_result result = delegate.do_validate(transformed);
+			--Package_test.debug_nesting;
+			
+			var inserted = new StringBuilder("\t".repeat(Package_test.debug_nesting));
+			inserted.append("transforming validator transforms \"");
+			inserted.append(decor.decorate(value, Type.yellow));
+			inserted.append("\" -> \"");
+			inserted.append(decor.decorate(transformed, Type.yellow));
+			inserted.append("\" and evaluates");
+			inserted.append(System.lineSeparator());
+			
+			result.debug.insert(0, inserted);
+			
 			return result;
 		}
 	}
@@ -121,20 +167,26 @@ abstract public class Validator
 		}
 		
 		@Override
-		Test_result validate(String value)
+		protected Test_result do_validate(String value)
 		{
 			final var numeric = Long.parseLong(value);
-			final boolean result = min <= numeric && numeric <= max;
 			
-			String message = MessageFormat.format("int-range [{0} - {1}] ",
+			Test_result result = new Test_result(min <= numeric && numeric <= max);
+			result.debug = new StringBuilder("\t".repeat(Package_test.debug_nesting));
+			
+			result.debug.append("int-range <");
+			result.debug.append(decor.decorate(MessageFormat.format("{0} - {1}",
 					min == Long.MIN_VALUE ? "" : Long.toString(min),
-					max == Long.MAX_VALUE ? "" : Long.toString(max));
-			message += result ?
-					decor.decorate("contains", Type.green) :
-					decor.decorate("does not contain", Type.red);
-			message += " value \"" + value + "\"";
+					max == Long.MAX_VALUE ? "" : Long.toString(max)), Type.cyan));
+			result.debug.append("> ");
+			result.debug.append(result.result ?
+					decor.decorate("contains", Type.green, Type.bold) :
+					decor.decorate("does not contain", Type.red, Type.bold));
+			result.debug.append(" value \"");
+			result.debug.append(decor.decorate(value, Type.yellow));
+			result.debug.append("\"");
 					
-			return new Test_result(result, message);
+			return result;
 		}
 	}
 	
@@ -146,103 +198,161 @@ abstract public class Validator
 		{
 			this.list = new ArrayList<Validator>(list);
 		}
+		
+		protected abstract void do_list_validate(String value, Test_result result);
+		
+		protected final void partial_validate(String value, Test_result result)
+		{
+			int offset = result.debug.length();
+			
+			++Package_test.debug_nesting;
+			do_list_validate(value, result);
+			--Package_test.debug_nesting;
+			
+			var inserted = new StringBuilder();
+			if (result.result)
+			{
+				inserted.append(decor.decorate("accepted", Type.green, Type.bold));
+			}
+			else
+			{
+				inserted.append(decor.decorate("rejected", Type.red, Type.bold));
+			}
+			inserted.append(" value \"");
+			inserted.append(decor.decorate(value, Type.yellow));
+			inserted.append("\": {");
+			inserted.append(System.lineSeparator());
+			result.debug.insert(offset, inserted);
+			result.debug.append("}");
+		}
 	}
 	
-	static class Whitelist_validator extends List_validator
+	@Deprecated
+	static class Whitelist_validator extends Any_validator
 	{
 		public Whitelist_validator(List<Validator> list)
 		{
 			super(list);
 		}
+	}
+	
+	@Deprecated
+	static class Blacklist_validator extends None_validator
+	{
+		public Blacklist_validator(List<Validator> list)
+		{
+			super(list);
+		}
+	}
+	
+	static class All_validator extends List_validator
+	{
+		public All_validator(List<Validator> list)
+		{
+			super(list);
+		}
 		
 		@Override
-		Test_result validate(String value)
+		protected void do_list_validate(String value, Test_result result)
 		{
-			boolean result = false;
-			StringBuilder sb = new StringBuilder();
-			sb.append("whitelist ");
-			int offset = sb.length();
+			for (final var val : list)
+			{
+				final var test_result = val.validate(value);
+				
+				if (test_result.result == false)
+				{
+					result.result = false;
+				}
+				
+				result.debug.append(test_result.debug);
+				result.debug.append(System.lineSeparator());
+			}
+		}
+		
+		@Override
+		protected Test_result do_validate(String value)
+		{
+			var result = new Test_result(true);
+			result.debug = new StringBuilder("\t".repeat(Package_test.debug_nesting));
+			result.debug.append("validator <all> ");
 			
+			partial_validate(value, result);
+			
+			return result;
+		}
+	}
+	
+	static class Any_validator extends List_validator
+	{
+		public Any_validator(List<Validator> list)
+		{
+			super(list);
+		}
+		
+		@Override
+		protected void do_list_validate(String value, Test_result result)
+		{
 			for (final var val : list)
 			{
 				final var test_result = val.validate(value);
 				
 				if (test_result.result)
 				{
-					result = true;
+					result.result = true;
 				}
 				
-				sb.append(test_result.message + "; ");
+				result.debug.append(test_result.debug);
+				result.debug.append(System.lineSeparator());
 			}
+		}
+		
+		@Override
+		protected Test_result do_validate(String value)
+		{
+			var result = new Test_result(false);
+			result.debug = new StringBuilder("\t".repeat(Package_test.debug_nesting));
+			result.debug.append("validator <any> ");
 			
-			String inserted;
-			if (result)
-			{
-				inserted = decor.decorate("accepted", Type.green, Type.bold);
-			}
-			else
-			{
-				inserted = decor.decorate("rejected", Type.red, Type.bold);
-			}
-			inserted += " value \"";
-			inserted += decor.decorate(value, Type.yellow);
-			inserted += "\": {";
-			sb.insert(offset, inserted);
+			partial_validate(value, result);
 			
-			/// Remove the last "; ", list must contain at least one element
-			sb.delete(sb.length() - 2, sb.length());
-			sb.append("}");
-			
-			return new Test_result(result, sb.toString());
+			return result;
 		}
 	}
 	
-	static class Blacklist_validator extends List_validator
+	static class None_validator extends List_validator
 	{
-		public Blacklist_validator(List<Validator> list)
+		public None_validator(List<Validator> list)
 		{
 			super(list);
 		}
 		
 		@Override
-		Test_result validate(String value)
+		protected void do_list_validate(String value, Test_result result)
 		{
-			boolean result = true;
-			StringBuilder sb = new StringBuilder();
-			sb.append("blacklist ");
-			int offset = sb.length();
-			
 			for (final var val : list)
 			{
 				final var test_result = val.validate(value);
 				
-				if (! test_result.result)
+				if (test_result.result)
 				{
-					result = false;
+					result.result = false;
 				}
 				
-				sb.append(test_result.message + "; ");
+				result.debug.append(test_result.debug);
+				result.debug.append(System.lineSeparator());
 			}
+		}
+		
+		@Override
+		protected Test_result do_validate(String value)
+		{
+			var result = new Test_result(true);
+			result.debug = new StringBuilder("\t".repeat(Package_test.debug_nesting));
+			result.debug.append("validator <none> ");
 			
-			String inserted;
-			if (result)
-			{
-				inserted = decor.decorate("accepted", Type.green);
-			}
-			else
-			{
-				inserted = decor.decorate("rejected", Type.red);
-			}
-			inserted += " value \"";
-			inserted += decor.decorate(value, Type.yellow);
-			inserted += "\": {";
-			sb.insert(offset, inserted);
+			partial_validate(value, result);
 			
-			/// Remove the last "; ", list must contain at least one element
-			sb.delete(sb.length() - 2, sb.length());
-			sb.append("}");
-			
-			return new Test_result(result, sb.toString());
+			return result;
 		}
 	}
 }

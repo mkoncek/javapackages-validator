@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
+import org.fedoraproject.javapackages.validator.Validator.Test_result;
 
 /**
  * @author Marián Konček
@@ -91,20 +92,20 @@ public interface Jar_validator
 			try
 			{
 				jar.skip(6);
-				var versionBuffer = ByteBuffer.allocate(2);
-				jar.read(versionBuffer.array());
+				var version_buffer = ByteBuffer.allocate(2);
+				jar.read(version_buffer.array());
 				
 				final var bc_validator = new Validator.Delegating_validator(bytecode_validator)
 				{
 					@Override
-					Test_result validate(String value)
+					protected Test_result do_validate(String value)
 					{
-						return delegate.validate(value).prefix(Package_test.color_decorator()
+						return delegate.do_validate(value).prefix(Package_test.color_decorator()
 								.decorate("[Bytecode version]", Ansi_colors.Type.bold) + ": ");
 					}
 				};
 				
-				final var version = Short.toString(versionBuffer.getShort());
+				final var version = Short.toString(version_buffer.getShort());
 				
 				visitor.visit(bc_validator.validate(version), entry);
 			}

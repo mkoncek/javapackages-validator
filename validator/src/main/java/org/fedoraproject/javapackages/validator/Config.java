@@ -30,6 +30,7 @@ import javax.xml.stream.events.XMLEvent;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
 import org.fedoraproject.javapackages.validator.Rule.Match;
+import org.fedoraproject.javapackages.validator.Validator.Test_result;
 
 /**
  * @author Marián Konček
@@ -156,6 +157,15 @@ public class Config
 				case "blacklist":
 					result = new Validator.Blacklist_validator(read_validator_list(start_name, event_reader));
 					break;
+				case "all":
+					result = new Validator.All_validator(read_validator_list(start_name, event_reader));
+					break;
+				case "any":
+					result = new Validator.Any_validator(read_validator_list(start_name, event_reader));
+					break;
+				case "none":
+					result = new Validator.None_validator(read_validator_list(start_name, event_reader));
+					break;
 				}
 				
 				break;
@@ -276,9 +286,9 @@ public class Config
 					result.files = new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
 						@Override
-						Test_result validate(String value)
+						protected Test_result do_validate(String value)
 						{
-							return delegate.validate(value).prefix(decor.decorate("[Files]", Ansi_colors.Type.bold) + ": ");
+							return delegate.do_validate(value).prefix(decor.decorate("[Files]", Ansi_colors.Type.bold) + ": ");
 						}
 					};
 					break;
@@ -286,9 +296,9 @@ public class Config
 					result.requires = new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
 						@Override
-						Test_result validate(String value)
+						protected Test_result do_validate(String value)
 						{
-							return delegate.validate(value).prefix(decor.decorate("[Requires]", Ansi_colors.Type.bold) + ": ");
+							return delegate.do_validate(value).prefix(decor.decorate("[Requires]", Ansi_colors.Type.bold) + ": ");
 						}
 					};
 					break;
@@ -296,9 +306,9 @@ public class Config
 					result.provides = new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
 						@Override
-						Test_result validate(String value)
+						protected Test_result do_validate(String value)
 						{
-							return delegate.validate(value).prefix(decor.decorate("[Provides]", Ansi_colors.Type.bold) + ": ");
+							return delegate.do_validate(value).prefix(decor.decorate("[Provides]", Ansi_colors.Type.bold) + ": ");
 						}
 					};
 					break;
@@ -351,9 +361,9 @@ public class Config
 					result.rpm_file_size = new Validator.Delegating_validator(converting_validator)
 					{
 						@Override
-						Test_result validate(String value)
+						protected Test_result do_validate(String value)
 						{
-							return delegate.validate(value).prefix(Package_test.color_decorator()
+							return delegate.do_validate(value).prefix(Package_test.color_decorator()
 									.decorate("[File size in " + suffix + "]", Ansi_colors.Type.bold) + ": ");
 						}
 					};

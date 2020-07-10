@@ -49,25 +49,42 @@ public class Package_test
 		return color_decorator;
 	}
 	
+	static public int debug_nesting = 0;
+	
 	static class Arguments
 	{
-		@Parameter(names = {"-h", "--help"}, help = true)
+		@Parameter(names = {"-h", "--help"}, help = true, description =
+				"Display help.")
 		boolean help = false;
 		
-		@Parameter(names = {"-o", "--output"})
+		@Parameter(names = {"-o", "--output"}, description =
+				"The file to write the output to. " +
+				"If not provided then outputs to the standard output.")
 		String output_file = null;
 		
-		@Parameter(names = {"-c", "--config"})
+		@Parameter(names = {"-c", "--config"}, description =
+				"The file to read the configuration from.")
 		String config_file = null;
 		
-		@Parameter(names = {"-f", "--files"}, variableArity = true)
+		@Parameter(names = {"-f", "--files"}, variableArity = true, description =
+				"The list of .rpm files to validate.")
 		ArrayList<String> test_files = new ArrayList<>();
 		
-		@Parameter(names = {"-i", "--input"})
+		@Parameter(names = {"-i", "--input"}, description =
+				"The file to read the list of input files from.")
 		String input_file = null;
 		
-		@Parameter(names = {"-r", "--color"})
+		@Parameter(names = {"-r", "--color"}, description =
+				"Print colored output.")
 		boolean color = false;
+		
+		@Parameter(names = {"-d", "--debug"}, description =
+				"Print additional debug output (affected by --color as well).")
+		boolean debug = false;
+		
+		@Parameter(names = {"-n", "--only-failed"}, description =
+				"Print only failed test cases.")
+		boolean only_failed = false;
 	}
 	
 	public static void main(String[] args) throws Exception
@@ -78,32 +95,10 @@ public class Package_test
 		
 		if (arguments.help)
 		{
-			System.out.println("javapackage-validator");
-			System.out.println("Options:");
-			System.out.println("  -h, --help                  " +
-					"Display help."
-			);
-			System.out.println();
-			System.out.println("  -o, --output=FILE           " +
-					"The file to write the output to. " +
-					"If not provided then outputs to the standard output."
-			);
-			System.out.println();
-			System.out.println("  -c, --config=FILE           " +
-					"The file to read the configuration from."
-			);
-			System.out.println();
-			System.out.println("  -f, --files=FILES...        " +
-					"The list of .rpm files to validate."
-			);
-			System.out.println("  -i, --input=FILE            " +
-					"The file to read the list of input files from."
-			);
-			System.out.println("                              " +
+			jcommander.usage();
+			System.out.println("    " +
 					"If neither -i nor -f is provided then the list of " +
-					"validated files is read from the standard input."
-			);
-			
+					"validated files is read from the standard input.");
 			return;
 		}
 		
@@ -216,7 +211,7 @@ public class Package_test
 											@Override
 											public void visit(Test_result result, String entry)
 											{
-												result.message = entry + ": " + result.message;
+												result.prefix(entry + ": ");
 												test_results.add(result);
 											}
 										}, jar_stream, rpm_name + ": " + jar_name);
@@ -257,8 +252,20 @@ public class Package_test
 			
 			for (var tr : test_results)
 			{
+				if (tr.result && arguments.only_failed)
+				{
+					continue;
+				}
+				
 				output.println(MessageFormat.format("{0} {1} - {2}",
-						(tr.result ? "ok" : "nok"), Integer.toString(test_number), tr.message));
+						(tr.result ? "ok" : "nok"), Integer.toString(test_number), tr.message()));
+				
+				if (arguments.debug && tr.debug != null)
+				{
+					output.println("Debug:");
+					output.println(tr.debug.toString());
+				}
+				
 				++test_number;
 			}
 		}
