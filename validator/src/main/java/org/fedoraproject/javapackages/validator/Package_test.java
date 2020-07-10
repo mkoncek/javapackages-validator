@@ -43,12 +43,16 @@ import org.fedoraproject.javapackages.validator.Validator.Test_result;
  */
 public class Package_test
 {
-	static final String error_separator = ";";
+	static private Ansi_colors.Decorator color_decorator = new Ansi_colors.No_decorator();
+	static final Ansi_colors.Decorator color_decorator()
+	{
+		return color_decorator;
+	}
 	
 	static class Arguments
 	{
 		@Parameter(names = {"-h", "--help"}, help = true)
-		private boolean help = false;
+		boolean help = false;
 		
 		@Parameter(names = {"-o", "--output"})
 		String output_file = null;
@@ -61,6 +65,9 @@ public class Package_test
 		
 		@Parameter(names = {"-i", "--input"})
 		String input_file = null;
+		
+		@Parameter(names = {"-r", "--color"})
+		boolean color = false;
 	}
 	
 	public static void main(String[] args) throws Exception
@@ -104,6 +111,11 @@ public class Package_test
 		{
 			System.err.println("error: Missing --config file");
 			return;
+		}
+		
+		if (arguments.color)
+		{
+			Package_test.color_decorator = new Ansi_colors.Default_decorator();
 		}
 		
 		try (PrintStream output = arguments.output_file != null ?
@@ -218,20 +230,22 @@ public class Package_test
 			
 			for (var pair : symlinks.entrySet())
 			{
-				String message = "[Symlink]: ";
+				String message = color_decorator().decorate("[Symlink]", Ansi_colors.Type.bold) + ": ";
 				final boolean result = files.contains(pair.getValue());
+				
+				message += MessageFormat.format("Symbolic link \"{0}\" points to \"{1}\" ",
+						color_decorator.decorate(pair.getKey(), Ansi_colors.Type.cyan),
+						color_decorator.decorate(pair.getValue(), Ansi_colors.Type.yellow));
 				
 				if (result)
 				{
-					message += MessageFormat.format(
-							"Symbolic link \"{0}\" points to \"{1}\" and the target file exists",
-							pair.getKey(), pair.getValue());
+					message += "and the target file "
+							+ color_decorator.decorate("exists", Ansi_colors.Type.green, Ansi_colors.Type.bold);
 				}
 				else
 				{
-					message += MessageFormat.format(
-							"Symbolic link \"{0}\" points to \"{1}\" but the target file does not exist",
-							pair.getKey(), pair.getValue());
+					message += "but the target file "
+							+ color_decorator.decorate("does not exist", Ansi_colors.Type.red, Ansi_colors.Type.bold);
 				}
 				
 				test_results.add(new Test_result(result, message));

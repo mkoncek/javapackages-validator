@@ -20,11 +20,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.fedoraproject.javapackages.validator.Ansi_colors.Type;
+
 /**
  * @author Marián Konček
  */
 abstract public class Validator
 {
+	private static final Ansi_colors.Decorator decor = Package_test.color_decorator();
+	
 	static final class Test_result
 	{
 		boolean result;
@@ -70,12 +74,19 @@ abstract public class Validator
 		{
 			final boolean result = pattern.matcher(value).matches();
 			
-			String message = "regex \"" + pattern.toString();
-			message += result ?
-					"\" matches value \"" + value + "\"" :
-					"\" does not match value \"" + value + "\"";
+			var sb = new StringBuilder();
+			
+			sb.append("regex \"");
+			sb.append(decor.decorate(pattern.toString(), Type.cyan));
+			sb.append("\" ");
+			sb.append(result ?
+					decor.decorate("matches", Type.green, Type.bold) :
+					decor.decorate("does not match", Type.red, Type.bold));
+			sb.append(" value \"");
+			sb.append(decor.decorate(value, Type.yellow));
+			sb.append("\"");
 					
-			return new Test_result(result, message);
+			return new Test_result(result, sb.toString());
 		}
 	}
 	
@@ -115,12 +126,13 @@ abstract public class Validator
 			final var numeric = Long.parseLong(value);
 			final boolean result = min <= numeric && numeric <= max;
 			
-			String message = MessageFormat.format("int-range [{0} - {1}]",
+			String message = MessageFormat.format("int-range [{0} - {1}] ",
 					min == Long.MIN_VALUE ? "" : Long.toString(min),
 					max == Long.MAX_VALUE ? "" : Long.toString(max));
 			message += result ?
-					" contains value \"" + value + "\"" :
-					" does not contain value \"" + value + "\"";
+					decor.decorate("contains", Type.green) :
+					decor.decorate("does not contain", Type.red);
+			message += " value \"" + value + "\"";
 					
 			return new Test_result(result, message);
 		}
@@ -163,14 +175,19 @@ abstract public class Validator
 				sb.append(test_result.message + "; ");
 			}
 			
+			String inserted;
 			if (result)
 			{
-				sb.insert(offset, "accepted value \"" + value + "\": {");
+				inserted = decor.decorate("accepted", Type.green, Type.bold);
 			}
 			else
 			{
-				sb.insert(offset, "rejected value \"" + value + "\": {");
+				inserted = decor.decorate("rejected", Type.red, Type.bold);
 			}
+			inserted += " value \"";
+			inserted += decor.decorate(value, Type.yellow);
+			inserted += "\": {";
+			sb.insert(offset, inserted);
 			
 			/// Remove the last "; ", list must contain at least one element
 			sb.delete(sb.length() - 2, sb.length());
@@ -207,14 +224,19 @@ abstract public class Validator
 				sb.append(test_result.message + "; ");
 			}
 			
+			String inserted;
 			if (result)
 			{
-				sb.insert(offset, "accepted value \"" + value + "\": {");
+				inserted = decor.decorate("accepted", Type.green);
 			}
 			else
 			{
-				sb.insert(offset, "rejected value \"" + value + "\": {");
+				inserted = decor.decorate("rejected", Type.red);
 			}
+			inserted += " value \"";
+			inserted += decor.decorate(value, Type.yellow);
+			inserted += "\": {";
+			sb.insert(offset, inserted);
 			
 			/// Remove the last "; ", list must contain at least one element
 			sb.delete(sb.length() - 2, sb.length());

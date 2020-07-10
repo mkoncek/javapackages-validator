@@ -99,7 +99,8 @@ public interface Jar_validator
 					@Override
 					Test_result validate(String value)
 					{
-						return delegate.validate(value).prefix("[Bytecode version]: ");
+						return delegate.validate(value).prefix(Package_test.color_decorator()
+								.decorate("[Bytecode version]", Ansi_colors.Type.bold) + ": ");
 					}
 				};
 				

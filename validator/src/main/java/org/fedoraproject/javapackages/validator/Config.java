@@ -265,6 +265,7 @@ public class Config
 			{
 			case XMLStreamConstants.START_ELEMENT:
 				final var start_name = event.asStartElement().getName().getLocalPart();
+				final var decor = Package_test.color_decorator();
 				
 				switch (start_name)
 				{
@@ -277,7 +278,7 @@ public class Config
 						@Override
 						Test_result validate(String value)
 						{
-							return delegate.validate(value).prefix("[Files]: ");
+							return delegate.validate(value).prefix(decor.decorate("[Files]", Ansi_colors.Type.bold) + ": ");
 						}
 					};
 					break;
@@ -287,7 +288,7 @@ public class Config
 						@Override
 						Test_result validate(String value)
 						{
-							return delegate.validate(value).prefix("[Requires]: ");
+							return delegate.validate(value).prefix(decor.decorate("[Requires]", Ansi_colors.Type.bold) + ": ");
 						}
 					};
 					break;
@@ -297,7 +298,7 @@ public class Config
 						@Override
 						Test_result validate(String value)
 						{
-							return delegate.validate(value).prefix("[Provides]: ");
+							return delegate.validate(value).prefix(decor.decorate("[Provides]", Ansi_colors.Type.bold) + ": ");
 						}
 					};
 					break;
@@ -352,7 +353,8 @@ public class Config
 						@Override
 						Test_result validate(String value)
 						{
-							return delegate.validate(value).prefix("[File size in " + suffix + "]: ");
+							return delegate.validate(value).prefix(Package_test.color_decorator()
+									.decorate("[File size in " + suffix + "]", Ansi_colors.Type.bold) + ": ");
 						}
 					};
 				}
