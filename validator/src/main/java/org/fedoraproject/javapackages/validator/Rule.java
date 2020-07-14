@@ -16,6 +16,7 @@
 package org.fedoraproject.javapackages.validator;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -82,7 +83,7 @@ public class Rule
 		return match != null && match.matches(rpm_info);
 	}
 	
-	public List<Test_result> apply(Path rpm_path) throws IOException
+	public List<Test_result> apply(Path rpm_path)
 	{
 		RpmInfo rpm_info;
 		
@@ -118,6 +119,10 @@ public class Rule
 					
 					result.add(files.validate(rpm_entry_name));
 				}
+			}
+			catch (IOException ex)
+			{
+				throw new UncheckedIOException(ex);
 			}
 		}
 		

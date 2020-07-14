@@ -27,7 +27,8 @@ import org.fedoraproject.javapackages.validator.Ansi_colors.Type;
  */
 abstract public class Validator
 {
-	private static final Ansi_colors.Decorator decor = Package_test.color_decorator();
+	static private final Ansi_colors.Decorator decor = Package_test.color_decorator();
+	static private int debug_nesting = 0;
 	
 	static final class Test_result
 	{
@@ -106,7 +107,7 @@ abstract public class Validator
 		protected Test_result do_validate(String value)
 		{
 			Test_result result = new Test_result(pattern.matcher(value).matches());
-			result.debug = new StringBuilder("\t".repeat(Package_test.debug_nesting));
+			result.debug = new StringBuilder("\t".repeat(debug_nesting));
 			
 			result.debug.append("regex \"");
 			result.debug.append(decor.decorate(pattern.toString(), Type.cyan));
@@ -137,19 +138,22 @@ abstract public class Validator
 		protected Test_result do_validate(String value)
 		{
 			final String transformed = transform(value);
-			++Package_test.debug_nesting;
+			++debug_nesting;
 			Test_result result = delegate.do_validate(transformed);
-			--Package_test.debug_nesting;
+			--debug_nesting;
 			
-			var inserted = new StringBuilder("\t".repeat(Package_test.debug_nesting));
-			inserted.append("transforming validator transforms \"");
+			var inserted = new StringBuilder("\t".repeat(debug_nesting));
+			inserted.append("transforming validator transformed \"");
 			inserted.append(decor.decorate(value, Type.yellow));
 			inserted.append("\" -> \"");
 			inserted.append(decor.decorate(transformed, Type.yellow));
-			inserted.append("\" and evaluates");
+			inserted.append("\" and evaluated: {");
 			inserted.append(System.lineSeparator());
 			
 			result.debug.insert(0, inserted);
+			result.debug.append(System.lineSeparator());
+			result.debug.append("\t".repeat(debug_nesting));
+			result.debug.append("}");
 			
 			return result;
 		}
@@ -172,7 +176,7 @@ abstract public class Validator
 			final var numeric = Long.parseLong(value);
 			
 			Test_result result = new Test_result(min <= numeric && numeric <= max);
-			result.debug = new StringBuilder("\t".repeat(Package_test.debug_nesting));
+			result.debug = new StringBuilder("\t".repeat(debug_nesting));
 			
 			result.debug.append("int-range <");
 			result.debug.append(decor.decorate(MessageFormat.format("{0} - {1}",
@@ -205,9 +209,9 @@ abstract public class Validator
 		{
 			int offset = result.debug.length();
 			
-			++Package_test.debug_nesting;
+			++debug_nesting;
 			do_list_validate(value, result);
-			--Package_test.debug_nesting;
+			--debug_nesting;
 			
 			var inserted = new StringBuilder();
 			if (result.result)
@@ -273,7 +277,7 @@ abstract public class Validator
 		protected Test_result do_validate(String value)
 		{
 			var result = new Test_result(true);
-			result.debug = new StringBuilder("\t".repeat(Package_test.debug_nesting));
+			result.debug = new StringBuilder("\t".repeat(debug_nesting));
 			result.debug.append("validator <all> ");
 			
 			partial_validate(value, result);
@@ -310,7 +314,7 @@ abstract public class Validator
 		protected Test_result do_validate(String value)
 		{
 			var result = new Test_result(false);
-			result.debug = new StringBuilder("\t".repeat(Package_test.debug_nesting));
+			result.debug = new StringBuilder("\t".repeat(debug_nesting));
 			result.debug.append("validator <any> ");
 			
 			partial_validate(value, result);
@@ -347,7 +351,7 @@ abstract public class Validator
 		protected Test_result do_validate(String value)
 		{
 			var result = new Test_result(true);
-			result.debug = new StringBuilder("\t".repeat(Package_test.debug_nesting));
+			result.debug = new StringBuilder("\t".repeat(debug_nesting));
 			result.debug.append("validator <none> ");
 			
 			partial_validate(value, result);

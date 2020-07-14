@@ -49,8 +49,6 @@ public class Package_test
 		return color_decorator;
 	}
 	
-	static public int debug_nesting = 0;
-	
 	static class Arguments
 	{
 		@Parameter(names = {"-h", "--help"}, help = true, description =
@@ -262,7 +260,7 @@ public class Package_test
 				
 				if (arguments.debug && tr.debug != null)
 				{
-					output.println("Debug:");
+					output.println("Debug output:");
 					output.println(tr.debug.toString());
 				}
 				
