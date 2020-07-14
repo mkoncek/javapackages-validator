@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -29,7 +30,6 @@ import javax.xml.stream.events.XMLEvent;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
-import org.fedoraproject.javapackages.validator.Rule.Match;
 import org.fedoraproject.javapackages.validator.Validator.Test_result;
 
 /**
@@ -41,12 +41,12 @@ public class Config
 	
 	ArrayList<Rule> rules = new ArrayList<>();
 	
-	static Match read_match(XMLEventReader event_reader) throws Exception
+	static Predicate<RpmInfo> read_match(XMLEventReader event_reader) throws Exception
 	{
 		String match_type = null;
-		Match result = null;
+		Predicate<RpmInfo> result = null;
 		
-		class Method_match implements Match
+		class Method_match implements Predicate<RpmInfo>
 		{
 			Method getter;
 			Pattern pattern;
@@ -58,7 +58,8 @@ public class Config
 				this.pattern = match;
 			}
 			
-			public boolean matches(RpmInfo rpm_info)
+			@Override
+			public boolean test(RpmInfo rpm_info)
 			{
 				try
 				{

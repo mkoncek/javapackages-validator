@@ -21,6 +21,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
@@ -34,12 +35,7 @@ import org.fedoraproject.javapackages.validator.Validator.Test_result;
  */
 public class Rule
 {
-	public interface Match
-	{
-		public boolean matches(RpmInfo rpm_info);
-	}
-	
-	public class Method_match implements Match
+	public class Method_match implements Predicate<RpmInfo>
 	{
 		Method getter;
 		Pattern match;
@@ -51,7 +47,7 @@ public class Rule
 			this.match = match;
 		}
 		
-		public boolean matches(RpmInfo rpm_info)
+		public boolean test(RpmInfo rpm_info)
 		{
 			try
 			{
@@ -69,7 +65,7 @@ public class Rule
 		return new Method_match(RpmInfo.class.getMethod("getName"), match);
 	}
 	
-	Match match;
+	Predicate<RpmInfo> match;
 	
 	Validator files;
 	Validator provides;
@@ -80,7 +76,7 @@ public class Rule
 	
 	boolean applies(RpmInfo rpm_info)
 	{
-		return match != null && match.matches(rpm_info);
+		return match != null && match.test(rpm_info);
 	}
 	
 	public List<Test_result> apply(Path rpm_path)
