@@ -231,7 +231,6 @@ abstract public class Validator
 		}
 	}
 	
-	@Deprecated
 	static class Whitelist_validator extends Any_validator
 	{
 		public Whitelist_validator(List<Validator> list)
@@ -240,7 +239,6 @@ abstract public class Validator
 		}
 	}
 	
-	@Deprecated
 	static class Blacklist_validator extends None_validator
 	{
 		public Blacklist_validator(List<Validator> list)
