@@ -35,7 +35,7 @@ import org.fedoraproject.javapackages.validator.Validator.Test_result;
  */
 public class Rule
 {
-	public class Method_match implements Predicate<RpmInfo>
+	static public class Method_match implements Predicate<RpmInfo>
 	{
 		Method getter;
 		Pattern match;

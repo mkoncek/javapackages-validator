@@ -18,11 +18,11 @@ package org.fedoraproject.javapackages.validator;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+
+import javax.management.RuntimeErrorException;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -30,47 +30,93 @@ import javax.xml.stream.events.XMLEvent;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
-import org.fedoraproject.javapackages.validator.Validator.Test_result;
-
 /**
  * @author Marián Konček
  */
-public class Config
+public final class Config
 {
 	static final Pattern int_range_pattern = Pattern.compile("([0-9]*)\\s*-\\s*([0-9]*)");
 	
 	ArrayList<Rule> rules = new ArrayList<>();
 	
-	static Predicate<RpmInfo> read_match(XMLEventReader event_reader) throws Exception
+	static final Predicate<RpmInfo> read_predicate(String end, XMLEventReader event_reader) throws Exception
 	{
-		String match_type = null;
+		switch (end)
+		{
+		case "and":
+			return read_predicate_list(end, event_reader).stream().reduce((l, r) -> l.and(r)).get();
+		case "or":
+			return read_predicate_list(end, event_reader).stream().reduce((l, r) -> l.or(r)).get();
+		default:
+			break;
+		}
+		
 		Predicate<RpmInfo> result = null;
 		
-		class Method_match implements Predicate<RpmInfo>
+		loop: while (event_reader.hasNext())
 		{
-			Method getter;
-			Pattern pattern;
+			XMLEvent event = event_reader.nextEvent();
 			
-			public Method_match(Method getter, Pattern match)
+			switch (event.getEventType())
 			{
-				super();
-				this.getter = getter;
-				this.pattern = match;
-			}
-			
-			@Override
-			public boolean test(RpmInfo rpm_info)
-			{
-				try
+			case XMLStreamConstants.END_ELEMENT:
+				var end_name = event.asEndElement().getName().getLocalPart();
+				
+				if (end_name.equals(end))
 				{
-					return pattern.matcher((String) getter.invoke(rpm_info)).matches();
+					break loop;
 				}
-				catch (Exception e)
+				
+				break;
+				
+			case XMLStreamConstants.START_ELEMENT:
+				var start_name = event.asStartElement().getName().getLocalPart();
+				
+				if (end.equals("not"))
 				{
-					throw new RuntimeException(e);
+					if (result != null)
+					{
+						throw new RuntimeException("<not> must contain exactly one element");
+					}
+					
+					result = read_predicate(start_name, event_reader).negate();
 				}
+				
+				break;
+				
+			case XMLStreamConstants.CHARACTERS:
+				var content = event.asCharacters().getData().strip();
+				
+				if (result != null)
+				{
+					continue;
+				}
+				
+				switch (end)
+				{
+				case "name":
+					result = new Rule.Method_match(RpmInfo.class.getMethod("getName"), Pattern.compile(content));
+					break;
+				case "arch":
+					result = new Rule.Method_match(RpmInfo.class.getMethod("getArch"), Pattern.compile(content));
+					break;
+				}
+				
+				break;
 			}
 		}
+		
+		if (result == null)
+		{
+			throw new RuntimeException("Could not read predicate");
+		}
+		
+		return result;
+	}
+	
+	static final ArrayList<Predicate<RpmInfo>> read_predicate_list(String end, XMLEventReader event_reader) throws Exception
+	{
+		var result = new ArrayList<Predicate<RpmInfo>>();
 		
 		loop: while (event_reader.hasNext())
 		{
@@ -81,17 +127,40 @@ public class Config
 			case XMLStreamConstants.START_ELEMENT:
 				var start_name = event.asStartElement().getName().getLocalPart();
 				
-				if (match_type == null)
-				{
-					match_type = start_name;
-				}
-				else
-				{
-					throw new RuntimeException("<match> can contain at most one element");
-				}
+				result.add(read_predicate(start_name, event_reader));
 				
 				break;
 				
+			case XMLStreamConstants.END_ELEMENT:
+				var end_name = event.asEndElement().getName().getLocalPart();
+				
+				if (end_name.equals(end))
+				{
+					break loop;
+				}
+				
+				break;
+			}
+		}
+		
+		if (result.isEmpty())
+		{
+			throw new RuntimeException("Trying to read an empty list");
+		}
+		
+		return result;
+	}
+	
+	static final Predicate<RpmInfo> read_match(XMLEventReader event_reader) throws Exception
+	{
+		Predicate<RpmInfo> result = null;
+		
+		loop: while (event_reader.hasNext())
+		{
+			XMLEvent event = event_reader.nextEvent();
+			
+			switch (event.getEventType())
+			{
 			case XMLStreamConstants.END_ELEMENT:
 				var end_name = event.asEndElement().getName().getLocalPart();
 				
@@ -102,32 +171,31 @@ public class Config
 				
 				break;
 				
-			case XMLStreamConstants.CHARACTERS:
-				var content = event.asCharacters().getData().strip();
+			case XMLStreamConstants.START_ELEMENT:
+				var start_name = event.asStartElement().getName().getLocalPart();
 				
-				if (match_type == null || result != null)
+				if (result == null)
 				{
-					continue;
+					result = read_predicate(start_name, event_reader);
 				}
-				
-				switch (match_type)
+				else
 				{
-				case "name":
-					result = new Method_match(RpmInfo.class.getMethod("getName"), Pattern.compile(content));
-					break;
-				case "arch":
-					result = new Method_match(RpmInfo.class.getMethod("getArch"), Pattern.compile(content));
-					break;
+					throw new RuntimeException("<match> can contain at most one element");
 				}
 				
 				break;
 			}
 		}
 		
+		if (result == null)
+		{
+			throw new RuntimeException("Could not read <match>");
+		}
+		
 		return result;
 	}
 	
-	static Validator read_validator(String end, XMLEventReader event_reader) throws Exception
+	static final Validator read_validator(String end, XMLEventReader event_reader) throws Exception
 	{
 		String match_type = null;
 		Validator result = null;
@@ -224,7 +292,7 @@ public class Config
 		return result;
 	}
 	
-	static List<Validator> read_validator_list(String end, XMLEventReader event_reader) throws Exception
+	static final ArrayList<Validator> read_validator_list(String end, XMLEventReader event_reader) throws Exception
 	{
 		var result = new ArrayList<Validator>();
 		
@@ -264,7 +332,7 @@ public class Config
 		return result;
 	}
 	
-	public static Rule read_rule(XMLEventReader event_reader) throws Exception
+	static final Rule read_rule(XMLEventReader event_reader) throws Exception
 	{
 		Rule result = new Rule();
 		
@@ -283,6 +351,7 @@ public class Config
 				case "match":
 					result.match = read_match(event_reader);
 					break;
+					
 				case "files":
 					result.files = new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
@@ -293,6 +362,7 @@ public class Config
 						}
 					};
 					break;
+					
 				case "requires":
 					result.requires = new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
@@ -303,6 +373,7 @@ public class Config
 						}
 					};
 					break;
+					
 				case "provides":
 					result.provides = new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
@@ -313,6 +384,7 @@ public class Config
 						}
 					};
 					break;
+					
 				case "java-bytecode":
 					result.jar_validator = new Jar_validator.Jar_class_validator(
 							new Jar_validator.Class_bytecode_validator(
@@ -434,7 +506,7 @@ public class Config
 		}
 	}
 	
-	public List<Rule> rules()
+	public final ArrayList<Rule> rules()
 	{
 		return rules;
 	}
