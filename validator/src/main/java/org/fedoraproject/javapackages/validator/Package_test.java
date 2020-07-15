@@ -150,9 +150,32 @@ public class Package_test
 				final var rpm_path = Paths.get(filename).toAbsolutePath().normalize();
 				final String rpm_name = rpm_path.getFileName().toString();
 				final var rpm_info = new RpmInfo(rpm_path);
-				final var applicable_rules = config.rules().stream()
-						.filter((r) -> r.applies(rpm_info))
-						.collect(Collectors.toCollection(ArrayList::new));
+				
+				var applicable_rules = new ArrayList<Rule>();
+				
+				{
+					Rule exclusive_rule = null;
+					
+					for (var rule : config.rules())
+					{
+						if (rule.exclusive)
+						{
+							exclusive_rule = rule;
+							break;
+						}
+						
+						if (rule.applies(rpm_info))
+						{
+							applicable_rules.add(rule);
+						}
+					}
+					
+					if (exclusive_rule != null)
+					{
+						applicable_rules.clear();
+						applicable_rules.add(exclusive_rule);
+					}
+				}
 				
 				/// Prefix every message with the RPM file name
 				for (var rule : applicable_rules)

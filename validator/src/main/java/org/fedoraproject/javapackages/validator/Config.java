@@ -150,6 +150,49 @@ public final class Config
 		return result;
 	}
 	
+	static final String read_content(final String end, XMLEventReader event_reader) throws Exception
+	{
+		String result = null;
+		
+		loop: while (event_reader.hasNext())
+		{
+			XMLEvent event = event_reader.nextEvent();
+			
+			switch (event.getEventType())
+			{
+			case XMLStreamConstants.END_ELEMENT:
+				final var end_name = event.asEndElement().getName().getLocalPart();
+				
+				if (end_name.equals(end))
+				{
+					break loop;
+				}
+				
+				break;
+				
+			case XMLStreamConstants.START_ELEMENT:
+				throw new RuntimeException("Reading XML node but expected content");
+				
+			case XMLStreamConstants.CHARACTERS:
+				 result = event.asCharacters().getData().strip();
+				
+				if (result != null)
+				{
+					continue;
+				}
+				
+				break;
+			}
+		}
+		
+		if (result == null)
+		{
+			throw new RuntimeException("Could not read XML node content");
+		}
+		
+		return result;
+	}
+	
 	static final Rule.Match read_match(XMLEventReader event_reader) throws Exception
 	{
 		Rule.Match result = null;
@@ -347,6 +390,10 @@ public final class Config
 				
 				switch (start_name)
 				{
+				case "exclusive":
+					result.exclusive = Boolean.valueOf(read_content(start_name, event_reader));
+					break;
+					
 				case "match":
 					result.match = read_match(event_reader);
 					break;
@@ -483,6 +530,7 @@ public final class Config
 						{
 						case "rule":
 							rules.add(read_rule(event_reader));
+							break;
 						}
 						
 						break;

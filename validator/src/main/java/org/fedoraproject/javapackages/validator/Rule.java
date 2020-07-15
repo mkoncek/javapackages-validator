@@ -42,22 +42,6 @@ public class Rule
 		public String to_xml();
 	}
 	
-	static public abstract class Delegating_match implements Match
-	{
-		protected Match delegate;
-		
-		Delegating_match(Match delegate)
-		{
-			this.delegate = delegate;
-		}
-		
-		@Override
-		public boolean test(RpmInfo rpm_info)
-		{
-			return delegate.test(rpm_info);
-		}
-	}
-	
 	static public class Not_match implements Match
 	{
 		protected Match match;
@@ -201,8 +185,8 @@ public class Rule
 		return new Method_match(RpmInfo.class.getMethod("getName"), match);
 	}
 	
+	boolean exclusive = false;
 	Match match;
-	
 	LinkedHashMap<String, Validator> validators = new LinkedHashMap<>();
 	Jar_validator jar_validator;
 	
@@ -283,7 +267,7 @@ public class Rule
 			}
 		}
 		{
-			final Validator rpm_file_size = validators.get("rpm_file_size");
+			final Validator rpm_file_size = validators.get("rpm-file-size");
 			
 			if (rpm_file_size != null)
 			{
