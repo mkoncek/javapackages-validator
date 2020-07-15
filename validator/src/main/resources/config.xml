@@ -26,9 +26,9 @@ Supported sizes:
     <match>
       <name>.*</name>
     </match>
-    <filesize-kb>
+    <rpm-file-size-kb>
       <int-range>-100</int-range>
-    </filesize-kb>
+    </rpm-file-size-kb>
     <java-bytecode>
       <int-range>-50</int-range>
     </java-bytecode>

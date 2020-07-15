@@ -60,6 +60,7 @@ abstract public class Validator
 	}
 	
 	protected abstract Test_result do_validate(String value);
+	public abstract String to_xml();
 	
 	public final Test_result validate(String value)
 	{
@@ -92,6 +93,12 @@ abstract public class Validator
 			super();
 			this.delegate = delegate;
 		}
+		
+		@Override
+		public String to_xml()
+		{
+			return delegate.to_xml();
+		}
 	}
 	
 	static class Regex_validator extends Validator
@@ -122,6 +129,12 @@ abstract public class Validator
 			result.debug.append("\"");
 					
 			return result;
+		}
+		
+		@Override
+		public String to_xml()
+		{
+			return "<regex>" + pattern.toString() + "</regex>";
 		}
 	}
 	
@@ -192,6 +205,16 @@ abstract public class Validator
 					
 			return result;
 		}
+		
+		@Override
+		public String to_xml()
+		{
+			return "<int-range>" +
+					(min == Long.MIN_VALUE ? "" : Long.toString(min)) +
+					"-" +
+					(max == Long.MAX_VALUE ? "" : Long.toString(max)) +
+					"</int-range>";
+		}
 	}
 	
 	static abstract class List_validator extends Validator
@@ -228,6 +251,18 @@ abstract public class Validator
 			inserted.append(System.lineSeparator());
 			result.debug.insert(offset, inserted);
 			result.debug.append("}");
+		}
+		
+		protected final String partial_to_xml()
+		{
+			var result = new StringBuilder();
+			
+			for (final var validator : list)
+			{
+				result.append(validator.to_xml());
+			}
+			
+			return result.toString();
 		}
 	}
 	
@@ -282,6 +317,12 @@ abstract public class Validator
 			
 			return result;
 		}
+		
+		@Override
+		public String to_xml()
+		{
+			return "<all>" + partial_to_xml() + "</all>";
+		}
 	}
 	
 	static class Any_validator extends List_validator
@@ -319,6 +360,12 @@ abstract public class Validator
 			
 			return result;
 		}
+		
+		@Override
+		public String to_xml()
+		{
+			return "<any>" + partial_to_xml() + "</any>";
+		}
 	}
 	
 	static class None_validator extends List_validator
@@ -355,6 +402,12 @@ abstract public class Validator
 			partial_validate(value, result);
 			
 			return result;
+		}
+		
+		@Override
+		public String to_xml()
+		{
+			return "<none>" + partial_to_xml() + "</none>";
 		}
 	}
 }

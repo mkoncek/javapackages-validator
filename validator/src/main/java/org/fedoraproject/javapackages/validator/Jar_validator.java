@@ -21,7 +21,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
-import org.fedoraproject.javapackages.validator.Validator.Test_result;
 
 /**
  * @author Marián Konček

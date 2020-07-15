@@ -19,10 +19,9 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.function.Predicate;
+import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.management.RuntimeErrorException;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -39,19 +38,19 @@ public final class Config
 	
 	ArrayList<Rule> rules = new ArrayList<>();
 	
-	static final Predicate<RpmInfo> read_predicate(String end, XMLEventReader event_reader) throws Exception
+	static final Rule.Match read_predicate(String end, XMLEventReader event_reader) throws Exception
 	{
 		switch (end)
 		{
 		case "and":
-			return read_predicate_list(end, event_reader).stream().reduce((l, r) -> l.and(r)).get();
+			return new Rule.And_match(read_predicate_list(end, event_reader));
 		case "or":
-			return read_predicate_list(end, event_reader).stream().reduce((l, r) -> l.or(r)).get();
+			return new Rule.Or_match(read_predicate_list(end, event_reader));
 		default:
 			break;
 		}
 		
-		Predicate<RpmInfo> result = null;
+		Rule.Match result = null;
 		
 		loop: while (event_reader.hasNext())
 		{
@@ -79,7 +78,7 @@ public final class Config
 						throw new RuntimeException("<not> must contain exactly one element");
 					}
 					
-					result = read_predicate(start_name, event_reader).negate();
+					result = new Rule.Not_match(read_predicate(start_name, event_reader));
 				}
 				
 				break;
@@ -114,9 +113,9 @@ public final class Config
 		return result;
 	}
 	
-	static final ArrayList<Predicate<RpmInfo>> read_predicate_list(String end, XMLEventReader event_reader) throws Exception
+	static final List<Rule.Match> read_predicate_list(String end, XMLEventReader event_reader) throws Exception
 	{
-		var result = new ArrayList<Predicate<RpmInfo>>();
+		var result = new ArrayList<Rule.Match>();
 		
 		loop: while (event_reader.hasNext())
 		{
@@ -151,9 +150,9 @@ public final class Config
 		return result;
 	}
 	
-	static final Predicate<RpmInfo> read_match(XMLEventReader event_reader) throws Exception
+	static final Rule.Match read_match(XMLEventReader event_reader) throws Exception
 	{
-		Predicate<RpmInfo> result = null;
+		Rule.Match result = null;
 		
 		loop: while (event_reader.hasNext())
 		{
@@ -353,36 +352,39 @@ public final class Config
 					break;
 					
 				case "files":
-					result.files = new Validator.Delegating_validator(read_validator(start_name, event_reader))
+					result.validators.put(start_name,
+							new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
 						@Override
 						protected Test_result do_validate(String value)
 						{
 							return delegate.do_validate(value).prefix(decor.decorate("[Files]", Ansi_colors.Type.bold) + ": ");
 						}
-					};
+					});
 					break;
 					
 				case "requires":
-					result.requires = new Validator.Delegating_validator(read_validator(start_name, event_reader))
+					result.validators.put(start_name,
+							new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
 						@Override
 						protected Test_result do_validate(String value)
 						{
 							return delegate.do_validate(value).prefix(decor.decorate("[Requires]", Ansi_colors.Type.bold) + ": ");
 						}
-					};
+					});
 					break;
 					
 				case "provides":
-					result.provides = new Validator.Delegating_validator(read_validator(start_name, event_reader))
+					result.validators.put(start_name,
+							new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
 						@Override
 						protected Test_result do_validate(String value)
 						{
 							return delegate.do_validate(value).prefix(decor.decorate("[Provides]", Ansi_colors.Type.bold) + ": ");
 						}
-					};
+					});
 					break;
 					
 				case "java-bytecode":
@@ -392,7 +394,7 @@ public final class Config
 					break;
 				}
 				
-				if (start_name.startsWith("filesize-"))
+				if (start_name.startsWith("rpm-file-size-"))
 				{
 					final var validator = read_validator(start_name, event_reader);
 					
@@ -431,7 +433,8 @@ public final class Config
 						}
 					};
 					
-					result.rpm_file_size = new Validator.Delegating_validator(converting_validator)
+					result.validators.put("rpm-file-size",
+							new Validator.Delegating_validator(converting_validator)
 					{
 						@Override
 						protected Test_result do_validate(String value)
@@ -439,7 +442,7 @@ public final class Config
 							return delegate.do_validate(value).prefix(Package_test.color_decorator()
 									.decorate("[File size in " + suffix + "]", Ansi_colors.Type.bold) + ": ");
 						}
-					};
+					});
 				}
 				
 				break;
@@ -509,5 +512,21 @@ public final class Config
 	public final ArrayList<Rule> rules()
 	{
 		return rules;
+	}
+	
+	public final String to_xml()
+	{
+		var result = new StringBuilder();
+		
+		result.append("<config>");
+		
+		for (var rule : rules)
+		{
+			result.append(rule.to_xml());
+		}
+		
+		result.append("</config>");
+		
+		return result.toString();
 	}
 }

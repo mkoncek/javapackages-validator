@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
 import java.text.MessageFormat;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
@@ -135,7 +136,7 @@ public class Package_test
 				}
 			}
 			
-			var config = new Config(new FileInputStream(arguments.config_file));
+			final var config = new Config(new FileInputStream(arguments.config_file));
 			
 			/// The union of file paths present in all RPM files
 			var files = new TreeSet<String>();
