@@ -158,14 +158,14 @@ public class Package_test
 					
 					for (var rule : config.rules())
 					{
-						if (rule.exclusive)
-						{
-							exclusive_rule = rule;
-							break;
-						}
-						
 						if (rule.applies(rpm_info))
 						{
+							if (rule.exclusive)
+							{
+								exclusive_rule = rule;
+								break;
+							}
+							
 							applicable_rules.add(rule);
 						}
 					}
