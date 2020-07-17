@@ -18,6 +18,7 @@ package org.fedoraproject.javapackages.validator;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
@@ -33,6 +34,7 @@ public interface Jar_validator
 	}
 	
 	void accept(Visitor visitor, JarArchiveInputStream jar, String entry);
+	String to_xml();
 	
 	/**
 	 * Applies its member validator on all of the contained .class files
@@ -62,7 +64,8 @@ public interface Jar_validator
 					
 					if (class_name.endsWith(".class"))
 					{
-						class_validator.accept(visitor, jar, entry + ": " + class_name);
+						class_validator.accept(visitor, jar, entry + ": " +
+								Package_test.color_decorator().decorate(class_name, Ansi_colors.Type.cyan));
 					}
 				}
 			}
@@ -70,6 +73,12 @@ public interface Jar_validator
 			{
 				throw new RuntimeException(e);
 			}
+		}
+		
+		@Override
+		public String to_xml()
+		{
+			return class_validator.to_xml();
 		}
 	}
 	
@@ -112,6 +121,12 @@ public interface Jar_validator
 			{
 				throw new UncheckedIOException(e);
 			}
+		}
+		
+		@Override
+		public String to_xml()
+		{
+			return MessageFormat.format("<{0}>{1}</{0}>", "java-bytecode", bytecode_validator.to_xml());
 		}
 	}
 }

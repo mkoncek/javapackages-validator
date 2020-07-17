@@ -24,7 +24,6 @@ import java.io.PrintStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import java.text.MessageFormat;
@@ -37,6 +36,7 @@ import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 
+import org.fedoraproject.javapackages.validator.Ansi_colors.Type;
 import org.fedoraproject.javapackages.validator.Validator.Test_result;
 
 /**
@@ -138,11 +138,31 @@ public class Package_test
 			
 			final var config = new Config(new FileInputStream(arguments.config_file));
 			
-			/// The union of file paths present in all RPM files
-			var files = new TreeSet<String>();
+			class Rpm_file implements Comparable<Rpm_file>
+			{
+				final String rpm_name;
+				final String file_name;
+				
+				public Rpm_file(String rpm_name, String file_name)
+				{
+					super();
+					this.rpm_name = rpm_name;
+					this.file_name = file_name;
+				}
+				
+				public int compareTo(Rpm_file other)
+				{
+					return file_name.compareTo(other.file_name);
+				};
+			}
+			
+			/// The union of file paths present in all RPM files mapped to the RPM
+			/// file names they are present in
+			var files = new TreeMap<String, String>();
 			
 			/// The map of symbolic link names to their targets present in all RPM files
-			var symlinks = new TreeMap<String, String>();
+			var symlinks = new TreeMap<Rpm_file, String>();
+			
 			var test_results = new ArrayList<Test_result>();
 			
 			for (final String filename : arguments.test_files)
@@ -184,7 +204,7 @@ public class Package_test
 					
 					for (var tr : results)
 					{
-						tr.prefix(rpm_name + ": ");
+						tr.prefix(color_decorator.decorate(rpm_name, Type.bright_cyan) + ": ");
 						test_results.add(tr);
 					}
 				}
@@ -206,7 +226,7 @@ public class Package_test
 							rpm_entry_name = rpm_entry_name.substring(1);
 						}
 						
-						files.add(rpm_entry_name);
+						files.put(rpm_entry_name, rpm_name);
 						
 						var content = new byte[(int) rpm_entry.getSize()];
 						rpm_is.read(content);
@@ -215,7 +235,7 @@ public class Package_test
 						{
 							var target = new String(content, "UTF-8");
 							target = Paths.get(rpm_entry_name).getParent().resolve(Paths.get(target)).normalize().toString();
-							symlinks.put(rpm_entry_name, target);
+							symlinks.put(new Rpm_file(rpm_name, rpm_entry_name), target);
 						}
 						else
 						{
@@ -236,7 +256,10 @@ public class Package_test
 												result.prefix(entry + ": ");
 												test_results.add(result);
 											}
-										}, jar_stream, rpm_name + ": " + jar_name);
+										},
+										jar_stream,
+										color_decorator.decorate(rpm_name, Type.bright_cyan) + ": " +
+										color_decorator.decorate(jar_name, Type.bright_magenta));
 									}
 								}
 							}
@@ -247,25 +270,40 @@ public class Package_test
 			
 			for (var pair : symlinks.entrySet())
 			{
-				String message = color_decorator().decorate("[Symlink]", Ansi_colors.Type.bold) + ": ";
-				final boolean result = files.contains(pair.getValue());
+				var message = new StringBuilder();
+				message.append(color_decorator().decorate("[Symlink]", Ansi_colors.Type.bold) + ": ");
+				final var rpm_file = files.get(pair.getValue());
 				
-				message += MessageFormat.format("Symbolic link \"{0}\" points to \"{1}\" ",
-						color_decorator.decorate(pair.getKey(), Ansi_colors.Type.cyan),
-						color_decorator.decorate(pair.getValue(), Ansi_colors.Type.yellow));
+				message.append(MessageFormat.format("Symbolic link \"{0}\" ",
+						color_decorator.decorate(pair.getKey().file_name, Ansi_colors.Type.cyan)));
 				
-				if (result)
+				if (arguments.debug)
 				{
-					message += "and the target file "
-							+ color_decorator.decorate("exists", Ansi_colors.Type.green, Ansi_colors.Type.bold);
+					message.append(MessageFormat.format("(from \"{0}\") ",
+							color_decorator.decorate(pair.getKey().rpm_name, Type.bright_cyan)));
+				}
+				
+				message.append(MessageFormat.format("points to \"{0}\" ",
+						color_decorator.decorate(pair.getValue(), Ansi_colors.Type.yellow)));
+				
+				if (rpm_file != null)
+				{
+					message.append(MessageFormat.format("and the target file {0}",
+							color_decorator.decorate("exists", Ansi_colors.Type.green, Ansi_colors.Type.bold), rpm_file));
+					
+					if (arguments.debug)
+					{
+						message.append(MessageFormat.format(" (provided by \"{0}\")",
+								color_decorator.decorate(rpm_file, Type.bright_yellow)));
+					}
 				}
 				else
 				{
-					message += "but the target file "
-							+ color_decorator.decorate("does not exist", Ansi_colors.Type.red, Ansi_colors.Type.bold);
+					message.append("but the target file "
+							+ color_decorator.decorate("does not exist", Ansi_colors.Type.red, Ansi_colors.Type.bold));
 				}
 				
-				test_results.add(new Test_result(result, message));
+				test_results.add(new Test_result((rpm_file != null), message.toString()));
 			}
 			
 			int test_number = test_results.isEmpty() ? 0 : 1;
@@ -290,6 +328,8 @@ public class Package_test
 				
 				++test_number;
 			}
+			
+			// System.out.println(config.to_xml());
 		}
 	}
 }

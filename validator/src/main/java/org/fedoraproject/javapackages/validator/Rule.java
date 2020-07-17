@@ -282,6 +282,7 @@ public class Rule
 	{
 		var result = new StringBuilder();
 		
+		result.append("<exclusive>" + Boolean.toString(exclusive) + "</exclusive>");
 		result.append("<match>" + match.to_xml() + "</match>");
 		
 		for (var pair : validators.entrySet())
@@ -298,7 +299,7 @@ public class Rule
 		
 		if (jar_validator != null)
 		{
-			/// TODO
+			result.append(jar_validator.to_xml());
 		}
 		
 		return result.toString();

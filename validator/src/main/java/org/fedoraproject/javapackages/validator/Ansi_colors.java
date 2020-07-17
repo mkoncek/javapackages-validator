@@ -22,7 +22,12 @@ public class Ansi_colors
 {
 	public enum Type
 	{
-		bold, underline, black, red, green, yellow, blue, magenta, cyan, white,
+		bold, underline,
+		
+		black, red, green, yellow, blue, magenta, cyan, white,
+		
+		bright_black, bright_red, bright_green, bright_yellow,
+		bright_blue, bright_magenta, bright_cyan, bright_white,
 	}
 	
 	/**
@@ -37,25 +42,16 @@ public class Ansi_colors
 		
 		for (var type : types)
 		{
-			switch (type)
+			if (type != Type.bold && type != Type.underline)
 			{
-			case black:
-			case red:
-			case green:
-			case yellow:
-			case blue:
-			case magenta:
-			case cyan:
-			case white:
 				if (color != null)
 				{
 					throw new IllegalArgumentException("Multiple colors specified");
 				}
-				
-				color = type;
-				break;
-			default:
-				continue;
+				else
+				{
+					color = type;
+				}
 			}
 		}
 		
@@ -107,6 +103,32 @@ public class Ansi_colors
 		case white:
 			result.append("37m");
 			break;
+			
+		case bright_black:
+			result.append("90m");
+			break;
+		case bright_red:
+			result.append("91m");
+			break;
+		case bright_green:
+			result.append("92m");
+			break;
+		case bright_yellow:
+			result.append("93m");
+			break;
+		case bright_blue:
+			result.append("94m");
+			break;
+		case bright_magenta:
+			result.append("95m");
+			break;
+		case bright_cyan:
+			result.append("96m");
+			break;
+		case bright_white:
+			result.append("97m");
+			break;
+			
 		default:
 			break;
 		}
