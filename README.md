@@ -14,7 +14,6 @@ Additionally there is the option to make a rule **exclusive** by setting:
 
 	<rule>
 		<exclusive>true</exclusive>
-		...
 	</rule>
 
 If the list of applicable rules as read
@@ -30,10 +29,10 @@ are checked as regular expressions.
 
 The primitive expressions are:
 
-* **`<name>`** --
+* **`<name>`** -
 Matches according to the package name.
 
-* **`<arch>`** --
+* **`<arch>`** -
 Matches according to the package architecture.
 
 Examples:
@@ -58,20 +57,20 @@ Examples:
 Other than `<match>` a rule may contain variable amount of checks to make. These
 are:
 
-* **`<filesize-b>`** -- (Also **`-kb`** and **`-mb`**)
+* **`<filesize-b>`** - (Also **`-kb`** and **`-mb`**)
 Applies the validator on the file size in given units of the `.rpm` file.  
 **TODO unify**
 
-* **`<files>`** --
+* **`<files>`** -
 Applies the validator on each file path contained in the `.rpm` file.
 
-* **`<requires>`** --
+* **`<requires>`** -
 Applies the validator on each string in the `requires` section.
 
-* **`<provides>`** --
+* **`<provides>`** -
 Applies the validator on each string in the `provides` section.
 
-* **`<java-bytecode>`** --
+* **`<java-bytecode>`** -
 Applies the validator on each numeric version string of each `.class` file of
 each `.jar` file contained in the `.rpm` file.
 
@@ -83,43 +82,44 @@ There are two types of validators: aggregate and primitive.
 
 These validators are recursively composed of other validators.
 
-* **`<all>`** --
+* **`<all>`** -
 The validator passes if all its member validators accept the value.
 
-* **`<any>`** or  **`<whitelist>`** --
+* **`<any>`** or  **`<whitelist>`** -
 The validator passes if any of its member validators accept the value.
 
-* **`<none>`** or  **`<blacklist>`** --
+* **`<none>`** or  **`<blacklist>`** -
 The validator passes if none of its member validators accept the value.
 
 #### Primitive
 
 These simply take the string value and accept or reject it.
 
-* **`<regex>`** --
+* **`<regex>`** -
 The validator applies a regular expression search to the value. The regular
 expression is in the form conforming to the [java.util.regex.Pattern](
 https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
 )
-class.
-<br>
+class.<br>
 Examples:
+
 	* Accepts everything.
 	
 			<regex>.*</regex>
 
-* **`<int-range>`** --
+* **`<int-range>`** -
 The validator contains two integer values separated by a dash (`-`). Whitespace
 is ignored. If any of the range limits is ommited then it is substituteb by
 negative / positive maximum integer depending on the position within the range.
 The validator expects the string value to represent an integer number as well.
 It passes if the string value is between the limits specified in the range
-**inclusive**.
-<br>
+**inclusive**.<br>
 Examples:
+
 	* Accepts any value in the inclusive range of `[25-75]`.
 	
 			<int-range>25-75</int-range>
+			
 	* Accepts any representable value lesser or equal to `100`.
 	
 			<int-range>-100</int-range>`
