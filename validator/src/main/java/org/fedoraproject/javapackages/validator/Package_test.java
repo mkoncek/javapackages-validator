@@ -103,7 +103,7 @@ public class Package_test
 		
 		if (arguments.config_file == null)
 		{
-			System.err.println("error: Missing --config file");
+			System.err.println("error: Configuration file not specified");
 			return;
 		}
 		
@@ -117,8 +117,17 @@ public class Package_test
 		{
 			if (arguments.test_files.isEmpty())
 			{
-				InputStream is = arguments.input_file != null ?
-						new FileInputStream(arguments.input_file) : System.in;
+				InputStream is;
+				
+				if (arguments.input_file != null)
+				{
+					is = new FileInputStream(arguments.input_file);
+				}
+				else
+				{
+					is = System.in;
+					System.err.println("Reading list of validated files from the standard input");
+				}
 				
 				try (var br = new BufferedReader(new InputStreamReader(is)))
 				{
@@ -128,7 +137,14 @@ public class Package_test
 						
 						if (! path.isAbsolute())
 						{
-							filename = Paths.get(arguments.input_file).getParent().resolve(path).toString();
+							if (arguments.input_file != null)
+							{
+								filename = Paths.get(arguments.input_file).resolveSibling(path).toString();
+							}
+							else
+							{
+								filename = Paths.get(System.getProperty("user.dir")).resolve(path).toString();
+							}
 						}
 						
 						arguments.test_files.add(filename);
