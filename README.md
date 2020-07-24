@@ -6,7 +6,7 @@ This tool is used for checking existing .rpm packages against various criteria.
 
 Requires OpenJDK 11.
 
-Running
+Executing
 
 	mvn package
 
@@ -38,7 +38,7 @@ The list of `.rpm` files to validate can be provided one of these ways:
 * Specify a file which names the validated files (one file path per line) by
 using the `-i`, `--input` flag.
 
-* Stream the file paths separated by new line through the standard input at
+* Stream the file paths separated by new line via the standard input at
 the program invocation.
 
 		./generator | java -jar validator.jar
