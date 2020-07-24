@@ -2,6 +2,61 @@
 
 This tool is used for checking existing .rpm packages against various criteria.
 
+## Building
+
+Requires OpenJDK 11.
+
+Running
+
+	mvn package
+
+will compile the project and generate a tarball containing dependencies.
+
+## Usage
+
+After packaging the project extract files:
+
+	tar -xf target/assembly-${version}.tar.gz
+
+Run the executable `.jar` file:
+
+	java -jar ./assembly-${version}/validator-${version}.jar [OPTIONS]
+
+### Command line options
+
+Traditional help with `-h`, `--help`.
+
+#### Mandatory
+
+Path to the configuration file is provided by the `-c`, `--config` flag.
+More to configuration in the next sections.
+
+The list of `.rpm` files to validate can be provided one of these ways:
+
+* Specify the file paths directly using the `-f`, `--files` flag.
+
+* Specify a file which names the validated files (one file path per line) by
+using the `-i`, `--input` flag.
+
+* Stream the file paths separated by new line through the standard input at
+the program invocation.
+
+		./generator | java -jar validator.jar
+
+#### Optional
+
+The text output is written to the standard output or, if provided by `-o`,
+`--output` into the provided file.
+
+For colored output it is possible to set the `-r`, `--color` flag.
+
+For more detailed output which shows which checks failed or succeeded there is
+the `-v`, `--verbose` flag.
+
+In order to print only failed checks the `-n`, `--only-failed` flag can be
+specified.
+
+
 ## Configuration
 
 The configuration file is an XML file.
