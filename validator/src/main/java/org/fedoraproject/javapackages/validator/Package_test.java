@@ -77,9 +77,9 @@ public class Package_test
 				"Print colored output.")
 		boolean color = false;
 		
-		@Parameter(names = {"-d", "--debug"}, description =
-				"Print additional debug output (affected by --color as well).")
-		boolean debug = false;
+		@Parameter(names = {"-v", "--verbose"}, description =
+				"Print more detailed output (affected by --color as well).")
+		boolean verbose = false;
 		
 		@Parameter(names = {"-n", "--only-failed"}, description =
 				"Print only failed test cases.")
@@ -122,7 +122,7 @@ public class Package_test
 				
 				try (var br = new BufferedReader(new InputStreamReader(is)))
 				{
-					br.lines().forEach((filename) ->
+					br.lines().forEachOrdered((filename) ->
 					{
 						var path = Paths.get(filename);
 						
@@ -277,7 +277,7 @@ public class Package_test
 				message.append(MessageFormat.format("Symbolic link \"{0}\" ",
 						color_decorator.decorate(pair.getKey().file_name, Ansi_colors.Type.cyan)));
 				
-				if (arguments.debug)
+				if (arguments.verbose)
 				{
 					message.append(MessageFormat.format("(from \"{0}\") ",
 							color_decorator.decorate(pair.getKey().rpm_name, Type.bright_cyan)));
@@ -291,7 +291,7 @@ public class Package_test
 					message.append(MessageFormat.format("and the target file {0}",
 							color_decorator.decorate("exists", Ansi_colors.Type.green, Ansi_colors.Type.bold), rpm_file));
 					
-					if (arguments.debug)
+					if (arguments.verbose)
 					{
 						message.append(MessageFormat.format(" (provided by \"{0}\")",
 								color_decorator.decorate(rpm_file, Type.bright_yellow)));
@@ -320,10 +320,9 @@ public class Package_test
 				output.println(MessageFormat.format("{0} {1} - {2}",
 						(tr.result ? "ok" : "nok"), Integer.toString(test_number), tr.message()));
 				
-				if (arguments.debug && tr.debug != null)
+				if (arguments.verbose && tr.verbose_text != null)
 				{
-					output.println("Debug output:");
-					output.println(tr.debug.toString());
+					output.println(tr.verbose_text.toString());
 				}
 				
 				++test_number;

@@ -34,7 +34,7 @@ abstract public class Validator
 	{
 		boolean result;
 		private StringBuilder message = new StringBuilder();
-		StringBuilder debug;
+		StringBuilder verbose_text;
 		
 		public Test_result(boolean result)
 		{
@@ -114,19 +114,19 @@ abstract public class Validator
 		protected Test_result do_validate(String value)
 		{
 			Test_result result = new Test_result(pattern.matcher(value).matches());
-			result.debug = new StringBuilder("\t".repeat(debug_nesting));
+			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
 			
-			result.debug.append("regex \"");
-			result.debug.append(decor.decorate(pattern.toString(), Type.cyan));
-			result.debug.append("\" ");
+			result.verbose_text.append("regex \"");
+			result.verbose_text.append(decor.decorate(pattern.toString(), Type.cyan));
+			result.verbose_text.append("\" ");
 			
-			result.debug.append(result.result ?
+			result.verbose_text.append(result.result ?
 				decor.decorate("matches", Type.green, Type.bold) :
 				decor.decorate("does not match", Type.red, Type.bold));
 			
-			result.debug.append(" value \"");
-			result.debug.append(decor.decorate(value, Type.yellow));
-			result.debug.append("\"");
+			result.verbose_text.append(" value \"");
+			result.verbose_text.append(decor.decorate(value, Type.yellow));
+			result.verbose_text.append("\"");
 					
 			return result;
 		}
@@ -163,10 +163,10 @@ abstract public class Validator
 			inserted.append("\" and evaluated: {");
 			inserted.append(System.lineSeparator());
 			
-			result.debug.insert(0, inserted);
-			result.debug.append(System.lineSeparator());
-			result.debug.append("\t".repeat(debug_nesting));
-			result.debug.append("}");
+			result.verbose_text.insert(0, inserted);
+			result.verbose_text.append(System.lineSeparator());
+			result.verbose_text.append("\t".repeat(debug_nesting));
+			result.verbose_text.append("}");
 			
 			return result;
 		}
@@ -189,19 +189,19 @@ abstract public class Validator
 			final var numeric = Long.parseLong(value);
 			
 			Test_result result = new Test_result(min <= numeric && numeric <= max);
-			result.debug = new StringBuilder("\t".repeat(debug_nesting));
+			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
 			
-			result.debug.append("int-range <");
-			result.debug.append(decor.decorate(MessageFormat.format("{0} - {1}",
+			result.verbose_text.append("int-range <");
+			result.verbose_text.append(decor.decorate(MessageFormat.format("{0} - {1}",
 					min == Long.MIN_VALUE ? "" : Long.toString(min),
 					max == Long.MAX_VALUE ? "" : Long.toString(max)), Type.cyan));
-			result.debug.append("> ");
-			result.debug.append(result.result ?
+			result.verbose_text.append("> ");
+			result.verbose_text.append(result.result ?
 					decor.decorate("contains", Type.green, Type.bold) :
 					decor.decorate("does not contain", Type.red, Type.bold));
-			result.debug.append(" value \"");
-			result.debug.append(decor.decorate(value, Type.yellow));
-			result.debug.append("\"");
+			result.verbose_text.append(" value \"");
+			result.verbose_text.append(decor.decorate(value, Type.yellow));
+			result.verbose_text.append("\"");
 					
 			return result;
 		}
@@ -230,7 +230,7 @@ abstract public class Validator
 		
 		protected final void partial_validate(String value, Test_result result)
 		{
-			int offset = result.debug.length();
+			int offset = result.verbose_text.length();
 			
 			++debug_nesting;
 			do_list_validate(value, result);
@@ -249,8 +249,8 @@ abstract public class Validator
 			inserted.append(decor.decorate(value, Type.yellow));
 			inserted.append("\": {");
 			inserted.append(System.lineSeparator());
-			result.debug.insert(offset, inserted);
-			result.debug.append("}");
+			result.verbose_text.insert(offset, inserted);
+			result.verbose_text.append("}");
 		}
 		
 		protected final String partial_to_xml()
@@ -301,8 +301,8 @@ abstract public class Validator
 					result.result = false;
 				}
 				
-				result.debug.append(test_result.debug);
-				result.debug.append(System.lineSeparator());
+				result.verbose_text.append(test_result.verbose_text);
+				result.verbose_text.append(System.lineSeparator());
 			}
 		}
 		
@@ -310,8 +310,8 @@ abstract public class Validator
 		protected Test_result do_validate(String value)
 		{
 			var result = new Test_result(true);
-			result.debug = new StringBuilder("\t".repeat(debug_nesting));
-			result.debug.append("validator <all> ");
+			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
+			result.verbose_text.append("validator <all> ");
 			
 			partial_validate(value, result);
 			
@@ -344,8 +344,8 @@ abstract public class Validator
 					result.result = true;
 				}
 				
-				result.debug.append(test_result.debug);
-				result.debug.append(System.lineSeparator());
+				result.verbose_text.append(test_result.verbose_text);
+				result.verbose_text.append(System.lineSeparator());
 			}
 		}
 		
@@ -353,8 +353,8 @@ abstract public class Validator
 		protected Test_result do_validate(String value)
 		{
 			var result = new Test_result(false);
-			result.debug = new StringBuilder("\t".repeat(debug_nesting));
-			result.debug.append("validator <any> ");
+			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
+			result.verbose_text.append("validator <any> ");
 			
 			partial_validate(value, result);
 			
@@ -387,8 +387,8 @@ abstract public class Validator
 					result.result = false;
 				}
 				
-				result.debug.append(test_result.debug);
-				result.debug.append(System.lineSeparator());
+				result.verbose_text.append(test_result.verbose_text);
+				result.verbose_text.append(System.lineSeparator());
 			}
 		}
 		
@@ -396,8 +396,8 @@ abstract public class Validator
 		protected Test_result do_validate(String value)
 		{
 			var result = new Test_result(true);
-			result.debug = new StringBuilder("\t".repeat(debug_nesting));
-			result.debug.append("validator <none> ");
+			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
+			result.verbose_text.append("validator <none> ");
 			
 			partial_validate(value, result);
 			
