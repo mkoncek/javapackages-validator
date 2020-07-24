@@ -112,9 +112,8 @@ Examples:
 Other than `<match>` a rule may contain variable amount of checks to make. These
 are:
 
-* **`<filesize-b>`** - (Also **`-kb`** and **`-mb`**)
-Applies the validator on the file size in given units of the `.rpm` file.  
-**TODO unify**
+* **`<rpm-file-size-bytes>`** -
+Applies the validator on the file size of the `.rpm` file in bytes.
 
 * **`<files>`** -
 Applies the validator on each file path contained in the `.rpm` file.

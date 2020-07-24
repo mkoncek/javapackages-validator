@@ -439,57 +439,19 @@ public final class Config
 							new Jar_validator.Class_bytecode_validator(
 									read_validator(start_name, event_reader)));
 					break;
-				}
 				
-				if (start_name.startsWith("rpm-file-size-"))
-				{
-					final var validator = read_validator(start_name, event_reader);
-					
-					long divisor;
-					String suffix;
-					
-					if (start_name.endsWith("-b"))
-					{
-						divisor = 1;
-						suffix = "bytes";
-					}
-					else if (start_name.endsWith("-kb"))
-					{
-						divisor = 1024;
-						suffix = "kilobytes";
-					}
-					else if (start_name.endsWith("-mb"))
-					{
-						divisor = 1024 * 1024;
-						suffix = "megabytes";
-					}
-					else
-					{
-						throw new RuntimeException("Invalid filesize suffix");
-					}
-					
-					final var converting_validator = new Validator.Transforming_validator(validator)
-					{
-						long file_size;
-						
-						@Override
-						protected String transform(String value)
-						{
-							file_size = Long.parseLong(value) / divisor;
-							return Long.toString(file_size);
-						}
-					};
-					
-					result.validators.put("rpm-file-size",
-							new Validator.Delegating_validator(converting_validator)
+				case "rpm-file-size-bytes":
+					result.validators.put("rpm-file-size-bytes",
+							new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
 						@Override
 						protected Test_result do_validate(String value)
 						{
 							return delegate.do_validate(value).prefix(Package_test.color_decorator()
-									.decorate("[File size in " + suffix + "]", Ansi_colors.Type.bold) + ": ");
+									.decorate("[RPM File size in bytes]", Ansi_colors.Type.bold) + ": ");
 						}
 					});
+					break;
 				}
 				
 				break;

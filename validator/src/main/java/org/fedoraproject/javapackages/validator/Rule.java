@@ -267,7 +267,7 @@ public class Rule
 			}
 		}
 		{
-			final Validator rpm_file_size = validators.get("rpm-file-size");
+			final Validator rpm_file_size = validators.get("rpm-file-size-bytes");
 			
 			if (rpm_file_size != null)
 			{
@@ -289,7 +289,7 @@ public class Rule
 		{
 			final String key = pair.getKey();
 			
-			if (key.equals("rpm-file-size"))
+			if (key.equals("rpm-file-size-bytes"))
 			{
 				/// TODO
 			}

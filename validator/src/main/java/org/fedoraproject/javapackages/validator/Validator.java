@@ -138,40 +138,6 @@ abstract public class Validator
 		}
 	}
 	
-	static abstract class Transforming_validator extends Delegating_validator
-	{
-		public Transforming_validator(Validator delegate)
-		{
-			super(delegate);
-		}
-		
-		protected abstract String transform(String value);
-		
-		@Override
-		protected Test_result do_validate(String value)
-		{
-			final String transformed = transform(value);
-			++debug_nesting;
-			Test_result result = delegate.do_validate(transformed);
-			--debug_nesting;
-			
-			var inserted = new StringBuilder("\t".repeat(debug_nesting));
-			inserted.append("transforming validator transformed \"");
-			inserted.append(decor.decorate(value, Type.yellow));
-			inserted.append("\" -> \"");
-			inserted.append(decor.decorate(transformed, Type.yellow));
-			inserted.append("\" and evaluated: {");
-			inserted.append(System.lineSeparator());
-			
-			result.verbose_text.insert(0, inserted);
-			result.verbose_text.append(System.lineSeparator());
-			result.verbose_text.append("\t".repeat(debug_nesting));
-			result.verbose_text.append("}");
-			
-			return result;
-		}
-	}
-	
 	static class Int_range_validator extends Validator
 	{
 		long min;
