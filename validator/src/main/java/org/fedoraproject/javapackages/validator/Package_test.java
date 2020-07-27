@@ -192,9 +192,11 @@ public class Package_test
 				{
 					Rule exclusive_rule = null;
 					
-					for (var rule : config.rules())
+					for (var rule : config.leaf_rules())
 					{
-						if (rule.applies(rpm_info))
+						Rule applicable = rule.applicable(rpm_info);
+						
+						if (applicable != null)
 						{
 							if (rule.exclusive)
 							{
@@ -264,14 +266,10 @@ public class Package_test
 								{
 									for (var jv : applicable_jar_validators)
 									{
-										jv.accept(new Jar_validator.Visitor()
+										jv.accept((Test_result result, String entry) ->
 										{
-											@Override
-											public void visit(Test_result result, String entry)
-											{
-												result.prefix(entry + ": ");
-												test_results.add(result);
-											}
+											result.prefix(entry + ": ");
+											test_results.add(result);
 										},
 										jar_stream,
 										color_decorator.decorate(rpm_name, Type.bright_cyan) + ": " +

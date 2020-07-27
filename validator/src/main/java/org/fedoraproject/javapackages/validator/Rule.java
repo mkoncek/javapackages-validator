@@ -23,6 +23,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -185,14 +186,44 @@ public class Rule
 		return new Method_match(RpmInfo.class.getMethod("getName"), match);
 	}
 	
+	Rule parent = null;
+	String name = null;
 	boolean exclusive = false;
 	Match match;
-	LinkedHashMap<String, Validator> validators = new LinkedHashMap<>();
+	Map<String, Validator> validators = new LinkedHashMap<>();
 	Jar_validator jar_validator;
 	
-	boolean applies(RpmInfo rpm_info)
+	/**
+	 * Traverse the inheritance branch up to the top to find the first
+	 * applicable rule.
+	 * @param rpm_info
+	 * @return The first applicable rule in the inheritance hierarchy or null
+	 * if there is none.
+	 */
+	Rule applicable(RpmInfo rpm_info)
 	{
-		return match != null && match.test(rpm_info);
+		Rule result = this;
+		
+		while (result != null && ! result.match.test(rpm_info))
+		{
+			result = result.parent;
+		}
+		
+		return result;
+	}
+	
+	private Validator validator_recursive(final String name)
+	{
+		Validator result = null;
+		Rule current = this;
+		
+		while (result == null && current != null)
+		{
+			result = current.validators.get(name);
+			current = current.parent;
+		}
+		
+		return result;
 	}
 	
 	public List<Test_result> apply(Path rpm_path)
@@ -210,13 +241,8 @@ public class Rule
 		
 		var result = new ArrayList<Test_result>();
 		
-		if (! applies(rpm_info))
 		{
-			return result;
-		}
-		
-		{
-			final Validator files = validators.get("files");
+			final Validator files = validator_recursive("files");
 			
 			if (files != null)
 			{
@@ -243,7 +269,7 @@ public class Rule
 		}
 		
 		{
-			final Validator provides = validators.get("provides");
+			final Validator provides = validator_recursive("provides");
 			
 			if (provides != null)
 			{
@@ -251,7 +277,7 @@ public class Rule
 			}
 		}
 		{
-			final Validator requires = validators.get("requires");
+			final Validator requires = validator_recursive("requires");
 			
 			if (requires != null)
 			{
@@ -259,7 +285,7 @@ public class Rule
 			}
 		}
 		{
-			final Validator obsoletes = validators.get("obsoletes");
+			final Validator obsoletes = validator_recursive("obsoletes");
 			
 			if (obsoletes != null)
 			{
@@ -267,7 +293,7 @@ public class Rule
 			}
 		}
 		{
-			final Validator rpm_file_size = validators.get("rpm-file-size-bytes");
+			final Validator rpm_file_size = validator_recursive("rpm-file-size-bytes");
 			
 			if (rpm_file_size != null)
 			{
@@ -282,17 +308,24 @@ public class Rule
 	{
 		var result = new StringBuilder();
 		
+		result.append("<rule>");
+		
+		if (parent != null)
+		{
+			result.append("<parent>" + parent.name + "</parent>");
+		}
+		
+		if (name != null)
+		{
+			result.append("<name>" + name + "</name>");
+		}
+		
 		result.append("<exclusive>" + Boolean.toString(exclusive) + "</exclusive>");
 		result.append("<match>" + match.to_xml() + "</match>");
 		
 		for (var pair : validators.entrySet())
 		{
 			final String key = pair.getKey();
-			
-			if (key.equals("rpm-file-size-bytes"))
-			{
-				/// TODO
-			}
 			
 			result.append("<" + key + ">" + pair.getValue().to_xml() + "</" + key + ">");
 		}
@@ -301,6 +334,8 @@ public class Rule
 		{
 			result.append(jar_validator.to_xml());
 		}
+		
+		result.append("</rule>");
 		
 		return result.toString();
 	}

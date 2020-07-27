@@ -28,9 +28,10 @@ import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
  */
 public interface Jar_validator
 {
+	@FunctionalInterface
 	static interface Visitor
 	{
-		void visit(Validator.Test_result result, String entry);
+		abstract void visit(Validator.Test_result result, String entry);
 	}
 	
 	void accept(Visitor visitor, JarArchiveInputStream jar, String entry);

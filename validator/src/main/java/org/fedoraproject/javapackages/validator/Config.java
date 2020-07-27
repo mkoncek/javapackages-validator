@@ -19,9 +19,13 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
-
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -36,7 +40,10 @@ public final class Config
 {
 	static final Pattern int_range_pattern = Pattern.compile("([0-9]*)\\s*-\\s*([0-9]*)");
 	
-	ArrayList<Rule> rules = new ArrayList<>();
+	private Map<String, Rule> rule_names = new LinkedHashMap<>();
+	private Map<Rule, String> parents = new LinkedHashMap<>();
+	private Set<Rule> all_rules = new LinkedHashSet<>();
+	private List<Rule> leaf_rules = new ArrayList<>();
 	
 	static final Rule.Match read_predicate(String end, XMLEventReader event_reader) throws Exception
 	{
@@ -374,7 +381,7 @@ public final class Config
 		return result;
 	}
 	
-	static final Rule read_rule(XMLEventReader event_reader) throws Exception
+	final Rule read_rule(XMLEventReader event_reader) throws Exception
 	{
 		Rule result = new Rule();
 		
@@ -390,6 +397,21 @@ public final class Config
 				
 				switch (start_name)
 				{
+				case "name":
+					result.name = read_content(start_name, event_reader);
+					
+					if (rule_names.containsKey(result.name))
+					{
+						throw new RuntimeException("Duplicate rule name found");
+					}
+					
+					rule_names.put(result.name, result);
+					break;
+					
+				case "parent":
+					parents.put(result, read_content(start_name, event_reader));
+					break;
+					
 				case "exclusive":
 					result.exclusive = Boolean.valueOf(read_content(start_name, event_reader));
 					break;
@@ -471,6 +493,47 @@ public final class Config
 		return result;
 	}
 	
+	/**
+	 * Resolve elements after the whole XML has been read.
+	 */
+	private final void postprocess()
+	{
+		/// Resolve parent names to rule objects
+		for (var pair : parents.entrySet())
+		{
+			final Rule found_parent = rule_names.get(pair.getValue());
+			
+			if (found_parent == null)
+			{
+				throw new RuntimeException("Parent name does not exist");
+			}
+			
+			pair.getKey().parent = found_parent;
+		}
+		
+		var non_leaf_rules = new LinkedHashSet<>();
+		
+		/// Resolve leaf rules
+		for (var rule : all_rules)
+		{
+			var parent = rule.parent;
+			
+			while (parent != null)
+			{
+				non_leaf_rules.add(parent);
+				parent = parent.parent;
+			}
+		}
+		
+		for (var rule : all_rules)
+		{
+			if (! non_leaf_rules.contains(rule))
+			{
+				leaf_rules.add(rule);
+			}
+		}
+	}
+	
 	public Config(InputStream is) throws Exception
 	{
 		try (var br = new BufferedReader(new InputStreamReader(is)))
@@ -491,7 +554,7 @@ public final class Config
 						switch (start_name)
 						{
 						case "rule":
-							rules.add(read_rule(event_reader));
+							all_rules.add(read_rule(event_reader));
 							break;
 						}
 						
@@ -511,6 +574,8 @@ public final class Config
 						continue;
 					}
 				}
+				
+				postprocess();
 			}
 			finally
 			{
@@ -519,9 +584,9 @@ public final class Config
 		}
 	}
 	
-	public final ArrayList<Rule> rules()
+	public final Collection<Rule> leaf_rules()
 	{
-		return rules;
+		return leaf_rules;
 	}
 	
 	public final String to_xml()
@@ -530,7 +595,7 @@ public final class Config
 		
 		result.append("<config>");
 		
-		for (var rule : rules)
+		for (var rule : all_rules)
 		{
 			result.append(rule.to_xml());
 		}
