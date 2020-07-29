@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -187,7 +188,7 @@ public class Package_test
 				final String rpm_name = rpm_path.getFileName().toString();
 				final var rpm_info = new RpmInfo(rpm_path);
 				
-				var applicable_rules = new ArrayList<Rule>();
+				var applicable_rules = new LinkedHashSet<Rule>();
 				
 				{
 					Rule exclusive_rule = null;
