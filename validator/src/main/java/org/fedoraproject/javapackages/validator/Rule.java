@@ -15,9 +15,11 @@
  */
 package org.fedoraproject.javapackages.validator;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -28,9 +30,10 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
+import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
+import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
-
 import org.fedoraproject.javapackages.validator.Validator.Test_result;
 
 /**
@@ -191,7 +194,6 @@ public class Rule
 	boolean exclusive = false;
 	Match match;
 	Map<String, Validator> validators = new LinkedHashMap<>();
-	Jar_validator jar_validator;
 	
 	/**
 	 * Traverse the inheritance branch up to the top to find the first
@@ -226,6 +228,94 @@ public class Rule
 		return result;
 	}
 	
+	private void validate_files(Validator validator, Path rpm_path, List<Test_result> result)
+	{
+		try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
+		{
+			CpioArchiveEntry rpm_entry;
+			while ((rpm_entry = rpm_is.getNextEntry()) != null)
+			{
+				String rpm_entry_name = rpm_entry.getName();
+				
+				if (rpm_entry_name.startsWith("./"))
+				{
+					rpm_entry_name = rpm_entry_name.substring(1);
+				}
+				
+				result.add(validator.validate(rpm_entry_name));
+			}
+		}
+		catch (IOException ex)
+		{
+			throw new UncheckedIOException(ex);
+		}
+	}
+	
+	private void validate_java_bytecode(Validator validator, Path rpm_path, List<Test_result> result)
+	{
+		try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
+		{
+			CpioArchiveEntry rpm_entry;
+			while ((rpm_entry = rpm_is.getNextEntry()) != null)
+			{
+				var content = new byte[(int) rpm_entry.getSize()];
+				rpm_is.read(content);
+				
+				if (! rpm_entry.isSymbolicLink() && rpm_entry.getName().endsWith(".jar"))
+				{
+					final String jar_name = rpm_entry.getName();
+					
+					var jar_stream = new JarArchiveInputStream(new ByteArrayInputStream(content));
+					
+					JarArchiveEntry jar_entry;
+					while ((jar_entry = jar_stream.getNextJarEntry()) != null)
+					{
+						final String class_name = jar_entry.getName();
+						
+						if (class_name.endsWith(".class"))
+						{
+							/// Read 6-th and 7-th bytes which indicate the
+							/// .class bytecode version
+							jar_stream.skip(6);
+							var version_buffer = ByteBuffer.allocate(2);
+							jar_stream.read(version_buffer.array());
+							
+							final var bc_validator = new Validator.Delegating_validator(validator)
+							{
+								@Override
+								protected Test_result do_validate(String value)
+								{
+									final var decor = Package_test.color_decorator();
+									return delegate.do_validate(value).prefix(
+											decor.decorate(jar_name, Ansi_colors.Type.bright_magenta) + ": " +
+											decor.decorate(class_name, Ansi_colors.Type.cyan) + ": ");
+								}
+								
+								@Override
+								public String to_xml()
+								{
+									return MessageFormat.format("<{0}>{1}</{0}>", "java-bytecode", delegate.to_xml());
+								}
+							};
+							
+							final var version = Short.toString(version_buffer.getShort());
+							
+							result.add(bc_validator.validate(version));
+						}
+					}
+				}
+			}
+		}
+		catch (IOException e)
+		{
+			throw new UncheckedIOException(e);
+		}
+		catch (Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+	
 	public List<Test_result> apply(Path rpm_path)
 	{
 		RpmInfo rpm_info;
@@ -246,25 +336,7 @@ public class Rule
 			
 			if (files != null)
 			{
-				try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
-				{
-					CpioArchiveEntry rpm_entry;
-					while ((rpm_entry = rpm_is.getNextEntry()) != null)
-					{
-						String rpm_entry_name = rpm_entry.getName();
-						
-						if (rpm_entry_name.startsWith("./"))
-						{
-							rpm_entry_name = rpm_entry_name.substring(1);
-						}
-						
-						result.add(files.validate(rpm_entry_name));
-					}
-				}
-				catch (IOException ex)
-				{
-					throw new UncheckedIOException(ex);
-				}
+				validate_files(files, rpm_path, result);
 			}
 		}
 		
@@ -300,6 +372,14 @@ public class Rule
 				result.add(rpm_file_size.validate(Long.toString(rpm_path.toFile().length())));
 			}
 		}
+		{
+			final Validator java_bytecode = validator_recursive("java-bytecode");
+			
+			if (java_bytecode != null)
+			{
+				validate_java_bytecode(java_bytecode, rpm_path, result);
+			}
+		}
 		
 		return result;
 	}
@@ -328,11 +408,6 @@ public class Rule
 			final String key = pair.getKey();
 			
 			result.append("<" + key + ">" + pair.getValue().to_xml() + "</" + key + ">");
-		}
-		
-		if (jar_validator != null)
-		{
-			result.append(jar_validator.to_xml());
 		}
 		
 		result.append("</rule>");

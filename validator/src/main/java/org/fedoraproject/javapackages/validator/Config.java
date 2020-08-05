@@ -457,13 +457,19 @@ public final class Config
 					break;
 					
 				case "java-bytecode":
-					result.jar_validator = new Jar_validator.Jar_class_validator(
-							new Jar_validator.Class_bytecode_validator(
-									read_validator(start_name, event_reader)));
+					result.validators.put(start_name,
+							new Validator.Delegating_validator(read_validator(start_name, event_reader))
+					{
+						@Override
+						protected Test_result do_validate(String value)
+						{
+							return delegate.do_validate(value).prefix(decor.decorate("[Bytecode version]", Ansi_colors.Type.bold) + ": ");
+						}
+					});
 					break;
 				
 				case "rpm-file-size-bytes":
-					result.validators.put("rpm-file-size-bytes",
+					result.validators.put(start_name,
 							new Validator.Delegating_validator(read_validator(start_name, event_reader))
 					{
 						@Override

@@ -16,7 +16,6 @@
 package org.fedoraproject.javapackages.validator;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -25,12 +24,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
-
 import java.text.MessageFormat;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
-import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
@@ -228,11 +224,6 @@ public class Package_test
 					}
 				}
 				
-				final var applicable_jar_validators = applicable_rules.stream()
-						.map((r) -> r.jar_validator)
-						.filter((jc) -> jc != null)
-						.collect(Collectors.toCollection(ArrayList::new));
-				
 				try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
 				{
 					CpioArchiveEntry rpm_entry;
@@ -255,29 +246,6 @@ public class Package_test
 							var target = new String(content, "UTF-8");
 							target = Paths.get(rpm_entry_name).getParent().resolve(Paths.get(target)).normalize().toString();
 							symlinks.put(new Rpm_file(rpm_name, rpm_entry_name), target);
-						}
-						else
-						{
-							if (rpm_entry.getName().endsWith(".jar"))
-							{
-								final String jar_name = rpm_entry_name;
-								
-								try (var jar_stream = new JarArchiveInputStream(
-										new ByteArrayInputStream(content)))
-								{
-									for (var jv : applicable_jar_validators)
-									{
-										jv.accept((Test_result result, String entry) ->
-										{
-											result.prefix(entry + ": ");
-											test_results.add(result);
-										},
-										jar_stream,
-										color_decorator.decorate(rpm_name, Type.bright_cyan) + ": " +
-										color_decorator.decorate(jar_name, Type.bright_magenta));
-									}
-								}
-							}
 						}
 					}
 				}
