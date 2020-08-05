@@ -263,7 +263,7 @@ public class Rule
 				
 				if (! rpm_entry.isSymbolicLink() && rpm_entry.getName().endsWith(".jar"))
 				{
-					final String jar_name = rpm_entry.getName();
+					final String jar_name = rpm_entry.getName().substring(1);
 					
 					var jar_stream = new JarArchiveInputStream(new ByteArrayInputStream(content));
 					

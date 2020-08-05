@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -32,6 +33,7 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.events.XMLEvent;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
+import org.fedoraproject.javapackages.validator.Ansi_colors.Decorator;
 
 /**
  * @author Marián Konček
@@ -44,6 +46,22 @@ public final class Config
 	private Map<Rule, String> parents = new LinkedHashMap<>();
 	private Set<Rule> all_rules = new LinkedHashSet<>();
 	private List<Rule> leaf_rules = new ArrayList<>();
+	static final Decorator decor = Package_test.color_decorator();
+	
+	static final Map<String, String> message_map = new HashMap<>();
+	static
+	{
+		message_map.put("files", "[Files]");
+		message_map.put("requires", "[Requires]");
+		message_map.put("provides", "[Provides]");
+		message_map.put("java-bytecode", "[Bytecode version]");
+		message_map.put("rpm-file-size-bytes", "[RPM File size in bytes]");
+		
+		for (final var pair : message_map.entrySet())
+		{
+			pair.setValue(decor.decorate(pair.getValue(), Ansi_colors.Type.bold) + " ");
+		}
+	}
 	
 	static final Rule.Match read_predicate(String end, XMLEventReader event_reader) throws Exception
 	{
@@ -393,7 +411,6 @@ public final class Config
 			{
 			case XMLStreamConstants.START_ELEMENT:
 				final var start_name = event.asStartElement().getName().getLocalPart();
-				final var decor = Package_test.color_decorator();
 				
 				switch (start_name)
 				{
@@ -419,67 +436,22 @@ public final class Config
 				case "match":
 					result.match = read_match(event_reader);
 					break;
-					
-				case "files":
-					result.validators.put(start_name,
-							new Validator.Delegating_validator(read_validator(start_name, event_reader))
-					{
-						@Override
-						protected Test_result do_validate(String value)
-						{
-							return delegate.do_validate(value).prefix(decor.decorate("[Files]", Ansi_colors.Type.bold) + ": ");
-						}
-					});
-					break;
-					
-				case "requires":
-					result.validators.put(start_name,
-							new Validator.Delegating_validator(read_validator(start_name, event_reader))
-					{
-						@Override
-						protected Test_result do_validate(String value)
-						{
-							return delegate.do_validate(value).prefix(decor.decorate("[Requires]", Ansi_colors.Type.bold) + ": ");
-						}
-					});
-					break;
-					
-				case "provides":
-					result.validators.put(start_name,
-							new Validator.Delegating_validator(read_validator(start_name, event_reader))
-					{
-						@Override
-						protected Test_result do_validate(String value)
-						{
-							return delegate.do_validate(value).prefix(decor.decorate("[Provides]", Ansi_colors.Type.bold) + ": ");
-						}
-					});
-					break;
-					
-				case "java-bytecode":
-					result.validators.put(start_name,
-							new Validator.Delegating_validator(read_validator(start_name, event_reader))
-					{
-						@Override
-						protected Test_result do_validate(String value)
-						{
-							return delegate.do_validate(value).prefix(decor.decorate("[Bytecode version]", Ansi_colors.Type.bold) + ": ");
-						}
-					});
-					break;
+				}
 				
-				case "rpm-file-size-bytes":
-					result.validators.put(start_name,
-							new Validator.Delegating_validator(read_validator(start_name, event_reader))
+				{
+					String message;
+					if ((message = message_map.get(start_name)) != null)
 					{
-						@Override
-						protected Test_result do_validate(String value)
+						result.validators.put(start_name,
+								new Validator.Delegating_validator(read_validator(start_name, event_reader))
 						{
-							return delegate.do_validate(value).prefix(Package_test.color_decorator()
-									.decorate("[RPM File size in bytes]", Ansi_colors.Type.bold) + ": ");
-						}
-					});
-					break;
+							@Override
+							protected Test_result do_validate(String value)
+							{
+								return delegate.do_validate(value).prefix(message);
+							}
+						});
+					}
 				}
 				
 				break;
