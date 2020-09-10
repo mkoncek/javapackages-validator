@@ -201,7 +201,7 @@ public class Package_test
 					
 					for (var rule : config.concrete_rules())
 					{
-						if (rule.applicable(rpm_info))
+						if (rule.is_applicable(rpm_info))
 						{
 							if (rule.exclusive)
 							{

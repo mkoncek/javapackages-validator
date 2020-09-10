@@ -312,6 +312,12 @@ public final class Config
 				
 				if (end_name.equals(end))
 				{
+					/// We probably read an empty XML body
+					if (result == null)
+					{
+						result = new Validator.Disabled(end);
+					}
+					
 					break loop;
 				}
 				

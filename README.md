@@ -67,13 +67,24 @@ It contains the main node `<config>`. This contains variable amount of nodes of
 type `<rule>`. For each validated package the validator selects applicable
 rules. Whether or not a rule is applicable depends on its `<match>` node. A node
 may have one match in which case it is *concrete* or have no match at all in
-which case it is *abstract*. *Abstract* rules additionally can be named by
-assigning them a `<name>` node. Setting this property allows other rules to
-inherit validators from them. This is done by setting a `<parent>` node with
-the name of the named rule which should be inherited from.
+which case it is *abstract*.
+
+### Inheritance
+
+*Abstract* rules additionally can be named by assigning them a `<name>` node.
+Setting this property allows other rules to inherit validators from them. This
+is done by setting a `<parent>` node with the name of the named rule which
+should be inherited from.
+
+Validators are only inherited if the child rule does not set them. If the child
+rule sets the rule it will be *overriden*. Setting the validator to an empty
+XML node disables the validator (i. e. overrides it with no-operation version
+of the validator).
 
 Name / inheritance resolution happens after the configuration is read so rules
 can refer to named rules which have not yet been defined.
+
+### Exclusivity
 
 Only *concrete* rules are selected for matching the `.rpm` packages.
 *Concrete* rules may additionally be set as **exclusive** by setting:
@@ -224,7 +235,9 @@ Examples:
 	    <files>
 	      <regex>.*</regex>
 	    </files>
-	    <!-- -->
+	    
+	    <!-- Disabling inherited requires -->
+	    <requires/>
 	  </rule>
 	  
 	  <!-- Everything else -->

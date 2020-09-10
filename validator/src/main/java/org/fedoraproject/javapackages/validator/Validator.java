@@ -30,6 +30,41 @@ abstract public class Validator
 	static private final Ansi_colors.Decorator decor = Package_test.color_decorator();
 	static private int debug_nesting = 0;
 	
+	public final boolean disabled;
+	
+	static class Disabled extends Validator
+	{
+		public final String name;
+		
+		public Disabled(String name)
+		{
+			super(true);
+			this.name = name;
+		}
+
+		@Override
+		protected Test_result do_validate(String value)
+		{
+			throw new RuntimeException("Trying to evaluate a disabled validator \"" + name + "\"");
+		}
+		
+		@Override
+		public String to_xml()
+		{
+			return "<" + name + "/>";
+		}
+	}
+	
+	public Validator()
+	{
+		this(false);
+	}
+	
+	public Validator(boolean disabled)
+	{
+		this.disabled = disabled;
+	}
+	
 	static final class Test_result
 	{
 		boolean result;
@@ -90,7 +125,7 @@ abstract public class Validator
 		
 		public Delegating_validator(Validator delegate)
 		{
-			super();
+			super(delegate.disabled);
 			this.delegate = delegate;
 		}
 		
@@ -107,6 +142,7 @@ abstract public class Validator
 		
 		public Regex_validator(Pattern pattern)
 		{
+			super();
 			this.pattern = pattern;
 		}
 		
@@ -145,6 +181,7 @@ abstract public class Validator
 		
 		Int_range_validator(long min, long max)
 		{
+			super();
 			this.min = min;
 			this.max = max;
 		}
@@ -189,6 +226,7 @@ abstract public class Validator
 		
 		protected List_validator(List<Validator> list)
 		{
+			super();
 			this.list = new ArrayList<Validator>(list);
 		}
 		

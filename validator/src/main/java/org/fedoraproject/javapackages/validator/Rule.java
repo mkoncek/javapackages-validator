@@ -213,6 +213,12 @@ public class Rule
 		while (result == null && current != null)
 		{
 			result = current.validators.get(name);
+			
+			if (result != null && result.disabled)
+			{
+				return null;
+			}
+			
 			current = current.parent;
 		}
 		
