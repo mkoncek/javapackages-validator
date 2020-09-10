@@ -18,6 +18,7 @@ package org.fedoraproject.javapackages.validator;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,7 +46,7 @@ public final class Config
 	private Map<String, Rule> rule_names = new LinkedHashMap<>();
 	private Map<Rule, String> parents = new LinkedHashMap<>();
 	private Set<Rule> all_rules = new LinkedHashSet<>();
-	private List<Rule> leaf_rules = new ArrayList<>();
+	private List<Rule> concrete_rules = new ArrayList<>();
 	static final Decorator decor = Package_test.color_decorator();
 	
 	static final Map<String, String> message_map = new HashMap<>();
@@ -353,7 +354,7 @@ public final class Config
 		
 		if (result == null)
 		{
-			throw new RuntimeException("internal error: function read_validator returned null");
+			throw new RuntimeException("internal error: function read_validator returned null, end is " + end);
 		}
 		
 		return result;
@@ -468,6 +469,16 @@ public final class Config
 			}
 		}
 		
+		if (result.exclusive && result.is_abstract())
+		{
+			throw new RuntimeException("Rule \"" + result.name + "\" is both abstract and exclusive");
+		}
+		
+		if (! result.is_abstract() && result.name != null)
+		{
+			throw new RuntimeException("Named rule \"" + result.name + "\" is not abstract (contains a match)");
+		}
+		
 		return result;
 	}
 	
@@ -483,32 +494,11 @@ public final class Config
 			
 			if (found_parent == null)
 			{
-				throw new RuntimeException("Parent name does not exist");
+				throw new RuntimeException(MessageFormat.format(
+						"Parent name \"{0}\" does not exist", pair.getValue()));
 			}
 			
 			pair.getKey().parent = found_parent;
-		}
-		
-		var non_leaf_rules = new LinkedHashSet<>();
-		
-		/// Resolve leaf rules
-		for (var rule : all_rules)
-		{
-			var parent = rule.parent;
-			
-			while (parent != null)
-			{
-				non_leaf_rules.add(parent);
-				parent = parent.parent;
-			}
-		}
-		
-		for (var rule : all_rules)
-		{
-			if (! non_leaf_rules.contains(rule))
-			{
-				leaf_rules.add(rule);
-			}
 		}
 	}
 	
@@ -532,7 +522,15 @@ public final class Config
 						switch (start_name)
 						{
 						case "rule":
-							all_rules.add(read_rule(event_reader));
+							final var rule = read_rule(event_reader);
+							
+							all_rules.add(rule);
+							
+							if (! rule.is_abstract())
+							{
+								concrete_rules.add(rule);
+							}
+							
 							break;
 						}
 						
@@ -562,9 +560,9 @@ public final class Config
 		}
 	}
 	
-	public final Collection<Rule> leaf_rules()
+	public final Collection<Rule> concrete_rules()
 	{
-		return leaf_rules;
+		return concrete_rules;
 	}
 	
 	public final String to_xml()

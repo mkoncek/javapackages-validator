@@ -72,6 +72,9 @@ assigning them a `<name>` node. Setting this property allows other rules to
 inherit validators from them. This is done by setting a `<parent>` node with
 the name of the named rule which should be inherited from.
 
+Name / inheritance resolution happens after the configuration is read so rules
+can refer to named rules which have not yet been defined.
+
 Only *concrete* rules are selected for matching the `.rpm` packages.
 *Concrete* rules may additionally be set as **exclusive** by setting:
 
@@ -79,7 +82,7 @@ Only *concrete* rules are selected for matching the `.rpm` packages.
 	  <exclusive>true</exclusive>
 	</rule>
 
-If the list of applicable rules as read from top to the bottom contains an
+If the list of applicable rules **as read from top to bottom** contains an
 exclusive rule then the first exclusive rule is selected and only that single
 rule will be applied to the package.
 
@@ -204,6 +207,7 @@ Examples:
 	  <!-- javapackages-tools -->
 	  <rule>
 	    <exclusive>true</exclusive>
+	    <parent>generic</parent>
 	    <match>
 	      <name>javapackages-tools</name>
 	    </match>
@@ -213,6 +217,7 @@ Examples:
 	  <!-- Javadoc packages -->
 	  <rule>
 	    <exclusive>true</exclusive>
+	    <parent>generic</parent>
 	    <match>
 	      <name>.*-javadoc.*</name>
 	    </match>
@@ -224,9 +229,7 @@ Examples:
 	  
 	  <!-- Everything else -->
 	  <rule>
-	    <match>
-	      <name>.*</name>
-	    </match>
+	    <name>generic</name>
 	    <requires>
 	      <any>
 	        <regex>maven-local</regex>

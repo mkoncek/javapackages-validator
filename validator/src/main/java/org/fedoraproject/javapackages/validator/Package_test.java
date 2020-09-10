@@ -81,6 +81,10 @@ public class Package_test
 		@Parameter(names = {"-n", "--only-failed"}, description =
 				"Print only failed test cases.")
 		boolean only_failed = false;
+		
+		@Parameter(names = {"-d", "--dump-config"}, description =
+				"Print the XML configuration.")
+		boolean dump_config = false;
 	}
 	
 	public static void main(String[] args) throws Exception
@@ -107,6 +111,14 @@ public class Package_test
 		if (arguments.color)
 		{
 			Package_test.color_decorator = new Ansi_colors.Default_decorator();
+		}
+		
+		final var config = new Config(new FileInputStream(arguments.config_file));
+		
+		if (arguments.dump_config)
+		{
+			System.out.println(config.to_xml());
+			return;
 		}
 		
 		try (PrintStream output = arguments.output_file != null ?
@@ -149,8 +161,6 @@ public class Package_test
 				}
 			}
 			
-			final var config = new Config(new FileInputStream(arguments.config_file));
-			
 			class Rpm_file implements Comparable<Rpm_file>
 			{
 				final String rpm_name;
@@ -184,16 +194,14 @@ public class Package_test
 				final String rpm_name = rpm_path.getFileName().toString();
 				final var rpm_info = new RpmInfo(rpm_path);
 				
-				var applicable_rules = new LinkedHashSet<Rule>();
+				var applicable_rules = new ArrayList<Rule>();
 				
 				{
 					Rule exclusive_rule = null;
 					
-					for (var rule : config.leaf_rules())
+					for (var rule : config.concrete_rules())
 					{
-						Rule applicable = rule.applicable(rpm_info);
-						
-						if (applicable != null)
+						if (rule.applicable(rpm_info))
 						{
 							if (rule.exclusive)
 							{
@@ -254,25 +262,25 @@ public class Package_test
 			for (var pair : symlinks.entrySet())
 			{
 				var message = new StringBuilder();
-				message.append(color_decorator().decorate("[Symlink]", Ansi_colors.Type.bold) + ": ");
+				message.append(color_decorator().decorate("[Symlink]", Ansi_colors.Type.bold));
 				final var rpm_file = files.get(pair.getValue());
-				
-				message.append(MessageFormat.format("Symbolic link \"{0}\" ",
-						color_decorator.decorate(pair.getKey().file_name, Ansi_colors.Type.cyan)));
 				
 				if (arguments.verbose)
 				{
-					message.append(MessageFormat.format("(from \"{0}\") ",
+					message.append(MessageFormat.format(" (from \"{0}\"): ",
 							color_decorator.decorate(pair.getKey().rpm_name, Type.bright_cyan)));
 				}
+				
+				message.append(MessageFormat.format("Symbolic link \"{0}\" ",
+						color_decorator.decorate(pair.getKey().file_name, Ansi_colors.Type.cyan)));
 				
 				message.append(MessageFormat.format("points to \"{0}\" ",
 						color_decorator.decorate(pair.getValue(), Ansi_colors.Type.yellow)));
 				
 				if (rpm_file != null)
 				{
-					message.append(MessageFormat.format("and the target file {0}",
-							color_decorator.decorate("exists", Ansi_colors.Type.green, Ansi_colors.Type.bold), rpm_file));
+					message.append("and the target file ");
+					message.append(color_decorator.decorate("exists", Ansi_colors.Type.green, Ansi_colors.Type.bold));
 					
 					if (arguments.verbose)
 					{
@@ -282,8 +290,8 @@ public class Package_test
 				}
 				else
 				{
-					message.append("but the target file "
-							+ color_decorator.decorate("does not exist", Ansi_colors.Type.red, Ansi_colors.Type.bold));
+					message.append("but the target file ");
+					message.append(color_decorator.decorate("does not exist", Ansi_colors.Type.red, Ansi_colors.Type.bold));
 				}
 				
 				test_results.add(new Test_result((rpm_file != null), message.toString()));
@@ -310,8 +318,6 @@ public class Package_test
 				
 				++test_number;
 			}
-			
-			// System.out.println(config.to_xml());
 		}
 	}
 }

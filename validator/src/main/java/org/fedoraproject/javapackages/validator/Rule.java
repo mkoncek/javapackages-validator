@@ -192,26 +192,17 @@ public class Rule
 	Rule parent = null;
 	String name = null;
 	boolean exclusive = false;
-	Match match;
+	Match match = null;
 	Map<String, Validator> validators = new LinkedHashMap<>();
 	
-	/**
-	 * Traverse the inheritance branch up to the top to find the first
-	 * applicable rule.
-	 * @param rpm_info
-	 * @return The first applicable rule in the inheritance hierarchy or null
-	 * if there is none.
-	 */
-	Rule applicable(RpmInfo rpm_info)
+	boolean is_abstract()
 	{
-		Rule result = this;
-		
-		while (result != null && ! result.match.test(rpm_info))
-		{
-			result = result.parent;
-		}
-		
-		return result;
+		return match == null;
+	}
+	
+	boolean is_applicable(RpmInfo rpm_info)
+	{
+		return match.test(rpm_info);
 	}
 	
 	private Validator validator_recursive(final String name)
@@ -339,7 +330,6 @@ public class Rule
 				validate_files(files, rpm_path, result);
 			}
 		}
-		
 		{
 			final Validator provides = validator_recursive("provides");
 			
@@ -386,7 +376,7 @@ public class Rule
 	
 	public String to_xml()
 	{
-		var result = new StringBuilder();
+		final var result = new StringBuilder();
 		
 		result.append("<rule>");
 		
@@ -401,9 +391,13 @@ public class Rule
 		}
 		
 		result.append("<exclusive>" + Boolean.toString(exclusive) + "</exclusive>");
-		result.append("<match>" + match.to_xml() + "</match>");
 		
-		for (var pair : validators.entrySet())
+		if (match != null)
+		{
+			result.append("<match>" + match.to_xml() + "</match>");
+		}
+		
+		for (final var pair : validators.entrySet())
 		{
 			final String key = pair.getKey();
 			
