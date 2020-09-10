@@ -315,7 +315,7 @@ public final class Config
 					/// We probably read an empty XML body
 					if (result == null)
 					{
-						result = new Validator.Disabled(end);
+						result = new Validator.Disabled();
 					}
 					
 					break loop;

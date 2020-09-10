@@ -34,24 +34,21 @@ abstract public class Validator
 	
 	static class Disabled extends Validator
 	{
-		public final String name;
-		
-		public Disabled(String name)
+		public Disabled()
 		{
 			super(true);
-			this.name = name;
 		}
 
 		@Override
 		protected Test_result do_validate(String value)
 		{
-			throw new RuntimeException("Trying to evaluate a disabled validator \"" + name + "\"");
+			throw new RuntimeException("Trying to evaluate a disabled validator");
 		}
 		
 		@Override
 		public String to_xml()
 		{
-			return "<" + name + "/>";
+			throw new RuntimeException("Calling to_xml() on a disabled validator");
 		}
 	}
 	
