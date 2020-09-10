@@ -41,7 +41,7 @@ using the `-i`, `--input` flag.
 * Stream the file paths separated by new line via the standard input at
 the program invocation.
 
-		./generator | java -jar validator.jar
+	  ./generator | java -jar validator.jar
 
 #### Optional
 
@@ -68,7 +68,7 @@ rule must have exactly one match.
 Additionally there is the option to make a rule **exclusive** by setting:
 
 	<rule>
-		<exclusive>true</exclusive>
+	  <exclusive>true</exclusive>
 	</rule>
 
 If the list of applicable rules as read
@@ -94,18 +94,18 @@ Examples:
 
 * Matching any `javadoc` package.
 
-		<match>
-			<name>.*-javadoc.*</name>
-		</match>
+	  <match>
+	    <name>.*-javadoc.*</name>
+	  </match>
 
 * Matching any source `.rpm`.
 
-		<match>
-			<or>
-				<arch>src</arch>
-				<arch>nosrc</arch>
-			</or>
-		</match>
+	  <match>
+	    <or>
+	      <arch>src</arch>
+	      <arch>nosrc</arch>
+	    </or>
+	  </match>
 
 ### Checks
 
@@ -159,7 +159,7 @@ Examples:
 
 	* Accepts everything.
 	
-			<regex>.*</regex>
+		  <regex>.*</regex>
 
 * **`<int-range>`** -
 The validator contains two integer values separated by a dash (`-`). Whitespace
@@ -172,65 +172,62 @@ Examples:
 
 	* Accepts any value in the inclusive range of `[25-75]`.
 	
-			<int-range>25-75</int-range>
+		  <int-range>25-75</int-range>
 			
 	* Accepts any representable value lesser or equal to `100`.
 	
-			<int-range>-100</int-range>`
+		  <int-range>-100</int-range>`
 
 ## Configuration examples
 
 	<config>
-		<!-- Source packages -->
-		<rule>
-			<exclusive>true</exclusive>
-			<match>
-				<or>
-					<arch>src</arch>
-					<arch>nosrc</arch>
-				</or>
-			</match>
-			<!-- -->
-		</rule>
-		
-		<!-- javapackages-tools -->
-		<rule>
-			<exclusive>true</exclusive>
-			<match>
-				<name>javapackages-tools</name>
-			</match>
-			
-			<!-- -->
-			
-		</rule>
-		
-		<!-- Javadoc packages -->
-		<rule>
-			<exclusive>true</exclusive>
-			<match>
-				<name>.*-javadoc.*</name>
-			</match>
-			<files>
-				<regex>.*</regex>
-				<!-- -->
-			</files>
-			<!-- -->
-		</rule>
-		
-		<!-- Everything else -->
-		<rule>
-			<match>
-				<name>.*</name>
-			</match>
-			<requires>
-				<any>
-					<regex>maven-local</regex>
-					<regex>maven-local-openjdk8</regex>
-					<regex>mvn\(.+:.+\)</regex>
-					<regex>rpmlib\(.+\)</regex>
-					<regex>javapackages-local</regex>
-					<!-- -->
-				</any>
-			</requires>
-		</rule>
+	  <!-- Source packages -->
+	  <rule>
+	    <exclusive>true</exclusive>
+	    <match>
+	      <or>
+	        <arch>src</arch>
+	        <arch>nosrc</arch>
+	      </or>
+	    </match>
+	    <!-- -->
+	  </rule>
+	  
+	  <!-- javapackages-tools -->
+	  <rule>
+	    <exclusive>true</exclusive>
+	    <match>
+	      <name>javapackages-tools</name>
+	    </match>
+	    <!-- -->
+	  </rule>
+	  
+	  <!-- Javadoc packages -->
+	  <rule>
+	    <exclusive>true</exclusive>
+	    <match>
+	      <name>.*-javadoc.*</name>
+	    </match>
+	    <files>
+	      <regex>.*</regex>
+	    </files>
+	    <!-- -->
+	  </rule>
+	  
+	  <!-- Everything else -->
+	  <rule>
+	    <match>
+	      <name>.*</name>
+	    </match>
+	    <requires>
+	      <any>
+	        <regex>maven-local</regex>
+	        <regex>maven-local-openjdk8</regex>
+	        <regex>mvn\(.+:.+\)</regex>
+	        <regex>rpmlib\(.+\)</regex>
+	        <regex>javapackages-local</regex>
+	        <!-- -->
+	      </any>
+	    </requires>
+	  </rule>
 	</config>
