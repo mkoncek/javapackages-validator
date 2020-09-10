@@ -26,6 +26,9 @@ Run the executable `.jar` file:
 
 Traditional help with `-h`, `--help`.
 
+An option to print the configuration in XML form after being read, this is used
+for debugging. Enabled by `-d`, `--dump-config`.
+
 #### Mandatory
 
 Path to the configuration file is provided by the `-c`, `--config` flag.
@@ -62,18 +65,23 @@ specified.
 The configuration file is an XML file.
 It contains the main node `<config>`. This contains variable amount of nodes of
 type `<rule>`. For each validated package the validator selects applicable
-rules. Whether or not a rule is applicable depends on its `<match>` node. Each
-rule must have exactly one match.
+rules. Whether or not a rule is applicable depends on its `<match>` node. A node
+may have one match in which case it is *concrete* or have no match at all in
+which case it is *abstract*. *Abstract* rules additionally can be named by
+assigning them a `<name>` node. Setting this property allows other rules to
+inherit validators from them. This is done by setting a `<parent>` node with
+the name of the named rule which should be inherited from.
 
-Additionally there is the option to make a rule **exclusive** by setting:
+Only *concrete* rules are selected for matching the `.rpm` packages.
+*Concrete* rules may additionally be set as **exclusive** by setting:
 
 	<rule>
 	  <exclusive>true</exclusive>
 	</rule>
 
-If the list of applicable rules as read
-from top to the bottom contains an exclusive rule then the first exclusive rule
-is selected and only that single rule will be applied to the package.
+If the list of applicable rules as read from top to the bottom contains an
+exclusive rule then the first exclusive rule is selected and only that single
+rule will be applied to the package.
 
 ### Match
 
