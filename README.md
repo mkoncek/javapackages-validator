@@ -10,9 +10,18 @@ Executing
 
 	mvn package
 
-will compile the project and generate a tarball containing dependencies.
+will compile the project and generate a tarball containing the validator `.jar`
+and its dependencies.
+
+Furthermore executing
+
+	mvn install
+
+will unpack the tarball and make the validator `.jar` executable.
 
 ## Usage
+
+### In case of `mvn package`
 
 After packaging the project extract files:
 
@@ -21,6 +30,12 @@ After packaging the project extract files:
 Run the executable `.jar` file:
 
 	java -jar ./assembly-${version}/validator-${version}.jar [OPTIONS]
+
+### In case of `mvn install`
+
+Simply run
+
+	./assembly-${version}/validator-${version}.jar [OPTIONS]
 
 ### Command line options
 
