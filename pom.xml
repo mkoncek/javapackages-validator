@@ -1,13 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-	https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+  https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   
   <parent>
     <groupId>org.fedoraproject.javapackages-validator</groupId>
     <artifactId>parent</artifactId>
-    <version>${project.version}</version>
+    <version>${revision}</version>
     <relativePath>parent</relativePath>
   </parent>
   
@@ -53,8 +53,8 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>${groupId}</groupId>
-                  <artifactId>${artifactId}</artifactId>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>${project.artifactId}</artifactId>
                   <version>${project.version}</version>
                   <type>tar.gz</type>
                   <outputDirectory>target</outputDirectory>
@@ -76,7 +76,7 @@
               <goal>exec</goal>
             </goals>
             <configuration>
-              <workingDirectory>target/${artifactId}-${project.version}</workingDirectory>
+              <workingDirectory>target/${project.artifactId}-${project.version}</workingDirectory>
               <executable>sh</executable>
               <arguments>
                 <argument>-c</argument>
