@@ -71,63 +71,43 @@ For colored output it is possible to set the `-r`, `--color` flag.
 For more detailed output which shows which checks failed or succeeded there is
 the `-v`, `--verbose` flag.
 
-In order to print only failed checks the `-n`, `--only-failed` flag can be
-specified.
+In order to print only failed checks use the `-n`, `--only-failed` flag.
 
 
 ## Configuration
 
 The configuration file is an XML file.
 It contains the main node `<config>`. This contains variable amount of nodes of
-type `<rule>`. For each validated package the validator selects applicable
-rules. Whether or not a rule is applicable depends on its `<match>` node. A node
-may have one match in which case it is *concrete* or have no match at all in
-which case it is *abstract*.
+type `<rule>`. Each rule must have exactly one `<name>` and `<match>` node.
 
-### Inheritance
+### Name
 
-*Abstract* rules additionally can be named by assigning them a `<name>` node.
-Setting this property allows other rules to inherit validators from them. This
-is done by setting a `<parent>` node with the name of the named rule which
-should be inherited from.
-
-Validators are only inherited if the child rule does not set them. If the child
-rule sets the rule it will be *overriden*. Setting the validator to an empty
-XML node disables the validator (i. e. overrides it with no-operation version
-of the validator).
-
-Name / inheritance resolution happens after the configuration is read so rules
-can refer to named rules which have not yet been defined.
-
-### Exclusivity
-
-Only *concrete* rules are selected for matching the `.rpm` packages.
-*Concrete* rules may additionally be set as **exclusive** by setting:
-
-	<rule>
-	  <exclusive>true</exclusive>
-	</rule>
-
-If the list of applicable rules **as read from top to bottom** contains an
-exclusive rule then the first exclusive rule is selected and only that single
-rule will be applied to the package.
+`<name>` is used to refer to already defined rules. Two rules cannot have the
+same name.
 
 ### Match
 
-The `<match>` node may consist of logical predicates or plain epressions which
-are checked as regular expressions.
+`<match>` is used to deterimne whether the rule is applicable to given `.rpm` file.
+This is determined for each validated package.
 
-* Logical predicates are **`<not>`**, **`<and>`**, **`<or>`**.
+It may consist of logical predicates, names of previous rules or `.rpm` file
+attributes (such as pachage name) which are checked as regular expressions.
 
-The primitive expressions are:
+It may also be empty in which case it matches everything (but still must be declared).
 
-* **`<name>`** -
-Matches according to the package name.
+#### Expressions
 
-* **`<arch>`** -
-Matches according to the package architecture.
+* Logical predicates: **`<not>`**, **`<and>`**, **`<or>`**.
 
-Examples:
+* **`<rule>`** - Matches *exactly* the name of an existing rule.
+
+* Expressions using regular expressions:
+
+	* **`<name>`** - Matches according to the package name.
+
+	* **`<arch>`** - Matches according to the package architecture.
+
+#### Examples
 
 * Matching any `javadoc` package.
 
@@ -142,6 +122,18 @@ Examples:
 	      <arch>src</arch>
 	      <arch>nosrc</arch>
 	    </or>
+	  </match>
+
+* Matching non-source package for the `x86_64` architecture, assuming previously
+declared rule for matching source packages.
+
+	  <match>
+	    <and>
+          <not>
+            <rule>source</rule>
+          </not>
+	      <arch>x86_64</arch>
+	    </and>
 	  </match>
 
 ### Checks
@@ -176,10 +168,10 @@ These validators are recursively composed of other validators.
 * **`<all>`** -
 The validator passes if all its member validators accept the value.
 
-* **`<any>`** or  **`<whitelist>`** -
+* **`<any>`** -
 The validator passes if any of its member validators accept the value.
 
-* **`<none>`** or  **`<blacklist>`** -
+* **`<none>`** -
 The validator passes if none of its member validators accept the value.
 
 #### Primitive
@@ -218,46 +210,82 @@ Examples:
 ## Configuration examples
 
 	<config>
-	  <!-- Source packages -->
+	  <!-- Rule for source packages -->
 	  <rule>
-	    <exclusive>true</exclusive>
+	    <name>source</name>
 	    <match>
 	      <or>
 	        <arch>src</arch>
 	        <arch>nosrc</arch>
 	      </or>
 	    </match>
-	    <!-- -->
 	  </rule>
 	  
-	  <!-- javapackages-tools -->
+	  <!-- Rule for checking the size of every non-source package -->
 	  <rule>
-	    <exclusive>true</exclusive>
-	    <parent>generic</parent>
+	    <name>size</name>
 	    <match>
-	      <name>javapackages-tools</name>
+	      <not>
+	        <rule>source</rule>
+	      </not>
 	    </match>
-	    <!-- -->
-	  </rule>
-	  
-	  <!-- Javadoc packages -->
-	  <rule>
-	    <exclusive>true</exclusive>
-	    <parent>generic</parent>
-	    <match>
-	      <name>.*-javadoc.*</name>
-	    </match>
-	    <files>
-	      <regex>.*</regex>
-	    </files>
 	    
-	    <!-- Disabling inherited requires -->
-	    <requires/>
+	    <filesize-mb>
+	      <int-range>-15</int-range>
+	    </filesize-mb>
 	  </rule>
 	  
-	  <!-- Everything else -->
+	  <rule>
+	    <name>javadoc</name>
+	    <match>
+	      <and>
+	        <not>
+	          <rule>source</rule>
+	        </not>
+	        <name>.*-javadoc.*</name>
+	      </and>
+	    </match>
+	    
+	    <!-- -->
+	  </rule>
+	  
+	  <rule>
+	    <name>javapackages-tools</name>
+	    <match>
+	      <and>
+	        <not>
+	          <rule>source</rule>
+	        </not>
+	        <name>javapackages-tools</name>
+	      </and>
+	    </match>
+	    
+	    <!-- -->
+	  </rule>
+	  
+	  <rule>
+	    <name>byaccj</name>
+	    <match>
+	      <and>
+	        <not>
+	          <rule>source</rule>
+	        </not>
+	        <name>byaccj</name>
+	      </and>
+	    </match>
+	    
+	    <!-- -->
+	  </rule>
+	  
+	  <!-- Matches all non-source packages -->
 	  <rule>
 	    <name>generic</name>
+		<match>
+		  <not>
+	        <rule>source</rule>
+		  </not>
+		<match>
+	    
 	    <requires>
 	      <any>
 	        <regex>maven-local</regex>
@@ -265,7 +293,6 @@ Examples:
 	        <regex>mvn\(.+:.+\)</regex>
 	        <regex>rpmlib\(.+\)</regex>
 	        <regex>javapackages-local</regex>
-	        <!-- -->
 	      </any>
 	    </requires>
 	  </rule>

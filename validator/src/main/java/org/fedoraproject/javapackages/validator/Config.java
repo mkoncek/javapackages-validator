@@ -23,11 +23,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
+
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -43,10 +42,7 @@ public final class Config
 {
 	static final Pattern int_range_pattern = Pattern.compile("([0-9]*)\\s*-\\s*([0-9]*)");
 	
-	private Map<String, Rule> rule_names = new LinkedHashMap<>();
-	private Map<Rule, String> parents = new LinkedHashMap<>();
-	private Set<Rule> all_rules = new LinkedHashSet<>();
-	private List<Rule> concrete_rules = new ArrayList<>();
+	private Map<String, Rule> rules = new LinkedHashMap<>();
 	static final Decorator decor = Package_test.color_decorator();
 	
 	static final Map<String, String> message_map = new HashMap<>();
@@ -64,14 +60,16 @@ public final class Config
 		}
 	}
 	
-	static final Rule.Match read_predicate(String end, XMLEventReader event_reader) throws Exception
+	final Rule.Match read_predicate(String end, XMLEventReader event_reader) throws Exception
 	{
 		switch (end)
 		{
 		case "and":
 			return new Rule.And_match(read_predicate_list(end, event_reader));
+			
 		case "or":
 			return new Rule.Or_match(read_predicate_list(end, event_reader));
+			
 		default:
 			break;
 		}
@@ -122,8 +120,40 @@ public final class Config
 				case "name":
 					result = new Rule.Method_match(RpmInfo.class.getMethod("getName"), Pattern.compile(content));
 					break;
+					
 				case "arch":
 					result = new Rule.Method_match(RpmInfo.class.getMethod("getArch"), Pattern.compile(content));
+					break;
+					
+				case "rule":
+					var rule = rules.get(content);
+					
+					if (rule == null)
+					{
+						throw new RuntimeException("Refering to a nonexisting rule in the <match> field");
+					}
+					
+					var old_match = rule.match;
+					var result_match = new Rule.Rule_match(rule);
+					
+					rule.match = new Rule.Match()
+					{
+						@Override
+						public boolean test(RpmInfo rpm_info)
+						{
+							result_match.result = old_match.test(rpm_info);
+							return result_match.result;
+						}
+						
+						@Override
+						public String to_xml()
+						{
+							return old_match.to_xml();
+						}
+					};
+					
+					result = result_match;
+					
 					break;
 				}
 				
@@ -139,7 +169,7 @@ public final class Config
 		return result;
 	}
 	
-	static final List<Rule.Match> read_predicate_list(String end, XMLEventReader event_reader) throws Exception
+	final List<Rule.Match> read_predicate_list(String end, XMLEventReader event_reader) throws Exception
 	{
 		var result = new ArrayList<Rule.Match>();
 		
@@ -219,7 +249,7 @@ public final class Config
 		return result;
 	}
 	
-	static final Rule.Match read_match(XMLEventReader event_reader) throws Exception
+	final Rule.Match read_match(XMLEventReader event_reader) throws Exception
 	{
 		Rule.Match result = null;
 		
@@ -248,7 +278,7 @@ public final class Config
 				}
 				else
 				{
-					throw new RuntimeException("<match> can contain at most one element");
+					throw new RuntimeException("<match> can contain at most one node");
 				}
 				
 				break;
@@ -257,7 +287,7 @@ public final class Config
 		
 		if (result == null)
 		{
-			throw new RuntimeException("Could not read <match>");
+			result = new Rule.All_match();
 		}
 		
 		return result;
@@ -288,12 +318,6 @@ public final class Config
 				
 				switch (start_name)
 				{
-				case "whitelist":
-					result = new Validator.Whitelist_validator(read_validator_list(start_name, event_reader));
-					break;
-				case "blacklist":
-					result = new Validator.Blacklist_validator(read_validator_list(start_name, event_reader));
-					break;
 				case "all":
 					result = new Validator.All_validator(read_validator_list(start_name, event_reader));
 					break;
@@ -422,23 +446,32 @@ public final class Config
 				switch (start_name)
 				{
 				case "name":
-					result.name = read_content(start_name, event_reader);
+					final var name = read_content(start_name, event_reader);
 					
-					if (rule_names.containsKey(result.name))
+					if (result.name != null)
 					{
-						throw new RuntimeException("Duplicate rule name found");
+						throw new RuntimeException(MessageFormat.format(
+								"Rule contains multiple name fields: \"{0}\" and \"{1}\"",
+								result.name, name));
 					}
 					
-					rule_names.put(result.name, result);
+					result.name = name;
+					
+					if (rules.containsKey(result.name))
+					{
+						throw new RuntimeException(MessageFormat.format(
+								"Found a rule with the same name as a previous rule: \"{0}\"",
+								name));
+					}
+					
+					rules.put(result.name, result);
 					break;
 					
 				case "parent":
-					parents.put(result, read_content(start_name, event_reader));
-					break;
+					throw new RuntimeException("<parent> no longer used");
 					
 				case "exclusive":
-					result.exclusive = Boolean.valueOf(read_content(start_name, event_reader));
-					break;
+					throw new RuntimeException("<exclusive> no longer used");
 					
 				case "match":
 					result.match = read_match(event_reader);
@@ -475,37 +508,17 @@ public final class Config
 			}
 		}
 		
-		if (result.exclusive && result.is_abstract())
+		if (result.name == null)
 		{
-			throw new RuntimeException("Rule \"" + result.name + "\" is both abstract and exclusive");
+			throw new RuntimeException("Rule \"" + result.name + "\" does not have a <name>");
 		}
 		
-		if (! result.is_abstract() && result.name != null)
+		if (result.match == null)
 		{
-			throw new RuntimeException("Named rule \"" + result.name + "\" is not abstract (contains a match)");
+			throw new RuntimeException("Named rule \"" + result.name + "\" does not contain a <match>");
 		}
 		
 		return result;
-	}
-	
-	/**
-	 * Resolve elements after the whole XML has been read.
-	 */
-	private final void postprocess()
-	{
-		/// Resolve parent names to rule objects
-		for (var pair : parents.entrySet())
-		{
-			final Rule found_parent = rule_names.get(pair.getValue());
-			
-			if (found_parent == null)
-			{
-				throw new RuntimeException(MessageFormat.format(
-						"Parent name \"{0}\" does not exist", pair.getValue()));
-			}
-			
-			pair.getKey().parent = found_parent;
-		}
 	}
 	
 	public Config(InputStream is) throws Exception
@@ -528,16 +541,13 @@ public final class Config
 						switch (start_name)
 						{
 						case "rule":
-							final var rule = read_rule(event_reader);
-							
-							all_rules.add(rule);
-							
-							if (! rule.is_abstract())
-							{
-								concrete_rules.add(rule);
-							}
-							
+							read_rule(event_reader);
 							break;
+						case "config":
+							break;
+						default:
+							throw new RuntimeException("Found unrecognized node <"
+									+ start_name + "> during reading the configuration file");
 						}
 						
 						break;
@@ -556,8 +566,6 @@ public final class Config
 						continue;
 					}
 				}
-				
-				postprocess();
 			}
 			finally
 			{
@@ -566,9 +574,9 @@ public final class Config
 		}
 	}
 	
-	public final Collection<Rule> concrete_rules()
+	public final Collection<Rule> rules()
 	{
-		return concrete_rules;
+		return rules.values();
 	}
 	
 	public final String to_xml()
@@ -577,7 +585,7 @@ public final class Config
 		
 		result.append("<config>");
 		
-		for (var rule : all_rules)
+		for (var rule : rules())
 		{
 			result.append(rule.to_xml());
 		}

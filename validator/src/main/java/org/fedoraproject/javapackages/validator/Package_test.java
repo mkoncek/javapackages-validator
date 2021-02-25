@@ -21,20 +21,18 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.TreeMap;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.TreeMap;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
+import org.fedoraproject.javapackages.validator.Ansi_colors.Type;
+import org.fedoraproject.javapackages.validator.Validator.Test_result;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-
-import org.fedoraproject.javapackages.validator.Ansi_colors.Type;
-import org.fedoraproject.javapackages.validator.Validator.Test_result;
 
 /**
  * @author Marián Konček
@@ -87,6 +85,14 @@ public class Package_test
 		boolean dump_config = false;
 	}
 	
+	private static void print_usage(JCommander jcommander)
+	{
+		jcommander.usage();
+		System.out.println("    " +
+				"If neither -i nor -f is provided then the list of " +
+				"validated files is read from the standard input.");
+	}
+	
 	public static void main(String[] args) throws Exception
 	{
 		var arguments = new Arguments();
@@ -95,16 +101,14 @@ public class Package_test
 		
 		if (arguments.help)
 		{
-			jcommander.usage();
-			System.out.println("    " +
-					"If neither -i nor -f is provided then the list of " +
-					"validated files is read from the standard input.");
+			print_usage(jcommander);
 			return;
 		}
 		
 		if (arguments.config_file == null)
 		{
-			System.err.println("error: Configuration file not specified");
+			System.err.println("error: Configuration file not specified, see usage with -h");
+			print_usage(jcommander);
 			return;
 		}
 		
@@ -196,29 +200,9 @@ public class Package_test
 				
 				var applicable_rules = new ArrayList<Rule>();
 				
-				{
-					Rule exclusive_rule = null;
-					
-					for (var rule : config.concrete_rules())
-					{
-						if (rule.is_applicable(rpm_info))
-						{
-							if (rule.exclusive)
-							{
-								exclusive_rule = rule;
-								break;
-							}
-							
-							applicable_rules.add(rule);
-						}
-					}
-					
-					if (exclusive_rule != null)
-					{
-						applicable_rules.clear();
-						applicable_rules.add(exclusive_rule);
-					}
-				}
+				config.rules().stream()
+						.filter(r -> r.is_applicable(rpm_info))
+						.forEach(r -> applicable_rules.add(r));
 				
 				/// Prefix every message with the RPM file name
 				for (var rule : applicable_rules)
@@ -271,7 +255,7 @@ public class Package_test
 							color_decorator.decorate(pair.getKey().rpm_name, Type.bright_cyan)));
 				}
 				
-				message.append(MessageFormat.format("Symbolic link \"{0}\" ",
+				message.append(MessageFormat.format(" Symbolic link \"{0}\" ",
 						color_decorator.decorate(pair.getKey().file_name, Ansi_colors.Type.cyan)));
 				
 				message.append(MessageFormat.format("points to \"{0}\" ",

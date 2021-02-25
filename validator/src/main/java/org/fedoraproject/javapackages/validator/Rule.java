@@ -46,6 +46,45 @@ public class Rule
 		public String to_xml();
 	}
 	
+	static public class Rule_match implements Match
+	{
+		protected Rule rule;
+		public Boolean result;
+		
+		public Rule_match(Rule rule)
+		{
+			super();
+			this.rule = rule;
+		}
+		
+		@Override
+		public boolean test(RpmInfo rpm_info)
+		{
+			return result;
+		}
+
+		@Override
+		public String to_xml()
+		{
+			return MessageFormat.format("<{0}>{1}</{0}>", "rule", rule.name);
+		}
+	}
+	
+	static public class All_match implements Match
+	{
+		@Override
+		public boolean test(RpmInfo rpm_info)
+		{
+			return true;
+		}
+
+		@Override
+		public String to_xml()
+		{
+			return "";
+		}
+	}
+	
 	static public class Not_match implements Match
 	{
 		protected Match match;
@@ -189,40 +228,13 @@ public class Rule
 		return new Method_match(RpmInfo.class.getMethod("getName"), match);
 	}
 	
-	Rule parent = null;
 	String name = null;
-	boolean exclusive = false;
 	Match match = null;
 	Map<String, Validator> validators = new LinkedHashMap<>();
-	
-	boolean is_abstract()
-	{
-		return match == null;
-	}
 	
 	boolean is_applicable(RpmInfo rpm_info)
 	{
 		return match.test(rpm_info);
-	}
-	
-	private Validator validator_recursive(final String name)
-	{
-		Validator result = null;
-		Rule current = this;
-		
-		while (result == null && current != null)
-		{
-			result = current.validators.get(name);
-			
-			if (result != null && result.disabled)
-			{
-				return null;
-			}
-			
-			current = current.parent;
-		}
-		
-		return result;
 	}
 	
 	private void validate_files(Validator validator, Path rpm_path, List<Test_result> result)
@@ -329,7 +341,7 @@ public class Rule
 		var result = new ArrayList<Test_result>();
 		
 		{
-			final Validator files = validator_recursive("files");
+			final Validator files = validators.get("files");
 			
 			if (files != null)
 			{
@@ -337,7 +349,7 @@ public class Rule
 			}
 		}
 		{
-			final Validator provides = validator_recursive("provides");
+			final Validator provides = validators.get("provides");
 			
 			if (provides != null)
 			{
@@ -345,7 +357,7 @@ public class Rule
 			}
 		}
 		{
-			final Validator requires = validator_recursive("requires");
+			final Validator requires = validators.get("requires");
 			
 			if (requires != null)
 			{
@@ -353,7 +365,7 @@ public class Rule
 			}
 		}
 		{
-			final Validator obsoletes = validator_recursive("obsoletes");
+			final Validator obsoletes = validators.get("obsoletes");
 			
 			if (obsoletes != null)
 			{
@@ -361,7 +373,7 @@ public class Rule
 			}
 		}
 		{
-			final Validator rpm_file_size = validator_recursive("rpm-file-size-bytes");
+			final Validator rpm_file_size = validators.get("rpm-file-size-bytes");
 			
 			if (rpm_file_size != null)
 			{
@@ -369,7 +381,7 @@ public class Rule
 			}
 		}
 		{
-			final Validator java_bytecode = validator_recursive("java-bytecode");
+			final Validator java_bytecode = validators.get("java-bytecode");
 			
 			if (java_bytecode != null)
 			{
@@ -386,22 +398,8 @@ public class Rule
 		
 		result.append("<rule>");
 		
-		if (parent != null)
-		{
-			result.append("<parent>" + parent.name + "</parent>");
-		}
-		
-		if (name != null)
-		{
-			result.append("<name>" + name + "</name>");
-		}
-		
-		result.append("<exclusive>" + Boolean.toString(exclusive) + "</exclusive>");
-		
-		if (match != null)
-		{
-			result.append("<match>" + match.to_xml() + "</match>");
-		}
+		result.append("<name>" + name + "</name>");
+		result.append("<match>" + match.to_xml() + "</match>");
 		
 		for (final var pair : validators.entrySet())
 		{

@@ -186,6 +186,7 @@ abstract public class Validator
 		@Override
 		protected Test_result do_validate(String value)
 		{
+			System.out.println(value);
 			final var numeric = Long.parseLong(value);
 			
 			Test_result result = new Test_result(min <= numeric && numeric <= max);
@@ -264,22 +265,6 @@ abstract public class Validator
 			}
 			
 			return result.toString();
-		}
-	}
-	
-	static class Whitelist_validator extends Any_validator
-	{
-		public Whitelist_validator(List<Validator> list)
-		{
-			super(list);
-		}
-	}
-	
-	static class Blacklist_validator extends None_validator
-	{
-		public Blacklist_validator(List<Validator> list)
-		{
-			super(list);
 		}
 	}
 	

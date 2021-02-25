@@ -1,36 +1,88 @@
-<!--
-Supported sizes:
-<filesize-b>
-<filesize-kb>
-<filesize-mb>
--->
-
 <config>
+  <!-- Rule for source packages -->
   <rule>
+    <name>source</name>
     <match>
-      <name>.*-javadoc.*</name>
+      <or>
+        <arch>src</arch>
+        <arch>nosrc</arch>
+      </or>
     </match>
-    <requires>
-      <whitelist>
-        <regex>java-1.8.0-javadoc</regex>
-      </whitelist>
-    </requires>
-    <files>
-      <whitelist>
-        <regex>/usr/share/javadoc/.*</regex>
-      </whitelist>
-    </files>
   </rule>
-  <!-- Rule matching all packages -->
+  
+  <!-- Rule for checking the size of every non-source package -->
   <rule>
+    <name>size</name>
     <match>
-      <name>.*</name>
+      <not>
+        <rule>source</rule>
+      </not>
     </match>
-    <rpm-file-size-bytes>
-      <int-range>-100</int-range>
-    </rpm-file-size-bytes>
-    <java-bytecode>
-      <int-range>-50</int-range>
-    </java-bytecode>
+    
+    <filesize-mb>
+      <int-range>-15</int-range>
+    </filesize-mb>
+  </rule>
+  
+  <rule>
+    <name>javadoc</name>
+    <match>
+      <and>
+        <not>
+          <rule>source</rule>
+        </not>
+        <name>.*-javadoc.*</name>
+      </and>
+    </match>
+    
+    <!-- -->
+  </rule>
+  
+  <rule>
+    <name>javapackages-tools</name>
+    <match>
+      <and>
+        <not>
+          <rule>source</rule>
+        </not>
+        <name>javapackages-tools</name>
+      </and>
+    </match>
+    
+    <!-- -->
+  </rule>
+  
+  <rule>
+    <name>byaccj</name>
+    <match>
+      <and>
+        <not>
+          <rule>source</rule>
+        </not>
+        <name>byaccj</name>
+      </and>
+    </match>
+    
+    <!-- -->
+  </rule>
+  
+  <!-- Matches all non-source packages -->
+  <rule>
+    <name>generic</name>
+	<match>
+	  <not>
+        <rule>source</rule>
+	  </not>
+	<match>
+    
+    <requires>
+      <any>
+        <regex>maven-local</regex>
+        <regex>maven-local-openjdk8</regex>
+        <regex>mvn\(.+:.+\)</regex>
+        <regex>rpmlib\(.+\)</regex>
+        <regex>javapackages-local</regex>
+      </any>
+    </requires>
   </rule>
 </config>
