@@ -284,7 +284,7 @@ Examples:
 		  <not>
 	        <rule>source</rule>
 		  </not>
-		<match>
+		</match>
 	    
 	    <requires>
 	      <any>
