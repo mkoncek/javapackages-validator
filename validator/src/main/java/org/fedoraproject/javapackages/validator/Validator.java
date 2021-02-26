@@ -186,7 +186,6 @@ abstract public class Validator
 		@Override
 		protected Test_result do_validate(String value)
 		{
-			System.out.println(value);
 			final var numeric = Long.parseLong(value);
 			
 			Test_result result = new Test_result(min <= numeric && numeric <= max);

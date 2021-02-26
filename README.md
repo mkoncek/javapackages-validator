@@ -37,14 +37,14 @@ Simply run
 
 	./assembly-${version}/validator-${version}.jar [OPTIONS]
 
-### Command line options
+## Command line options
 
 Traditional help with `-h`, `--help`.
 
 An option to print the configuration in XML form after being read, this is used
 for debugging. Enabled by `-d`, `--dump-config`.
 
-#### Mandatory
+### Mandatory
 
 Path to the configuration file is provided by the `-c`, `--config` flag.
 More to configuration in the next sections.
@@ -61,7 +61,7 @@ the program invocation.
 
 	  ./generator | java -jar validator.jar
 
-#### Optional
+### Optional
 
 The text output is written to the standard output or, if provided by `-o`,
 `--output` into the provided file.
@@ -183,7 +183,8 @@ The validator applies a regular expression search to the value. The regular
 expression is in the form conforming to the [java.util.regex.Pattern](
 https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
 )
-class.<br>
+class.
+<br>
 Examples:
 
 	* Accepts everything.
@@ -191,21 +192,26 @@ Examples:
 		  <regex>.*</regex>
 
 * **`<int-range>`** -
-The validator contains two integer values separated by a dash (`-`). Whitespace
-is ignored. If any of the range limits is ommited then it is substituteb by
+The validator contains two integer values separated by a dash "`-`". For
+readability it is possible to separate the digits by an underscore "`_`" or by
+a single quote symbol "`'`". Whitespace between digits and the dash is ignored.
+<br><br>
+If any of the range limits is ommited then it is substituted by
 negative / positive maximum integer depending on the position within the range.
 The validator expects the string value to represent an integer number as well.
 It passes if the string value is between the limits specified in the range
-**inclusive**.<br>
+**inclusive**.
+<br>
 Examples:
 
 	* Accepts any value in the inclusive range of `[25-75]`.
 	
 		  <int-range>25-75</int-range>
 			
-	* Accepts any representable value lesser or equal to `100`.
+	* Accepts any representable value lesser or equal to `1000`.
 	
-		  <int-range>-100</int-range>`
+		  <int-range> - 1'000</int-range>
+		  <int-range> - 1_000</int-range>
 
 ## Configuration examples
 
@@ -230,9 +236,9 @@ Examples:
 	      </not>
 	    </match>
 	    
-	    <filesize-mb>
-	      <int-range>-15</int-range>
-	    </filesize-mb>
+	    <rpm-file-size-bytes>
+	      <int-range> - 15'000'000</int-range>
+	    </rpm-file-size-bytes>
 	  </rule>
 	  
 	  <rule>

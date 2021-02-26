@@ -19,9 +19,9 @@
       </not>
     </match>
     
-    <filesize-mb>
-      <int-range>-15</int-range>
-    </filesize-mb>
+    <rpm-file-size-bytes>
+      <int-range> - 15'000'000</int-range>
+    </rpm-file-size-bytes>
   </rule>
   
   <rule>

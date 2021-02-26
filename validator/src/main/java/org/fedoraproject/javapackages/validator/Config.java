@@ -40,7 +40,8 @@ import org.fedoraproject.javapackages.validator.Ansi_colors.Decorator;
  */
 public final class Config
 {
-	static final Pattern int_range_pattern = Pattern.compile("([0-9]*)\\s*-\\s*([0-9]*)");
+	static final Pattern int_range_pattern = Pattern.compile("(['_0-9]*)\\s*-\\s*(['_0-9]*)");
+	static final String int_range_replacement_regex = "[_']";
 	
 	private Map<String, Rule> rules = new LinkedHashMap<>();
 	static final Decorator decor = Package_test.color_decorator();
@@ -368,10 +369,10 @@ public final class Config
 						throw new RuntimeException("Could not match <int-range>");
 					}
 					
-					var min_group = matcher.group(1);
+					var min_group = matcher.group(1).replaceAll(int_range_replacement_regex, "");
 					var min = min_group.equals("") ? Long.MIN_VALUE : Long.parseLong(min_group);
 					
-					var max_group = matcher.group(2);
+					var max_group = matcher.group(2).replaceAll(int_range_replacement_regex, "");
 					var max = max_group.equals("") ? Long.MAX_VALUE : Long.parseLong(max_group);
 					
 					result = new Validator.Int_range_validator(min, max);
@@ -476,9 +477,8 @@ public final class Config
 				case "match":
 					result.match = read_match(event_reader);
 					break;
-				}
 				
-				{
+				default:
 					String message;
 					if ((message = message_map.get(start_name)) != null)
 					{
@@ -491,6 +491,11 @@ public final class Config
 								return delegate.do_validate(value).prefix(message);
 							}
 						});
+					}
+					else
+					{
+						throw new RuntimeException(MessageFormat.format(
+								"Found unrecognized node <{0}> inside <rule>", start_name));
 					}
 				}
 				
