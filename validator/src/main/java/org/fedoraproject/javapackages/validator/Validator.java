@@ -30,38 +30,6 @@ abstract public class Validator
 	static private final Ansi_colors.Decorator decor = Package_test.color_decorator();
 	static private int debug_nesting = 0;
 	
-	public final boolean disabled;
-	
-	static class Disabled extends Validator
-	{
-		public Disabled()
-		{
-			super(true);
-		}
-
-		@Override
-		protected Test_result do_validate(String value)
-		{
-			throw new RuntimeException("Trying to evaluate a disabled validator");
-		}
-		
-		@Override
-		public String to_xml()
-		{
-			throw new RuntimeException("Calling to_xml() on a disabled validator");
-		}
-	}
-	
-	public Validator()
-	{
-		this(false);
-	}
-	
-	public Validator(boolean disabled)
-	{
-		this.disabled = disabled;
-	}
-	
 	static final class Test_result
 	{
 		boolean result;
@@ -122,7 +90,6 @@ abstract public class Validator
 		
 		public Delegating_validator(Validator delegate)
 		{
-			super(delegate.disabled);
 			this.delegate = delegate;
 		}
 		
@@ -130,6 +97,23 @@ abstract public class Validator
 		public String to_xml()
 		{
 			return delegate.to_xml();
+		}
+	}
+	
+	static class Print_validator extends Validator
+	{
+		@Override
+		protected Test_result do_validate(String value)
+		{
+			final var result = new Test_result(false);
+			result.verbose_text = new StringBuilder("validator <print/>");
+			return result;
+		}
+		
+		@Override
+		public String to_xml()
+		{
+			return "<print/>";
 		}
 	}
 	
@@ -146,7 +130,7 @@ abstract public class Validator
 		@Override
 		protected Test_result do_validate(String value)
 		{
-			Test_result result = new Test_result(pattern.matcher(value).matches());
+			final var result = new Test_result(pattern.matcher(value).matches());
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
 			
 			result.verbose_text.append("regex \"");
@@ -188,7 +172,7 @@ abstract public class Validator
 		{
 			final var numeric = Long.parseLong(value);
 			
-			Test_result result = new Test_result(min <= numeric && numeric <= max);
+			final var result = new Test_result(min <= numeric && numeric <= max);
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
 			
 			result.verbose_text.append("int-range <");
@@ -294,7 +278,7 @@ abstract public class Validator
 		@Override
 		protected Test_result do_validate(String value)
 		{
-			var result = new Test_result(true);
+			final var result = new Test_result(true);
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
 			result.verbose_text.append("validator <all> ");
 			
@@ -337,7 +321,7 @@ abstract public class Validator
 		@Override
 		protected Test_result do_validate(String value)
 		{
-			var result = new Test_result(false);
+			final var result = new Test_result(false);
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
 			result.verbose_text.append("validator <any> ");
 			
@@ -380,7 +364,7 @@ abstract public class Validator
 		@Override
 		protected Test_result do_validate(String value)
 		{
-			var result = new Test_result(true);
+			final var result = new Test_result(true);
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
 			result.verbose_text.append("validator <none> ");
 			

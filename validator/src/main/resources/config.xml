@@ -10,17 +10,51 @@
     </match>
   </rule>
   
-  <!-- Rule for checking the size of every non-source package -->
   <rule>
-    <name>size</name>
+    <name>binary</name>
     <match>
       <not>
         <rule>source</rule>
       </not>
     </match>
+  </rule>
+  
+  <!-- Rule for checking the size of every non-source package -->
+  <rule>
+    <name>larger binary size</name>
+    <match>
+      <and>
+        <rule>binary</rule>
+        <or>
+          <name>byte-buddy</name>
+          <name>byte-buddy-javadoc</name>
+          <name>ant-lib</name>
+          <name>aqute-bnd-javadoc</name>
+          <name>aqute-bndlib</name>
+          <name>guava</name>
+          <name>guava-javadoc</name>
+          <name>xmvn-minimal</name>
+          <name>maven-lib</name>
+          <name>javapackages-bootstrap</name>
+        </or>
+      </and>
+    </match>
     
     <rpm-file-size-bytes>
-      <int-range> - 15'000'000</int-range>
+      <int-range> - 10'000'000</int-range>
+    </rpm-file-size-bytes>
+  </rule>
+  
+  <rule>
+    <name>general binary size</name>
+    <match>
+      <not>
+        <rule>larger binary size</rule>
+      </not>
+    </match>
+    
+    <rpm-file-size-bytes>
+      <int-range> - 2'000'000</int-range>
     </rpm-file-size-bytes>
   </rule>
   
@@ -28,10 +62,8 @@
     <name>javadoc</name>
     <match>
       <and>
-        <not>
-          <rule>source</rule>
-        </not>
-        <name>.*-javadoc.*</name>
+        <rule>binary</rule>
+        <name>.*-javadoc-.*</name>
       </and>
     </match>
     
@@ -42,9 +74,7 @@
     <name>javapackages-tools</name>
     <match>
       <and>
-        <not>
-          <rule>source</rule>
-        </not>
+        <rule>binary</rule>
         <name>javapackages-tools</name>
       </and>
     </match>
@@ -56,33 +86,11 @@
     <name>byaccj</name>
     <match>
       <and>
-        <not>
-          <rule>source</rule>
-        </not>
+        <rule>binary</rule>
         <name>byaccj</name>
       </and>
     </match>
     
     <!-- -->
-  </rule>
-  
-  <!-- Matches all non-source packages -->
-  <rule>
-    <name>generic</name>
-	<match>
-	  <not>
-        <rule>source</rule>
-	  </not>
-	</match>
-    
-    <requires>
-      <any>
-        <regex>maven-local</regex>
-        <regex>maven-local-openjdk8</regex>
-        <regex>mvn\(.+:.+\)</regex>
-        <regex>rpmlib\(.+\)</regex>
-        <regex>javapackages-local</regex>
-      </any>
-    </requires>
   </rule>
 </config>

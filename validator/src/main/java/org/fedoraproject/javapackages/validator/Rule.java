@@ -405,14 +405,7 @@ public class Rule
 		{
 			final String key = pair.getKey();
 			
-			if (pair.getValue().disabled)
-			{
-				result.append("<" + key + "/>");
-			}
-			else
-			{
-				result.append("<" + key + ">" + pair.getValue().to_xml() + "</" + key + ">");
-			}
+			result.append("<" + key + ">" + pair.getValue().to_xml() + "</" + key + ">");
 		}
 		
 		result.append("</rule>");

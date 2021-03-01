@@ -1,36 +1,67 @@
-<!--
-Supported sizes:
-<filesize-b>
-<filesize-kb>
-<filesize-mb>
--->
-
 <config>
+  <!-- Rule for source packages -->
   <rule>
+    <name>source</name>
     <match>
-      <name>.*-javadoc</name>
+      <or>
+        <arch>src</arch>
+        <arch>nosrc</arch>
+      </or>
     </match>
-    <requires>
-      <whitelist>
-        <regex>java-1.8.0-javadoc</regex>
-      </whitelist>
-    </requires>
-    <files>
-      <whitelist>
-        <regex>/usr/share/javadoc/.*</regex>
-      </whitelist>
-    </files>
   </rule>
-  <!-- Rule matching all packages -->
+  
   <rule>
+    <name>binary</name>
     <match>
-      <name>.*</name>
+      <not>
+        <rule>source</rule>
+      </not>
     </match>
-    <filesize-kb>
-      <int-range>-100</int-range>
-    </filesize-kb>
-    <java-bytecode>
-      <int-range>-50</int-range>
-    </java-bytecode>
+    
+    <rpm-file-size-bytes><print/></rpm-file-size-bytes>
+  </rule>
+  
+  <!-- Rule for checking the size of every non-source package -->
+  <rule>
+    <name>size</name>
+    <match>
+      <rule>binary</rule>
+    </match>
+  </rule>
+  
+  <rule>
+    <name>javadoc</name>
+    <match>
+      <and>
+        <rule>binary</rule>
+        <name>.*-javadoc-.*</name>
+      </and>
+    </match>
+    
+    <!-- -->
+  </rule>
+  
+  <rule>
+    <name>javapackages-tools</name>
+    <match>
+      <and>
+        <rule>binary</rule>
+        <name>javapackages-tools</name>
+      </and>
+    </match>
+    
+    <!-- -->
+  </rule>
+  
+  <rule>
+    <name>byaccj</name>
+    <match>
+      <and>
+        <rule>binary</rule>
+        <name>byaccj</name>
+      </and>
+    </match>
+    
+    <!-- -->
   </rule>
 </config>

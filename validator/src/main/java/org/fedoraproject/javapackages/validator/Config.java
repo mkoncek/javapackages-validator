@@ -61,7 +61,7 @@ public final class Config
 		}
 	}
 	
-	final Rule.Match read_predicate(String end, XMLEventReader event_reader) throws Exception
+	final Rule.Match read_predicate(final String end, XMLEventReader event_reader) throws Exception
 	{
 		switch (end)
 		{
@@ -131,7 +131,9 @@ public final class Config
 					
 					if (rule == null)
 					{
-						throw new RuntimeException("Refering to a nonexisting rule in the <match> field");
+						throw new RuntimeException(MessageFormat.format(
+								"Referring to a nonexisting rule \"{0}\" in the <match> field",
+								content));
 					}
 					
 					var old_match = rule.match;
@@ -170,7 +172,7 @@ public final class Config
 		return result;
 	}
 	
-	final List<Rule.Match> read_predicate_list(String end, XMLEventReader event_reader) throws Exception
+	final List<Rule.Match> read_predicate_list(final String end, XMLEventReader event_reader) throws Exception
 	{
 		var result = new ArrayList<Rule.Match>();
 		
@@ -294,7 +296,7 @@ public final class Config
 		return result;
 	}
 	
-	static final Validator read_validator(String end, XMLEventReader event_reader) throws Exception
+	static final Validator read_validator(final String end, XMLEventReader event_reader) throws Exception
 	{
 		String match_type = null;
 		Validator result = null;
@@ -322,11 +324,17 @@ public final class Config
 				case "all":
 					result = new Validator.All_validator(read_validator_list(start_name, event_reader));
 					break;
+					
 				case "any":
 					result = new Validator.Any_validator(read_validator_list(start_name, event_reader));
 					break;
+					
 				case "none":
 					result = new Validator.None_validator(read_validator_list(start_name, event_reader));
+					break;
+					
+				case "print":
+					result = new Validator.Print_validator();
 					break;
 				}
 				
@@ -340,7 +348,6 @@ public final class Config
 					/// We probably read an empty XML body
 					if (result == null)
 					{
-						result = new Validator.Disabled();
 					}
 					
 					break loop;
@@ -391,7 +398,7 @@ public final class Config
 		return result;
 	}
 	
-	static final ArrayList<Validator> read_validator_list(String end, XMLEventReader event_reader) throws Exception
+	static final ArrayList<Validator> read_validator_list(final String end, XMLEventReader event_reader) throws Exception
 	{
 		var result = new ArrayList<Validator>();
 		
