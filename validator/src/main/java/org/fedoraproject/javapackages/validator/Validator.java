@@ -152,7 +152,7 @@ abstract public class Validator
 		@Override
 		protected Test_result do_validate(String value)
 		{
-			final var result = new Test_result(string.matches(value));
+			final var result = new Test_result(string.equals(value));
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
 			
 			result.verbose_text.append("text \"");

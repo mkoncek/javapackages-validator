@@ -309,7 +309,7 @@ public class Package_test
 				}
 				
 				output.println(MessageFormat.format("{0} {1} - {2}",
-						(tr.result ? "ok" : "nok"), Integer.toString(test_number), tr.message()));
+						(tr.result ? "ok" : "not ok"), Integer.toString(test_number), tr.message()));
 				
 				if (arguments.verbose)
 				{

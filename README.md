@@ -182,6 +182,9 @@ These simply take the string value and accept or reject it.
 
 * **`<fail/>`** - Unconditionally fails, must have empty body.
 
+* **`<text>`** - Compares the text inside the node with the value. Passes only
+on exact match.
+
 * **`<regex>`** -
 The validator applies a regular expression search to the value. The regular
 expression is in the form conforming to the [java.util.regex.Pattern](

@@ -506,11 +506,10 @@ public final class Config
 						break;
 					
 					default:
-						String message;
-						if ((message = message_map.get(start_name)) != null)
+						if (message_map.keySet().contains(start_name))
 						{
 							result.validators.put(start_name, read_validator(
-									start_name, event_reader).prefix(message));
+									start_name, event_reader));
 						}
 						else
 						{

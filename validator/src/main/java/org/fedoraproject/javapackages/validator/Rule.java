@@ -285,6 +285,8 @@ public class Rule
 	
 	private void validate_java_bytecode(Validator validator, Path rpm_path, final String prefix, List<Test_result> result)
 	{
+		final String jb_prefix = Config.message_map.get("java-bytecode");
+		
 		try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
 		{
 			CpioArchiveEntry rpm_entry;
@@ -317,7 +319,7 @@ public class Rule
 							final var decor = Package_test.color_decorator();
 							bc_validator.prefix(
 									decor.decorate(jar_name, Ansi_colors.Type.bright_magenta) + ": " +
-									decor.decorate(class_name, Ansi_colors.Type.cyan) + ": ");
+									decor.decorate(class_name, Ansi_colors.Type.cyan) + ": " + jb_prefix);
 							
 							final var version = Short.toString(version_buffer.getShort());
 							
@@ -441,6 +443,8 @@ public class Rule
 				// {
 				// 	result_validator.list.addAll(any_validator.list);
 				// }
+				
+				result_validator.prefix(Config.message_map.get(key));
 				
 				if (validator instanceof Validator.Any_validator)
 				{
