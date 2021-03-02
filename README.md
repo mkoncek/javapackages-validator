@@ -191,9 +191,9 @@ class.
 <br>
 Examples:
 
-	* Accepts everything.
-	
-		  <regex>.*</regex>
+* Accepts everything.
+
+      <regex>.*</regex>
 
 * **`<int-range>`** -
 The validator contains two integer values separated by a dash "`-`". For
@@ -208,14 +208,14 @@ It passes if the string value is between the limits specified in the range
 <br>
 Examples:
 
-	* Accepts any value in the inclusive range of `[25-75]`.
-	
-		  <int-range>25-75</int-range>
-			
-	* Accepts any representable value lesser or equal to `1000`.
-	
-		  <int-range> - 1'000</int-range>
-		  <int-range> - 1_000</int-range>
+* Accepts any value in the inclusive range of `[25-75]`.
+
+      <int-range>25-75</int-range>
+
+* Accepts any representable value lesser or equal to `1000`.
+
+      <int-range> - 1'000</int-range>
+      <int-range> - 1_000</int-range>
 
 ## Configuration examples
 
