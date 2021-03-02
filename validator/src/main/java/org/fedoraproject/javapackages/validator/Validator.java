@@ -34,6 +34,15 @@ abstract public class Validator
 	
 	static private int debug_nesting = 0;
 	
+	public Validator()
+	{
+	}
+	
+	public Validator(Validator delegate)
+	{
+		this.rule = delegate.rule;
+	}
+	
 	static final class Test_result
 	{
 		Validator validator;
@@ -52,12 +61,6 @@ abstract public class Validator
 			this.message.append(message);
 		}
 		
-		final Test_result prefix(String prefix)
-		{
-			message.insert(0, prefix);
-			return this;
-		}
-		
 		final String message()
 		{
 			return message.toString();
@@ -65,12 +68,21 @@ abstract public class Validator
 	}
 	
 	Rule rule;
+	private String message_prefix = "";
+	
 	protected abstract Test_result do_validate(String value);
 	public abstract String to_xml();
 	
-	public final Test_result validate(String value)
+	public Validator prefix(String message_prefix)
+	{
+		this.message_prefix = message_prefix;
+		return this;
+	}
+	
+	public final Test_result validate(String value, String prefix)
 	{
 		final var result = do_validate(value);
+		result.message.insert(0, prefix + message_prefix);
 		result.validator = this;
 		
 		if (result.result)
@@ -89,23 +101,6 @@ abstract public class Validator
 		}
 		
 		return result;
-	}
-	
-	static abstract class Delegating_validator extends Validator
-	{
-		Validator delegate;
-		
-		public Delegating_validator(Validator delegate)
-		{
-			this.delegate = delegate;
-			this.rule = delegate.rule;
-		}
-		
-		@Override
-		public String to_xml()
-		{
-			return delegate.to_xml();
-		}
 	}
 	
 	static class Pass_validator extends Validator
@@ -141,6 +136,44 @@ abstract public class Validator
 		public String to_xml()
 		{
 			return "<fail/>";
+		}
+	}
+	
+	static class Text_validator extends Validator
+	{
+		String string;
+		
+		public Text_validator(String string)
+		{
+			super();
+			this.string = string;
+		}
+		
+		@Override
+		protected Test_result do_validate(String value)
+		{
+			final var result = new Test_result(string.matches(value));
+			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
+			
+			result.verbose_text.append("text \"");
+			result.verbose_text.append(decor().decorate(string, Type.cyan));
+			result.verbose_text.append("\" ");
+			
+			result.verbose_text.append(result.result ?
+				decor().decorate("matches", Type.green, Type.bold) :
+				decor().decorate("does not match", Type.red, Type.bold));
+			
+			result.verbose_text.append(" value \"");
+			result.verbose_text.append(decor().decorate(value, Type.yellow));
+			result.verbose_text.append("\"");
+			
+			return result;
+		}
+		
+		@Override
+		public String to_xml()
+		{
+			return "<text>" + string + "</text>";
 		}
 	}
 	
@@ -230,7 +263,7 @@ abstract public class Validator
 	
 	static abstract class List_validator extends Validator
 	{
-		protected ArrayList<Validator> list;
+		public ArrayList<Validator> list;
 		
 		protected List_validator(List<Validator> list)
 		{
@@ -262,6 +295,7 @@ abstract public class Validator
 			inserted.append("\": {");
 			inserted.append(System.lineSeparator());
 			result.verbose_text.insert(offset, inserted);
+			result.verbose_text.append("\t".repeat(debug_nesting));
 			result.verbose_text.append("}");
 		}
 		
@@ -290,7 +324,7 @@ abstract public class Validator
 		{
 			for (final var val : list)
 			{
-				final var test_result = val.validate(value);
+				final var test_result = val.do_validate(value);
 				
 				if (test_result.result == false)
 				{
@@ -333,7 +367,7 @@ abstract public class Validator
 		{
 			for (final var val : list)
 			{
-				final var test_result = val.validate(value);
+				final var test_result = val.do_validate(value);
 				
 				if (test_result.result)
 				{
@@ -376,7 +410,7 @@ abstract public class Validator
 		{
 			for (final var val : list)
 			{
-				final var test_result = val.validate(value);
+				final var test_result = val.do_validate(value);
 				
 				if (test_result.result)
 				{

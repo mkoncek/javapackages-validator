@@ -52,7 +52,89 @@
     </match>
   </rule>
   
+  <!-- Package-specific rules -->
+  
+  <rule>
+    <name>byaccj</name>
+    <match>
+      <name>byaccj</name>
+    </match>
+    
+    <requires>
+      <any>
+        <regex>rpmlib\(.*</regex>
+        <regex>libc\.so\.6.*</regex>
+        <text>gcc</text>
+        <text>make</text>
+        <text>rtld(GNU_HASH)</text>
+      </any>
+    </requires>
+  </rule>
+  
+  <rule>
+    <name>xmvn-minimal</name>
+    <match>
+      <name>xmvn-minimal</name>
+    </match>
+    
+    <requires>
+      <any>
+        <text>/usr/bin/sh</text>
+        <text>apache-commons-cli</text>
+        <text>apache-commons-lang3</text>
+        <text>atinject</text>
+        <text>google-guice</text>
+        <text>guava</text>
+        <text>plexus-cipher</text>
+        <text>plexus-classworlds</text>
+        <text>plexus-containers-component-annotations</text>
+        <text>plexus-interpolation</text>
+        <text>plexus-sec-dispatcher</text>
+        <text>plexus-utils</text>
+        <text>sisu</text>
+        <text>slf4j</text>
+        <text>xmvn-api</text>
+        <text>xmvn-connector-aether</text>
+        <text>xmvn-core</text>
+        <text>maven-jdk-binding</text>
+        <text>maven-lib</text>
+        <text>maven-resolver</text>
+        <text>maven-wagon</text>
+        <regex>rpmlib\(.*</regex>
+      </any>
+    </requires>
+  </rule>
+  
+  <rule>
+    <name>javapackages-tools</name>
+    <match>
+      <name>javapackages-tools</name>
+    </match>
+    
+    <requires>
+      <any>
+        <text>coreutils</text>
+        <text>findutils</text>
+        <text>make</text>
+        <text>javapackages-tools</text>
+        <text>config(javapackages-tools)</text>
+        <text>java-11-openjdk-headless</text>
+        <text>javapackages-filesystem</text>
+        <text>which</text>
+      </any>
+    </requires>
+  </rule>
+  
   <!-- RPM file size rules -->
+  
+  <rule>
+    <name>general size</name>
+    <match/>
+    
+    <rpm-file-size-bytes>
+      <int-range> - 2'000'000</int-range>
+    </rpm-file-size-bytes>
+  </rule>
   
   <rule>
     <name>very large size</name>
@@ -73,28 +155,25 @@
   <rule>
     <name>larger size</name>
     <match>
-      <and>
-        <not><rule>very large size</rule></not>
-        <or>
-          <name>ant</name>
-          <name>ant-lib</name>
-          <name>aqute-bnd</name>
-          <name>aqute-bnd-javadoc</name>
-          <name>aqute-bndlib</name>
-          <name>byte-buddy</name>
-          <name>byte-buddy-javadoc</name>
-          <name>guava</name>
-          <name>guava-javadoc</name>
-          <name>jdom</name>
-          <name>jflex</name>
-          <name>junit5</name>
-          <name>maven</name>
-          <name>maven-lib</name>
-          <name>slf4j</name>
-          <name>xalan-j2</name>
-          <name>xmvn-minimal</name>
-        </or>
-      </and>
+      <or>
+        <name>ant</name>
+        <name>ant-lib</name>
+        <name>aqute-bnd</name>
+        <name>aqute-bnd-javadoc</name>
+        <name>aqute-bndlib</name>
+        <name>byte-buddy</name>
+        <name>byte-buddy-javadoc</name>
+        <name>guava</name>
+        <name>guava-javadoc</name>
+        <name>jdom</name>
+        <name>jflex</name>
+        <name>junit5</name>
+        <name>maven</name>
+        <name>maven-lib</name>
+        <name>slf4j</name>
+        <name>xalan-j2</name>
+        <name>xmvn-minimal</name>
+      </or>
     </match>
     
     <rpm-file-size-bytes>
@@ -102,21 +181,16 @@
     </rpm-file-size-bytes>
   </rule>
   
-  <rule>
-    <name>general size</name>
-    <match>
-      <and>
-        <not><rule>larger size</rule></not>
-        <not><rule>very large size</rule></not>
-      </and>
-    </match>
-    
-    <rpm-file-size-bytes>
-      <int-range> - 2'000'000</int-range>
-    </rpm-file-size-bytes>
-  </rule>
-  
   <!-- Java bytecode rules -->
+  
+  <rule>
+    <name>no java bytecode</name>
+    <match/>
+    
+    <java-bytecode>
+      <fail/>
+    </java-bytecode>
+  </rule>
   
   <rule>
     <name>java bytecode maven/ant</name>
@@ -146,46 +220,38 @@
     </java-bytecode>
   </rule>
   
-  <rule>
-    <name>no java bytecode</name>
-    <match>
-      <and>
-        <not><rule>java bytecode maven/ant</rule></not>
-        <not><rule>java bytecode javapackages</rule></not>
-      </and>
-    </match>
-    
-    <java-bytecode>
-      <fail/>
-    </java-bytecode>
-  </rule>
-  
-  <!-- Other rules -->
+  <!-- Requires rules -->
   
   <rule>
-    <name>javadoc</name>
+    <name>requires python</name>
     <match>
-      <name>.*-javadoc-.*</name>
+      <or>
+        <name>python3-javapackages</name>
+        <name>javapackages-generators</name>
+        <name>javapackages-tools</name>
+      </or>
     </match>
     
-    <!-- -->
+    <requires>
+      <any>
+        <regex>.*python3.*</regex>
+        <text>python(abi)</text>
+        <regex>rpmlib\(.*</regex>
+      </any>
+    </requires>
   </rule>
   
   <rule>
-    <name>javapackages-tools</name>
-    <match>
-      <name>javapackages-tools</name>
-    </match>
+    <name>requires</name>
+    <match/>
     
-    <!-- -->
-  </rule>
-  
-  <rule>
-    <name>byaccj</name>
-    <match>
-      <name>byaccj</name>
-    </match>
-    
-    <!-- -->
+    <requires>
+      <any>
+        <regex>rpmlib\(.*</regex>
+        <regex>mvn\(.*</regex>
+        <regex>\(?java.*</regex>
+        <regex>maven.*</regex>
+      </any>
+    </requires>
   </rule>
 </config>

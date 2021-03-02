@@ -221,23 +221,10 @@ public class Package_test
 				final String rpm_name = rpm_path.getFileName().toString();
 				final var rpm_info = new RpmInfo(rpm_path);
 				
-				var applicable_rules = new ArrayList<Rule>();
-				
-				config.rules().stream()
-						.filter(r -> r.is_applicable(rpm_info))
-						.forEach(r -> applicable_rules.add(r));
-				
 				/// Prefix every message with the RPM file name
-				for (var rule : applicable_rules)
-				{
-					var results = rule.apply(rpm_path);
-					
-					for (var tr : results)
-					{
-						tr.prefix(color_decorator.decorate(rpm_name, Type.bright_cyan) + ": ");
-						test_results.add(tr);
-					}
-				}
+				test_results.addAll(Rule.union(config.rules().stream()
+						.filter(r -> r.is_applicable(rpm_info))).apply(rpm_path,
+								color_decorator.decorate(rpm_name, Type.bright_cyan) + ": "));
 				
 				try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
 				{
@@ -326,7 +313,7 @@ public class Package_test
 				
 				if (arguments.verbose)
 				{
-					output.print(MessageFormat.format("[VERBOSE] from rule \"{0}\"", tr.validator.rule.name));
+					output.print(MessageFormat.format("[VERBOSE] from {0}", tr.validator.rule.description()));
 					
 					if (tr.verbose_text != null)
 					{

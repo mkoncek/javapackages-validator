@@ -377,6 +377,10 @@ public final class Config
 				
 				switch (match_type)
 				{
+				case "text":
+					result = new Validator.Text_validator(content);
+					break;
+					
 				case "regex":
 					result = new Validator.Regex_validator(Pattern.compile(content));
 					break;
@@ -505,15 +509,8 @@ public final class Config
 						String message;
 						if ((message = message_map.get(start_name)) != null)
 						{
-							result.validators.put(start_name, new Validator.Delegating_validator(
-									read_validator(start_name, event_reader))
-							{
-								@Override
-								protected Test_result do_validate(String value)
-								{
-									return delegate.do_validate(value).prefix(message);
-								}
-							});
+							result.validators.put(start_name, read_validator(
+									start_name, event_reader).prefix(message));
 						}
 						else
 						{

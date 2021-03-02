@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
@@ -225,21 +227,16 @@ public class Rule
 		}
 	}
 	
-	Method_match rpm_name_match(Pattern match) throws Exception
-	{
-		return new Method_match(RpmInfo.class.getMethod("getName"), match);
-	}
-	
 	String name = null;
 	Match match = null;
 	Map<String, Validator> validators = new LinkedHashMap<>();
 	
-	boolean is_applicable(RpmInfo rpm_info)
+	final boolean is_applicable(RpmInfo rpm_info)
 	{
 		return match.test(rpm_info);
 	}
 	
-	private void validate_files(Validator validator, Path rpm_path, List<Test_result> result)
+	private void validate_files(Validator validator, Path rpm_path, String prefix, List<Test_result> result)
 	{
 		try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
 		{
@@ -253,7 +250,7 @@ public class Rule
 					rpm_entry_name = rpm_entry_name.substring(1);
 				}
 				
-				result.add(validator.validate(rpm_entry_name));
+				result.add(validator.validate(rpm_entry_name, prefix));
 			}
 		}
 		catch (IOException ex)
@@ -262,7 +259,31 @@ public class Rule
 		}
 	}
 	
-	private void validate_java_bytecode(Validator validator, Path rpm_path, List<Test_result> result)
+	static private class Java_bytecode_validator extends Validator
+	{
+		Validator delegate;
+		
+		Java_bytecode_validator(Validator delegate)
+		{
+			super(delegate);
+			this.delegate = delegate;
+		}
+		
+		@Override
+		protected Test_result do_validate(String value)
+		{
+			return delegate.do_validate(value);
+		}
+
+		@Override
+		public String to_xml()
+		{
+			return MessageFormat.format("<{0}>{1}</{0}>", "java-bytecode", delegate.to_xml());
+		}
+		
+	}
+	
+	private void validate_java_bytecode(Validator validator, Path rpm_path, final String prefix, List<Test_result> result)
 	{
 		try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
 		{
@@ -291,27 +312,16 @@ public class Rule
 							var version_buffer = ByteBuffer.allocate(2);
 							jar_stream.read(version_buffer.array());
 							
-							final var bc_validator = new Validator.Delegating_validator(validator)
-							{
-								@Override
-								protected Test_result do_validate(String value)
-								{
-									final var decor = Package_test.color_decorator();
-									return delegate.do_validate(value).prefix(
-											decor.decorate(jar_name, Ansi_colors.Type.bright_magenta) + ": " +
-											decor.decorate(class_name, Ansi_colors.Type.cyan) + ": ");
-								}
-								
-								@Override
-								public String to_xml()
-								{
-									return MessageFormat.format("<{0}>{1}</{0}>", "java-bytecode", delegate.to_xml());
-								}
-							};
+							final var bc_validator = new Java_bytecode_validator(validator);
+							
+							final var decor = Package_test.color_decorator();
+							bc_validator.prefix(
+									decor.decorate(jar_name, Ansi_colors.Type.bright_magenta) + ": " +
+									decor.decorate(class_name, Ansi_colors.Type.cyan) + ": ");
 							
 							final var version = Short.toString(version_buffer.getShort());
 							
-							result.add(bc_validator.validate(version));
+							result.add(bc_validator.validate(version, prefix));
 						}
 					}
 				}
@@ -327,7 +337,7 @@ public class Rule
 		}
 	}
 	
-	public List<Test_result> apply(Path rpm_path)
+	public final List<Test_result> apply(final Path rpm_path, final String prefix)
 	{
 		RpmInfo rpm_info;
 		
@@ -347,7 +357,7 @@ public class Rule
 			
 			if (files != null)
 			{
-				validate_files(files, rpm_path, result);
+				validate_files(files, rpm_path, prefix, result);
 			}
 		}
 		{
@@ -355,7 +365,7 @@ public class Rule
 			
 			if (provides != null)
 			{
-				rpm_info.getProvides().stream().map((s) -> provides.validate(s)).forEachOrdered(result::add);
+				rpm_info.getProvides().stream().map((s) -> provides.validate(s, prefix)).forEachOrdered(result::add);
 			}
 		}
 		{
@@ -363,7 +373,7 @@ public class Rule
 			
 			if (requires != null)
 			{
-				rpm_info.getRequires().stream().map((s) -> requires.validate(s)).forEachOrdered(result::add);
+				rpm_info.getRequires().stream().map((s) -> requires.validate(s, prefix)).forEachOrdered(result::add);
 			}
 		}
 		{
@@ -379,7 +389,7 @@ public class Rule
 			
 			if (rpm_file_size != null)
 			{
-				result.add(rpm_file_size.validate(Long.toString(rpm_path.toFile().length())));
+				result.add(rpm_file_size.validate(Long.toString(rpm_path.toFile().length()), prefix));
 			}
 		}
 		{
@@ -387,11 +397,68 @@ public class Rule
 			
 			if (java_bytecode != null)
 			{
-				validate_java_bytecode(java_bytecode, rpm_path, result);
+				validate_java_bytecode(java_bytecode, rpm_path, prefix, result);
 			}
 		}
 		
 		return result;
+	}
+	
+	public static Rule union(Stream<Rule> rules)
+	{
+		final var result = new Rule()
+		{
+			List<String> rule_names = new ArrayList<>();
+			
+			@Override
+			public String description()
+			{
+				return "a union rule of " + rule_names.stream()
+						.map(s -> "\"" + s + "\"").collect(Collectors.joining(", "));
+			}
+		};
+		
+		rules.forEach(rule ->
+		{
+			result.rule_names.add(rule.name);
+			
+			for (final var pair : rule.validators.entrySet())
+			{
+				final String key = pair.getKey();
+				var result_validator = (Validator.Any_validator) result.validators.get(key);
+				
+				if (result_validator == null)
+				{
+					result_validator = new Validator.Any_validator(new ArrayList<Validator>());
+					result_validator.rule = result;
+					result.validators.put(key, result_validator);
+				}
+				
+				Validator validator = pair.getValue();
+				
+				/// JDK 14
+				// if (validator instanceof Validator.Any_validator any_validator)
+				// {
+				// 	result_validator.list.addAll(any_validator.list);
+				// }
+				
+				if (validator instanceof Validator.Any_validator)
+				{
+					result_validator.list.addAll(((Validator.Any_validator) validator).list);
+				}
+				else
+				{
+					result_validator.list.add(validator);
+				}
+			}
+		});
+		
+		return result;
+	}
+	
+	public String description()
+	{
+		return "rule \"" + name + "\"";
 	}
 	
 	public String to_xml()
