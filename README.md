@@ -178,6 +178,10 @@ The validator passes if none of its member validators accept the value.
 
 These simply take the string value and accept or reject it.
 
+* **`<pass/>`** - Unconditionally passes, must have empty body.
+
+* **`<fail/>`** - Unconditionally fails, must have empty body.
+
 * **`<regex>`** -
 The validator applies a regular expression search to the value. The regular
 expression is in the form conforming to the [java.util.regex.Pattern](
