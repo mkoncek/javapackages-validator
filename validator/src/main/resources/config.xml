@@ -1,41 +1,98 @@
 <config>
-  <!-- Rule for source packages -->
+  <!-- TODO implement detection of source .rpms by using RPMTAG_SOURCEPACKAGE -->
+  
   <rule>
-    <name>source</name>
+    <name>source arch</name>
     <match>
       <or>
         <arch>src</arch>
         <arch>nosrc</arch>
       </or>
     </match>
+    
+    <rpm-file-size-bytes>
+      <fail/>
+    </rpm-file-size-bytes>
   </rule>
   
+  <!-- Module rules -->
+  
   <rule>
-    <name>binary</name>
+    <name>module maven</name>
     <match>
-      <not>
-        <rule>source</rule>
-      </not>
+      <release>.*\.mm</release>
     </match>
   </rule>
   
-  <!-- Rule for checking the size of every non-source package -->
   <rule>
-    <name>larger binary size</name>
+    <name>module ant</name>
+    <match>
+      <release>.*\.am</release>
+    </match>
+  </rule>
+  
+  <rule>
+    <name>module jp-runtime</name>
+    <match>
+      <release>.*\.jpr</release>
+    </match>
+  </rule>
+  
+  <rule>
+    <name>module jp-tools</name>
+    <match>
+      <release>.*\.jpt</release>
+    </match>
+  </rule>
+  
+  <rule>
+    <name>module jp-bootstrap</name>
+    <match>
+      <release>.*\.jpb</release>
+    </match>
+  </rule>
+  
+  <!-- RPM file size rules -->
+  
+  <rule>
+    <name>very large size</name>
     <match>
       <and>
-        <rule>binary</rule>
         <or>
-          <name>byte-buddy</name>
-          <name>byte-buddy-javadoc</name>
+          <name>apache-commons-compress</name>
+          <name>javapackages-bootstrap</name>
+        </or>
+      </and>
+    </match>
+    
+    <rpm-file-size-bytes>
+      <int-range> - 35'000'000</int-range>
+    </rpm-file-size-bytes>
+  </rule>
+  
+  <rule>
+    <name>larger size</name>
+    <match>
+      <and>
+        <not><rule>very large size</rule></not>
+        <or>
+          <name>ant</name>
           <name>ant-lib</name>
+          <name>aqute-bnd</name>
           <name>aqute-bnd-javadoc</name>
           <name>aqute-bndlib</name>
+          <name>byte-buddy</name>
+          <name>byte-buddy-javadoc</name>
           <name>guava</name>
           <name>guava-javadoc</name>
-          <name>xmvn-minimal</name>
+          <name>jdom</name>
+          <name>jflex</name>
+          <name>junit5</name>
+          <name>maven</name>
           <name>maven-lib</name>
-          <name>javapackages-bootstrap</name>
+          <name>slf4j</name>
+          <name>xalan-j2</name>
+          <name>xmvn-minimal</name>
         </or>
       </and>
     </match>
@@ -46,11 +103,12 @@
   </rule>
   
   <rule>
-    <name>general binary size</name>
+    <name>general size</name>
     <match>
-      <not>
-        <rule>larger binary size</rule>
-      </not>
+      <and>
+        <not><rule>larger size</rule></not>
+        <not><rule>very large size</rule></not>
+      </and>
     </match>
     
     <rpm-file-size-bytes>
@@ -58,13 +116,56 @@
     </rpm-file-size-bytes>
   </rule>
   
+  <!-- Java bytecode rules -->
+  
+  <rule>
+    <name>java bytecode maven/ant</name>
+    <match>
+      <or>
+        <rule>module maven</rule>
+        <rule>module ant</rule>
+      </or>
+    </match>
+    
+    <java-bytecode>
+      <int-range>49 - 52</int-range>
+    </java-bytecode>
+  </rule>
+  
+  <rule>
+    <name>java bytecode javapackages</name>
+    <match>
+      <or>
+        <rule>module jp-tools</rule>
+        <rule>module jp-bootstrap</rule>
+      </or>
+    </match>
+    
+    <java-bytecode>
+      <int-range>49 - 55</int-range>
+    </java-bytecode>
+  </rule>
+  
+  <rule>
+    <name>no java bytecode</name>
+    <match>
+      <and>
+        <not><rule>java bytecode maven/ant</rule></not>
+        <not><rule>java bytecode javapackages</rule></not>
+      </and>
+    </match>
+    
+    <java-bytecode>
+      <fail/>
+    </java-bytecode>
+  </rule>
+  
+  <!-- Other rules -->
+  
   <rule>
     <name>javadoc</name>
     <match>
-      <and>
-        <rule>binary</rule>
-        <name>.*-javadoc-.*</name>
-      </and>
+      <name>.*-javadoc-.*</name>
     </match>
     
     <!-- -->
@@ -73,10 +174,7 @@
   <rule>
     <name>javapackages-tools</name>
     <match>
-      <and>
-        <rule>binary</rule>
-        <name>javapackages-tools</name>
-      </and>
+      <name>javapackages-tools</name>
     </match>
     
     <!-- -->
@@ -85,10 +183,7 @@
   <rule>
     <name>byaccj</name>
     <match>
-      <and>
-        <rule>binary</rule>
-        <name>byaccj</name>
-      </and>
+      <name>byaccj</name>
     </match>
     
     <!-- -->

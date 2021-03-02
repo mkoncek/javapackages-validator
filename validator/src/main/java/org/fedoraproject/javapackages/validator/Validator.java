@@ -27,11 +27,16 @@ import org.fedoraproject.javapackages.validator.Ansi_colors.Type;
  */
 abstract public class Validator
 {
-	static private final Ansi_colors.Decorator decor = Package_test.color_decorator();
+	static private final Ansi_colors.Decorator decor()
+	{
+		return Package_test.color_decorator();
+	}
+	
 	static private int debug_nesting = 0;
 	
 	static final class Test_result
 	{
+		Validator validator;
 		boolean result;
 		private StringBuilder message = new StringBuilder();
 		StringBuilder verbose_text;
@@ -43,7 +48,7 @@ abstract public class Validator
 		
 		public Test_result(boolean result, String message)
 		{
-			this.result = result;
+			this(result);
 			this.message.append(message);
 		}
 		
@@ -59,25 +64,27 @@ abstract public class Validator
 		}
 	}
 	
+	Rule rule;
 	protected abstract Test_result do_validate(String value);
 	public abstract String to_xml();
 	
 	public final Test_result validate(String value)
 	{
-		var result = do_validate(value);
+		final var result = do_validate(value);
+		result.validator = this;
 		
 		if (result.result)
 		{
-			result.message.append(decor.decorate("passed", Type.green, Type.bold));
+			result.message.append(decor().decorate("passed", Type.green, Type.bold));
 			result.message.append(" with value \"");
-			result.message.append(decor.decorate(value, Type.yellow));
+			result.message.append(decor().decorate(value, Type.yellow));
 			result.message.append("\"");
 		}
 		else
 		{
-			result.message.append(decor.decorate("failed", Type.red, Type.bold));
+			result.message.append(decor().decorate("failed", Type.red, Type.bold));
 			result.message.append(" with value \"");
-			result.message.append(decor.decorate(value, Type.yellow));
+			result.message.append(decor().decorate(value, Type.yellow));
 			result.message.append("\"");
 		}
 		
@@ -91,6 +98,7 @@ abstract public class Validator
 		public Delegating_validator(Validator delegate)
 		{
 			this.delegate = delegate;
+			this.rule = delegate.rule;
 		}
 		
 		@Override
@@ -100,20 +108,39 @@ abstract public class Validator
 		}
 	}
 	
-	static class Print_validator extends Validator
+	static class Pass_validator extends Validator
 	{
 		@Override
 		protected Test_result do_validate(String value)
 		{
-			final var result = new Test_result(false);
-			result.verbose_text = new StringBuilder("validator <print/>");
+			final var result = new Test_result(true);
+			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
+			result.verbose_text.append("validator <pass>");
 			return result;
 		}
 		
 		@Override
 		public String to_xml()
 		{
-			return "<print/>";
+			return "<pass/>";
+		}
+	}
+	
+	static class Fail_validator extends Validator
+	{
+		@Override
+		protected Test_result do_validate(String value)
+		{
+			final var result = new Test_result(false);
+			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
+			result.verbose_text.append("validator <fail>");
+			return result;
+		}
+		
+		@Override
+		public String to_xml()
+		{
+			return "<fail/>";
 		}
 	}
 	
@@ -134,15 +161,15 @@ abstract public class Validator
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
 			
 			result.verbose_text.append("regex \"");
-			result.verbose_text.append(decor.decorate(pattern.toString(), Type.cyan));
+			result.verbose_text.append(decor().decorate(pattern.toString(), Type.cyan));
 			result.verbose_text.append("\" ");
 			
 			result.verbose_text.append(result.result ?
-				decor.decorate("matches", Type.green, Type.bold) :
-				decor.decorate("does not match", Type.red, Type.bold));
+				decor().decorate("matches", Type.green, Type.bold) :
+				decor().decorate("does not match", Type.red, Type.bold));
 			
 			result.verbose_text.append(" value \"");
-			result.verbose_text.append(decor.decorate(value, Type.yellow));
+			result.verbose_text.append(decor().decorate(value, Type.yellow));
 			result.verbose_text.append("\"");
 					
 			return result;
@@ -176,15 +203,15 @@ abstract public class Validator
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
 			
 			result.verbose_text.append("int-range <");
-			result.verbose_text.append(decor.decorate(MessageFormat.format("{0} - {1}",
+			result.verbose_text.append(decor().decorate(MessageFormat.format("{0} - {1}",
 					min == Long.MIN_VALUE ? "" : Long.toString(min),
 					max == Long.MAX_VALUE ? "" : Long.toString(max)), Type.cyan));
 			result.verbose_text.append("> ");
 			result.verbose_text.append(result.result ?
-					decor.decorate("contains", Type.green, Type.bold) :
-					decor.decorate("does not contain", Type.red, Type.bold));
+					decor().decorate("contains", Type.green, Type.bold) :
+					decor().decorate("does not contain", Type.red, Type.bold));
 			result.verbose_text.append(" value \"");
-			result.verbose_text.append(decor.decorate(value, Type.yellow));
+			result.verbose_text.append(decor().decorate(value, Type.yellow));
 			result.verbose_text.append("\"");
 					
 			return result;
@@ -224,14 +251,14 @@ abstract public class Validator
 			var inserted = new StringBuilder();
 			if (result.result)
 			{
-				inserted.append(decor.decorate("accepted", Type.green, Type.bold));
+				inserted.append(decor().decorate("accepted", Type.green, Type.bold));
 			}
 			else
 			{
-				inserted.append(decor.decorate("rejected", Type.red, Type.bold));
+				inserted.append(decor().decorate("rejected", Type.red, Type.bold));
 			}
 			inserted.append(" value \"");
-			inserted.append(decor.decorate(value, Type.yellow));
+			inserted.append(decor().decorate(value, Type.yellow));
 			inserted.append("\": {");
 			inserted.append(System.lineSeparator());
 			result.verbose_text.insert(offset, inserted);

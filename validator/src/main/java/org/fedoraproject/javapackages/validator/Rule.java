@@ -212,9 +212,11 @@ public class Rule
 			case "getName":
 				name = "name";
 				break;
+				
 			case "getArch":
 				name = "arch";
 				break;
+				
 			default:
 				throw new RuntimeException("Invalid " + this.getClass().getSimpleName());
 			}

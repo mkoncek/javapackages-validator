@@ -45,6 +45,29 @@ public class Package_test
 		return color_decorator;
 	}
 	
+	/// TODO integrate this into the normal rule - validator - test-result workflow
+	static final Rule symlink_rule = new Rule();
+	static final Validator symlink_validator = new Validator()
+	{
+		@Override
+		public String to_xml()
+		{
+			return null;
+		}
+		
+		@Override
+		protected Test_result do_validate(String value)
+		{
+			return null;
+		}
+	};
+	
+	static
+	{
+		symlink_rule.name = "symbolic link resolver";
+		symlink_validator.rule = symlink_rule;
+	};
+	
 	static class Arguments
 	{
 		@Parameter(names = {"-h", "--help"}, help = true, description =
@@ -241,6 +264,10 @@ public class Package_test
 						}
 					}
 				}
+				catch (Exception ex)
+				{
+					throw new RuntimeException(MessageFormat.format("When reading file \"{0}\"", filename), ex);
+				}
 			}
 			
 			for (var pair : symlinks.entrySet())
@@ -278,7 +305,9 @@ public class Package_test
 					message.append(color_decorator.decorate("does not exist", Ansi_colors.Type.red, Ansi_colors.Type.bold));
 				}
 				
-				test_results.add(new Test_result((rpm_file != null), message.toString()));
+				final var symlink_result = new Test_result((rpm_file != null), message.toString());
+				symlink_result.validator = symlink_validator;
+				test_results.add(symlink_result);
 			}
 			
 			int test_number = test_results.isEmpty() ? 0 : 1;
@@ -295,9 +324,17 @@ public class Package_test
 				output.println(MessageFormat.format("{0} {1} - {2}",
 						(tr.result ? "ok" : "nok"), Integer.toString(test_number), tr.message()));
 				
-				if (arguments.verbose && tr.verbose_text != null)
+				if (arguments.verbose)
 				{
-					output.println(tr.verbose_text.toString());
+					output.print(MessageFormat.format("[VERBOSE] from rule \"{0}\"", tr.validator.rule.name));
+					
+					if (tr.verbose_text != null)
+					{
+						output.print(" ");
+						output.print(tr.verbose_text.toString());
+					}
+					
+					output.println();
 				}
 				
 				++test_number;

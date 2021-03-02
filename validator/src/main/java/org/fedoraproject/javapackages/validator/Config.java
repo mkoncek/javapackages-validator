@@ -119,11 +119,18 @@ public final class Config
 				switch (end)
 				{
 				case "name":
-					result = new Rule.Method_match(RpmInfo.class.getMethod("getName"), Pattern.compile(content));
+					result = new Rule.Method_match(
+							RpmInfo.class.getMethod("getName"), Pattern.compile(content));
 					break;
 					
 				case "arch":
-					result = new Rule.Method_match(RpmInfo.class.getMethod("getArch"), Pattern.compile(content));
+					result = new Rule.Method_match(
+							RpmInfo.class.getMethod("getArch"), Pattern.compile(content));
+					break;
+					
+				case "release":
+					result = new Rule.Method_match(
+							RpmInfo.class.getMethod("getRelease"), Pattern.compile(content));
 					break;
 					
 				case "rule":
@@ -172,7 +179,8 @@ public final class Config
 		return result;
 	}
 	
-	final List<Rule.Match> read_predicate_list(final String end, XMLEventReader event_reader) throws Exception
+	final List<Rule.Match> read_predicate_list(
+			final String end, XMLEventReader event_reader) throws Exception
 	{
 		var result = new ArrayList<Rule.Match>();
 		
@@ -332,9 +340,13 @@ public final class Config
 				case "none":
 					result = new Validator.None_validator(read_validator_list(start_name, event_reader));
 					break;
+				
+				case "pass":
+					result = new Validator.Pass_validator();
+					break;
 					
-				case "print":
-					result = new Validator.Print_validator();
+				case "fail":
+					result = new Validator.Fail_validator();
 					break;
 				}
 				
@@ -368,6 +380,7 @@ public final class Config
 				case "regex":
 					result = new Validator.Regex_validator(Pattern.compile(content));
 					break;
+					
 				case "int-range":
 					var matcher = int_range_pattern.matcher(content);
 					
@@ -398,7 +411,8 @@ public final class Config
 		return result;
 	}
 	
-	static final ArrayList<Validator> read_validator_list(final String end, XMLEventReader event_reader) throws Exception
+	static final ArrayList<Validator> read_validator_list(
+			final String end, XMLEventReader event_reader) throws Exception
 	{
 		var result = new ArrayList<Validator>();
 		
@@ -442,82 +456,90 @@ public final class Config
 	{
 		Rule result = new Rule();
 		
-		loop: while (event_reader.hasNext())
+		try
 		{
-			XMLEvent event = event_reader.nextEvent();
-			
-			switch (event.getEventType())
+			loop: while (event_reader.hasNext())
 			{
-			case XMLStreamConstants.START_ELEMENT:
-				final var start_name = event.asStartElement().getName().getLocalPart();
+				XMLEvent event = event_reader.nextEvent();
 				
-				switch (start_name)
+				switch (event.getEventType())
 				{
-				case "name":
-					final var name = read_content(start_name, event_reader);
+				case XMLStreamConstants.START_ELEMENT:
+					final var start_name = event.asStartElement().getName().getLocalPart();
 					
-					if (result.name != null)
+					switch (start_name)
 					{
-						throw new RuntimeException(MessageFormat.format(
-								"Rule contains multiple name fields: \"{0}\" and \"{1}\"",
-								result.name, name));
-					}
-					
-					result.name = name;
-					
-					if (rules.containsKey(result.name))
-					{
-						throw new RuntimeException(MessageFormat.format(
-								"Found a rule with the same name as a previous rule: \"{0}\"",
-								name));
-					}
-					
-					rules.put(result.name, result);
-					break;
-					
-				case "parent":
-					throw new RuntimeException("<parent> no longer used");
-					
-				case "exclusive":
-					throw new RuntimeException("<exclusive> no longer used");
-					
-				case "match":
-					result.match = read_match(event_reader);
-					break;
-				
-				default:
-					String message;
-					if ((message = message_map.get(start_name)) != null)
-					{
-						result.validators.put(start_name,
-								new Validator.Delegating_validator(read_validator(start_name, event_reader))
+					case "name":
+						final var name = read_content(start_name, event_reader);
+						
+						if (result.name != null)
 						{
-							@Override
-							protected Test_result do_validate(String value)
+							throw new RuntimeException(MessageFormat.format(
+									"Rule contains multiple name fields: \"{0}\" and \"{1}\"",
+									result.name, name));
+						}
+						
+						result.name = name;
+						
+						if (rules.containsKey(result.name))
+						{
+							throw new RuntimeException(MessageFormat.format(
+									"Found a rule with the same name as a previous rule: \"{0}\"",
+									name));
+						}
+						
+						rules.put(result.name, result);
+						break;
+						
+					case "parent":
+						throw new RuntimeException("<parent> no longer used");
+						
+					case "exclusive":
+						throw new RuntimeException("<exclusive> no longer used");
+						
+					case "match":
+						result.match = read_match(event_reader);
+						break;
+					
+					default:
+						String message;
+						if ((message = message_map.get(start_name)) != null)
+						{
+							result.validators.put(start_name, new Validator.Delegating_validator(
+									read_validator(start_name, event_reader))
 							{
-								return delegate.do_validate(value).prefix(message);
-							}
-						});
+								@Override
+								protected Test_result do_validate(String value)
+								{
+									return delegate.do_validate(value).prefix(message);
+								}
+							});
+						}
+						else
+						{
+							throw new RuntimeException(MessageFormat.format(
+									"Found unrecognized node <{0}> inside <rule>", start_name));
+						}
 					}
-					else
+					
+					break;
+					
+				case XMLStreamConstants.END_ELEMENT:
+					var end_name = event.asEndElement().getName().getLocalPart();
+					
+					if (end_name.equals("rule"))
 					{
-						throw new RuntimeException(MessageFormat.format(
-								"Found unrecognized node <{0}> inside <rule>", start_name));
+						break loop;
 					}
+					
+					break;
 				}
-				
-				break;
-				
-			case XMLStreamConstants.END_ELEMENT:
-				var end_name = event.asEndElement().getName().getLocalPart();
-				
-				if (end_name.equals("rule"))
-				{
-					break loop;
-				}
-				
-				break;
 			}
+		}
+		catch (Exception ex)
+		{
+			throw new RuntimeException(MessageFormat.format(
+					"When reading rule named \"{0}\"", result.name), ex);
 		}
 		
 		if (result.name == null)
@@ -529,6 +551,8 @@ public final class Config
 		{
 			throw new RuntimeException("Named rule \"" + result.name + "\" does not contain a <match>");
 		}
+		
+		result.validators.values().forEach(v -> v.rule = result);
 		
 		return result;
 	}
@@ -555,8 +579,10 @@ public final class Config
 						case "rule":
 							read_rule(event_reader);
 							break;
+							
 						case "config":
 							break;
+							
 						default:
 							throw new RuntimeException("Found unrecognized node <"
 									+ start_name + "> during reading the configuration file");
