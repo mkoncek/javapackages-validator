@@ -382,7 +382,7 @@ public final class Config
 					break;
 					
 				case "regex":
-					result = new Validator.Regex_validator(Pattern.compile(content));
+					result = new Validator.Regex_validator(content);
 					break;
 					
 				case "int-range":

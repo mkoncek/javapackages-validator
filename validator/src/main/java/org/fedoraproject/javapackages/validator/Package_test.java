@@ -56,7 +56,7 @@ public class Package_test
 		}
 		
 		@Override
-		protected Test_result do_validate(String value)
+		protected Test_result do_validate(String value, RpmInfo rpm_info)
 		{
 			return null;
 		}

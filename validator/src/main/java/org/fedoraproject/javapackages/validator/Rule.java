@@ -236,7 +236,8 @@ public class Rule
 		return match.test(rpm_info);
 	}
 	
-	private void validate_files(Validator validator, Path rpm_path, String prefix, List<Test_result> result)
+	private void validate_files(Validator validator, Path rpm_path, String prefix,
+			RpmInfo rpm_info, List<Test_result> result)
 	{
 		try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
 		{
@@ -250,7 +251,7 @@ public class Rule
 					rpm_entry_name = rpm_entry_name.substring(1);
 				}
 				
-				result.add(validator.validate(rpm_entry_name, prefix));
+				result.add(validator.validate(rpm_entry_name, prefix, rpm_info));
 			}
 		}
 		catch (IOException ex)
@@ -270,9 +271,9 @@ public class Rule
 		}
 		
 		@Override
-		protected Test_result do_validate(String value)
+		protected Test_result do_validate(String value, RpmInfo rpm_info)
 		{
-			return delegate.do_validate(value);
+			return delegate.do_validate(value, rpm_info);
 		}
 
 		@Override
@@ -283,7 +284,8 @@ public class Rule
 		
 	}
 	
-	private void validate_java_bytecode(Validator validator, Path rpm_path, final String prefix, List<Test_result> result)
+	private void validate_java_bytecode(Validator validator, Path rpm_path,
+			String prefix, RpmInfo rpm_info, List<Test_result> result)
 	{
 		final String jb_prefix = Config.message_map.get("java-bytecode");
 		
@@ -323,7 +325,7 @@ public class Rule
 							
 							final var version = Short.toString(version_buffer.getShort());
 							
-							result.add(bc_validator.validate(version, prefix));
+							result.add(bc_validator.validate(version, prefix, rpm_info));
 						}
 					}
 				}
@@ -359,7 +361,7 @@ public class Rule
 			
 			if (files != null)
 			{
-				validate_files(files, rpm_path, prefix, result);
+				validate_files(files, rpm_path, prefix, rpm_info, result);
 			}
 		}
 		{
@@ -367,7 +369,8 @@ public class Rule
 			
 			if (provides != null)
 			{
-				rpm_info.getProvides().stream().map((s) -> provides.validate(s, prefix)).forEachOrdered(result::add);
+				rpm_info.getProvides().stream().map((s) -> provides.
+						validate(s, prefix, rpm_info)).forEachOrdered(result::add);
 			}
 		}
 		{
@@ -375,7 +378,8 @@ public class Rule
 			
 			if (requires != null)
 			{
-				rpm_info.getRequires().stream().map((s) -> requires.validate(s, prefix)).forEachOrdered(result::add);
+				rpm_info.getRequires().stream().map((s) -> requires.
+						validate(s, prefix, rpm_info)).forEachOrdered(result::add);
 			}
 		}
 		{
@@ -391,7 +395,8 @@ public class Rule
 			
 			if (rpm_file_size != null)
 			{
-				result.add(rpm_file_size.validate(Long.toString(rpm_path.toFile().length()), prefix));
+				result.add(rpm_file_size.
+						validate(Long.toString(rpm_path.toFile().length()), prefix, rpm_info));
 			}
 		}
 		{
@@ -399,7 +404,7 @@ public class Rule
 			
 			if (java_bytecode != null)
 			{
-				validate_java_bytecode(java_bytecode, rpm_path, prefix, result);
+				validate_java_bytecode(java_bytecode, rpm_path, prefix, rpm_info, result);
 			}
 		}
 		

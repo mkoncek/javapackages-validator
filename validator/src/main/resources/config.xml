@@ -209,7 +209,264 @@
     </requires>
   </rule>
   
+  <rule>
+    <name>specific requires</name>
+    <match>
+      <or>
+        <name>antlr-C\+\+</name>
+        <name>antlr</name>
+        <name>antlr-tool</name>
+        <name>ant</name>
+        <name>apache-commons-collections-testframework</name>
+        <name>aqute-bnd</name>
+        <name>bsf</name>
+        <name>gradle-local</name>
+        <name>httpcomponents-client</name>
+        <name>ivy-local</name>
+        <name>java_cup</name>
+        <name>javapackages-bootstrap</name>
+        <name>javapackages-generators</name>
+        <name>javapackages-local</name>
+        <name>jdepend-demo</name>
+        <name>jdom-demo</name>
+        <name>jflex</name>
+        <name>jsch</name>
+        <name>jzlib-demo</name>
+        <name>maven-lib</name>
+        <name>maven-local</name>
+        <name>maven</name>
+        <name>maven-openjdk11</name>
+        <name>maven-openjdk8</name>
+        <name>maven-surefire</name>
+        <name>maven-surefire-plugin</name>
+        <name>modello</name>
+        <name>objectweb-asm</name>
+        <name>qdox</name>
+        <name>slf4j-jcl</name>
+        <name>slf4j</name>
+        <name>xalan-j2</name>
+        <name>xalan-j2-xsltc</name>
+        <name>xerces-j2-demo</name>
+        <name>xerces-j2</name>
+        <name>xml-commons-apis</name>
+        <name>xml-commons-resolver</name>
+        <name>xmvn-install</name>
+        <name>xmvn</name>
+        <name>xmvn-resolve</name>
+        <name>xmvn-subst</name>
+      </or>
+    </match>
+    
+    <requires>
+      <any>
+        <text>alternatives</text>
+        <text>ant</text>
+        <text>apache-commons-collections</text>
+        <text>apache-commons-compress</text>
+        <text>apache-commons-logging</text>
+        <text>apache-ivy</text>
+        <text>apache-parent</text>
+        <text>asciidoc</text>
+        <text>bash</text>
+        <text>bcel</text>
+        <text>/bin/sh</text>
+        <text>byaccj</text>
+        <text>config(aqute-bnd)</text>
+        <text>config(javapackages-generators)</text>
+        <text>config(maven-lib)</text>
+        <text>config(maven-openjdk11)</text>
+        <text>config(maven-openjdk8)</text>
+        <text>coreutils</text>
+        <text>gcc-c++</text>
+        <text>gradle</text>
+        <text>jdepend</text>
+        <text>jdom</text>
+        <text>jflex</text>
+        <text>junit5</text>
+        <text>jzlib</text>
+        <text>make</text>
+        <regex>\(maven-surefire-provider.*</regex>
+        <text>osgi(javax.xml)</text>
+        <text>osgi(org.apache.xerces)</text>
+        <text>osgi(org.apache.xml.resolver)</text>
+        <text>osgi(slf4j.api)</text>
+        <text>procps-ng</text>
+        <text>publicsuffix-list</text>
+        <text>regexp</text>
+        <text>sed</text>
+        <text>/usr/bin/bash</text>
+        <text>/usr/bin/mvn</text>
+        <text>/usr/bin/sh</text>
+        <text>/usr/bin/xmvn-install</text>
+        <text>/usr/bin/xmvn-resolve</text>
+        <text>/usr/bin/xmvn-subst</text>
+        <text>/usr/bin/xmvn</text>
+        <text>xalan-j2</text>
+        <text>xerces-j2</text>
+        <text>xml-commons-apis</text>
+        <text>xml-commons-resolver</text>
+        <text>xmlto</text>
+        <text>xmvn-connector-gradle</text>
+        <text>xmvn-connector-ivy</text>
+        <text>xmvn-minimal</text>
+        <text>zip</text>
+      </any>
+    </requires>
+  </rule>
+  
+  <rule>
+    <name>provides</name>
+    <match>
+    </match>
+    
+    <provides>
+      <any>
+        <regex>#{NAME}.*</regex>
+        <regex>mvn\(.*</regex>
+        <regex>osgi\(.*</regex>
+      </any>
+    </provides>
+  </rule>
+  
+  <rule>
+    <name>google-guice provides</name>
+    <match>
+      <name>google-guice</name>
+    </match>
+    
+    <provides>
+      <regex>guice.*</regex>
+    </provides>
+  </rule>
+  
+  <rule>
+    <name>maven provides</name>
+    <match>
+      <name>maven.*</name>
+    </match>
+    
+    <provides>
+      <regex>maven.*</regex>
+    </provides>
+  </rule>
+  
+  <rule>
+    <name>javapackages provides</name>
+    <match>
+      <or>
+        <name>javapackages.*</name>
+        <name>python3-javapackages.*</name>
+      </or>
+    </match>
+    
+    <provides>
+      <any>
+        <text>jpackage-utils</text>
+        <regex>python.*javapackages.*</regex>
+        <regex>javapackages.*</regex>
+        <regex>config\(javapackages.*</regex>
+      </any>
+    </provides>
+  </rule>
+  
+  <rule>
+    <name>plexus provides</name>
+    <match>
+      <name>plexus.*</name>
+    </match>
+    
+    <provides>
+      <regex>plexus.*</regex>
+    </provides>
+  </rule>
+  
+  <rule>
+    <name>ant provides</name>
+    <match>
+      <name>ant.*</name>
+    </match>
+    
+    <provides>
+      <any>
+        <regex>ant.*</regex>
+        <regex>config\(ant.*</regex>
+      </any>
+    </provides>
+  </rule>
+  
+  <rule>
+    <name>xmvn provides</name>
+    <match>
+      <name>xmvn.*</name>
+    </match>
+    
+    <provides>
+      <regex>xmvn.*</regex>
+    </provides>
+  </rule>
+  
+  <rule>
+    <name>specific provides</name>
+    <match>
+      <or>
+        <name>aqute-bnd</name>
+        <name>byaccj-debuginfo</name>
+        <name>javamail</name>
+        <name>javapackages-bootstrap</name>
+        <name>javapackages-filesystem</name>
+        <name>javapackages-tools</name>
+        <name>maven-lib</name>
+        <name>maven-openjdk11</name>
+        <name>maven-openjdk8</name>
+        <name>sisu</name>
+        <name>slf4j</name>
+        <name>xalan-j2</name>
+        <name>xerces-j2</name>
+        <name>xml-commons-apis</name>
+      </or>
+    </match>
+    
+    <provides>
+      <any>
+        <text>ant-junit</text>
+        <text>ant</text>
+        <text>bundled(objectweb-asm)</text>
+        <text>bundled(slf4j)</text>
+        <text>config(aqute-bnd)</text>
+        <text>config(maven-lib)</text>
+        <text>config(maven-openjdk11)</text>
+        <text>config(maven-openjdk8)</text>
+        <text>debuginfo(build-id)</text>
+        <text>eclipse-filesystem</text>
+        <text>gradle-local</text>
+        <text>ivy-local</text>
+        <text>java_cup</text>
+        <text>javax.mail</text>
+        <text>jaxp_parser_impl</text>
+        <text>jaxp_transform_impl</text>
+        <text>jcl-over-slf4j</text>
+        <text>jflex</text>
+        <text>jul-to-slf4j</text>
+        <text>maven-local-openjdk8</text>
+        <text>maven-local</text>
+        <text>xml-commons-jaxp-1.3-apis</text>
+        <text>xml-commons</text>
+      </any>
+    </provides>
+  </rule>
+  
   <!-- Package-specific rules -->
+  
+  <rule>
+    <name>javapackages-bootstrap</name>
+    <match>
+      <name>javapackages-bootstrap</name>
+    </match>
+    
+    <provides>
+      <regex>bundled\(.*</regex>
+    </provides>
+  </rule>
   
   <rule>
     <name>byaccj</name>
