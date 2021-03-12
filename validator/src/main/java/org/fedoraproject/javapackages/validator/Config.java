@@ -50,8 +50,17 @@ public final class Config
 	static
 	{
 		message_map.put("files", "[Files]");
-		message_map.put("requires", "[Requires]");
+		
 		message_map.put("provides", "[Provides]");
+		message_map.put("requires", "[Requires]");
+		message_map.put("conflicts", "[Conflicts]");
+		message_map.put("obsoletes", "[Obsoletes]");
+		message_map.put("recommends", "[Recommends]");
+		message_map.put("suggests", "[Suggests]");
+		message_map.put("supplements", "[Supplements]");
+		message_map.put("enhances", "[Enhances]");
+		message_map.put("order-with-requires", "[Order with requires]");
+		
 		message_map.put("java-bytecode", "[Bytecode version]");
 		message_map.put("rpm-file-size-bytes", "[RPM File size in bytes]");
 		
@@ -131,6 +140,41 @@ public final class Config
 				case "release":
 					result = new Rule.Method_match(
 							RpmInfo.class.getMethod("getRelease"), Pattern.compile(content));
+					break;
+				
+				case "distribution":
+					final boolean want_source;
+					
+					if (content.equals("source"))
+					{
+						want_source = true;
+					}
+					else if (content.equals("binary"))
+					{
+						want_source = false;
+					}
+					else
+					{
+						throw new RuntimeException(MessageFormat.format(
+								"Found unrecognized type \"{0}\" inside <distribution>",
+								content));
+					}
+					
+					result = new Rule.Match()
+					{
+						@Override
+						public boolean test(RpmInfo rpm_info)
+						{
+							return rpm_info.isSourcePackage() == want_source;
+						}
+						
+						@Override
+						public String to_xml()
+						{
+							return MessageFormat.format("<{0}>{1}</{0}>", end, content);
+						}
+					};
+					
 					break;
 					
 				case "rule":

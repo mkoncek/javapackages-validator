@@ -1,67 +1,12 @@
 <config>
-  <!-- Rule for source packages -->
   <rule>
-    <name>source</name>
+    <name>obsoletes</name>
     <match>
-      <or>
-        <arch>src</arch>
-        <arch>nosrc</arch>
-      </or>
-    </match>
-  </rule>
-  
-  <rule>
-    <name>binary</name>
-    <match>
-      <not>
-        <rule>source</rule>
-      </not>
+      <distribution>binary</distribution>
     </match>
     
-    <rpm-file-size-bytes><print/></rpm-file-size-bytes>
-  </rule>
-  
-  <!-- Rule for checking the size of every non-source package -->
-  <rule>
-    <name>size</name>
-    <match>
-      <rule>binary</rule>
-    </match>
-  </rule>
-  
-  <rule>
-    <name>javadoc</name>
-    <match>
-      <and>
-        <rule>binary</rule>
-        <name>.*-javadoc-.*</name>
-      </and>
-    </match>
-    
-    <!-- -->
-  </rule>
-  
-  <rule>
-    <name>javapackages-tools</name>
-    <match>
-      <and>
-        <rule>binary</rule>
-        <name>javapackages-tools</name>
-      </and>
-    </match>
-    
-    <!-- -->
-  </rule>
-  
-  <rule>
-    <name>byaccj</name>
-    <match>
-      <and>
-        <rule>binary</rule>
-        <name>byaccj</name>
-      </and>
-    </match>
-    
-    <!-- -->
+    <rpm-file-size-bytes>
+      <fail/>
+    </rpm-file-size-bytes>
   </rule>
 </config>

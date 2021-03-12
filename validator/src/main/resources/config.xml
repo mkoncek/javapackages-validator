@@ -1,6 +1,4 @@
 <config>
-  <!-- TODO implement detection of source .rpms by using RPMTAG_SOURCEPACKAGE -->
-  
   <rule>
     <name>source arch</name>
     <match>
@@ -55,11 +53,38 @@
   <!-- RPM file size rules -->
   
   <rule>
-    <name>general size</name>
-    <match/>
+    <name>general binary rpm size</name>
+    <match>
+      <distribution>binary</distribution>
+    </match>
     
     <rpm-file-size-bytes>
-      <int-range> - 2'000'000</int-range>
+      <int-range> - 4'000'000</int-range>
+    </rpm-file-size-bytes>
+  </rule>
+  
+  <rule>
+    <name>general source rpm size</name>
+    <match>
+      <distribution>source</distribution>
+    </match>
+    
+    <rpm-file-size-bytes>
+      <int-range> - 6'000'000</int-range>
+    </rpm-file-size-bytes>
+  </rule>
+  
+  <rule>
+    <name>larger size</name>
+    <match>
+      <or>
+        <name>maven-lib</name>
+        <name>xmvn-minimal</name>
+      </or>
+    </match>
+    
+    <rpm-file-size-bytes>
+      <int-range> - 10'000'000</int-range>
     </rpm-file-size-bytes>
   </rule>
   
@@ -76,35 +101,6 @@
     
     <rpm-file-size-bytes>
       <int-range> - 35'000'000</int-range>
-    </rpm-file-size-bytes>
-  </rule>
-  
-  <rule>
-    <name>larger size</name>
-    <match>
-      <or>
-        <name>ant</name>
-        <name>ant-lib</name>
-        <name>aqute-bnd</name>
-        <name>aqute-bnd-javadoc</name>
-        <name>aqute-bndlib</name>
-        <name>byte-buddy</name>
-        <name>byte-buddy-javadoc</name>
-        <name>guava</name>
-        <name>guava-javadoc</name>
-        <name>jdom</name>
-        <name>jflex</name>
-        <name>junit5</name>
-        <name>maven</name>
-        <name>maven-lib</name>
-        <name>slf4j</name>
-        <name>xalan-j2</name>
-        <name>xmvn-minimal</name>
-      </or>
-    </match>
-    
-    <rpm-file-size-bytes>
-      <int-range> - 10'000'000</int-range>
     </rpm-file-size-bytes>
   </rule>
   
@@ -453,6 +449,139 @@
         <text>xml-commons</text>
       </any>
     </provides>
+  </rule>
+  
+  <!-- Obsoletes -->
+  
+  <rule>
+    <name>obsoletes</name>
+    <match/>
+    
+    <obsoletes>
+      <fail/>
+    </obsoletes>
+  </rule>
+  
+  <!-- Conflicts -->
+  
+  <rule>
+    <name>conflicts</name>
+    <match/>
+    
+    <conflicts>
+      <fail/>
+    </conflicts>
+  </rule>
+  
+  <rule>
+    <name>specific conflicts</name>
+    <match>
+      <or>
+        <name>maven-openjdk8</name>
+        <name>maven-openjdk11</name>
+      </or>
+    </match>
+    
+    <conflicts>
+      <text>maven-jdk-binding</text>
+    </conflicts>
+  </rule>
+  
+  <!-- Recommends -->
+  
+  <rule>
+    <name>recommends</name>
+    <match/>
+    
+    <recommends>
+      <fail/>
+    </recommends>
+  </rule>
+  
+  <rule>
+    <name>specific recommends</name>
+    <match>
+      <or>
+        <name>ant</name>
+        <name>byaccj-debuginfo</name>
+      </or>
+    </match>
+    
+    <recommends>
+      <any>
+        <text>byaccj-debugsource(x86-64)</text>
+        <text>java-devel</text>
+      </any>
+    </recommends>
+  </rule>
+  
+  <!-- Suggests -->
+  
+  <rule>
+    <name>suggests</name>
+    <match/>
+    
+    <suggests>
+      <fail/>
+    </suggests>
+  </rule>
+  
+  <rule>
+    <name>specific suggests</name>
+    <match>
+      <or>
+        <name>maven</name>
+        <name>xmvn-minimal</name>
+      </or>
+    </match>
+    
+    <suggests>
+      <text>maven-openjdk11</text>
+    </suggests>
+  </rule>
+  
+  <!-- Supplements -->
+  
+  <rule>
+    <name>supplements</name>
+    <match/>
+    
+    <supplements>
+      <fail/>
+    </supplements>
+  </rule>
+  
+  <!-- Enhances -->
+  
+  <rule>
+    <name>enhances</name>
+    <match/>
+    
+    <enhances>
+      <fail/>
+    </enhances>
+  </rule>
+  
+  <!-- Order with requires -->
+  
+  <rule>
+    <name>order with requires</name>
+    <match/>
+    
+    <order-with-requires>
+      <fail/>
+    </order-with-requires>
+  </rule>
+  
+  <rule>
+    <name>specific order with requires</name>
+    <match>
+      <name>maven-lib</name>
+    </match>
+    
+    <order-with-requires>
+      <text>xmvn-minimal</text>
+    </order-with-requires>
   </rule>
   
   <!-- Package-specific rules -->

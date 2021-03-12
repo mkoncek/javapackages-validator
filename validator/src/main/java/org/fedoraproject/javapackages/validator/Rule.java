@@ -341,6 +341,16 @@ public class Rule
 		}
 	}
 	
+	private void validate_trait(RpmInfo rpm_info, Stream<String> stream, String name, String prefix, List<Test_result> result)
+	{
+		final Validator validator = validators.get(name);
+		
+		if (validator != null)
+		{
+			stream.map((s) -> validator.validate(s, prefix, rpm_info)).forEachOrdered(result::add);
+		}
+	}
+	
 	public final List<Test_result> apply(final Path rpm_path, final String prefix)
 	{
 		RpmInfo rpm_info;
@@ -364,32 +374,17 @@ public class Rule
 				validate_files(files, rpm_path, prefix, rpm_info, result);
 			}
 		}
-		{
-			final Validator provides = validators.get("provides");
-			
-			if (provides != null)
-			{
-				rpm_info.getProvides().stream().map((s) -> provides.
-						validate(s, prefix, rpm_info)).forEachOrdered(result::add);
-			}
-		}
-		{
-			final Validator requires = validators.get("requires");
-			
-			if (requires != null)
-			{
-				rpm_info.getRequires().stream().map((s) -> requires.
-						validate(s, prefix, rpm_info)).forEachOrdered(result::add);
-			}
-		}
-		{
-			final Validator obsoletes = validators.get("obsoletes");
-			
-			if (obsoletes != null)
-			{
-				throw new RuntimeException("Obsoletes not implemented");
-			}
-		}
+		
+		validate_trait(rpm_info, rpm_info.getProvides().stream(), "provides", prefix, result);
+		validate_trait(rpm_info, rpm_info.getRequires().stream(), "requires", prefix, result);
+		validate_trait(rpm_info, rpm_info.getConflicts().stream(), "conflicts", prefix, result);
+		validate_trait(rpm_info, rpm_info.getObsoletes().stream(), "obsoletes", prefix, result);
+		validate_trait(rpm_info, rpm_info.getRecommends().stream(), "recommends", prefix, result);
+		validate_trait(rpm_info, rpm_info.getSuggests().stream(), "suggests", prefix, result);
+		validate_trait(rpm_info, rpm_info.getSupplements().stream(), "supplements", prefix, result);
+		validate_trait(rpm_info, rpm_info.getEnhances().stream(), "enhances", prefix, result);
+		validate_trait(rpm_info, rpm_info.getOrderWithRequires().stream(), "order-with-requires", prefix, result);
+		
 		{
 			final Validator rpm_file_size = validators.get("rpm-file-size-bytes");
 			
