@@ -539,12 +539,6 @@ public final class Config
 						rules.put(result.name, result);
 						break;
 						
-					case "parent":
-						throw new RuntimeException("<parent> no longer used");
-						
-					case "exclusive":
-						throw new RuntimeException("<exclusive> no longer used");
-						
 					case "match":
 						result.match = read_match(event_reader);
 						break;

@@ -1,0 +1,46 @@
+<config>
+  <rule>
+    <name>source</name>
+    <match>
+      <or>
+        <arch>src</arch>
+        <arch>nosrc</arch>
+      </or>
+    </match>
+  </rule>
+  
+  <rule>
+    <match><rule>source</rule></match>
+    <name>javapackages-tools</name>
+    <files>
+      <regex>.*</regex>
+    </files>
+  </rule>
+  
+  <rule>
+    <match><rule>source</rule></match>
+    <name>javadoc</name>
+    <files>
+      <regex>.*</regex>
+    </files>
+  </rule>
+  
+  <rule>
+    <name>generic</name>
+	<match/>
+    <requires>
+      <any>
+        <regex>maven-local</regex>
+        <regex>maven-local-openjdk8</regex>
+        <all>
+          <int-range>-99</int-range>
+          <int-range>99-</int-range>
+          <int-range>99-100</int-range>
+          <none>
+            <regex>.*</regex>
+          </none>
+        </all>
+      </any>
+    </requires>
+  </rule>
+</config>
