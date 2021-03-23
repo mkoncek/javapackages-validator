@@ -82,19 +82,49 @@ public class XML_document implements AutoCloseable
 			return content;
 		}
 		
+		public final Stream<XML_node> gets()
+		{
+			if (descendants != null)
+			{
+				return descendants.stream();
+			}
+			
+			return Stream.empty();
+		}
+		
+		public final Optional<XML_node> getop()
+		{
+			try
+			{
+				return gets().reduce((lhs, rhs) ->
+				{
+					throw new RuntimeException("Multiple entries of \"" + name + "\" found");
+				});
+			}
+			catch (NoSuchElementException ex)
+			{
+				throw new NoSuchElementException(ex.getMessage() + ": \"" + name + "\"");
+			}
+		}
+		
+		public final XML_node get()
+		{
+			return getop().get();
+		}
+		
 		public final Stream<XML_node> gets(String name)
 		{
-			return gets_from(name, descendants.stream());
+			return gets().filter(n -> n.name().equals(name));
 		}
 		
 		public final Optional<XML_node> getop(String name)
 		{
-			return getop_from(name, descendants.stream());
+			return getop_from(name, gets());
 		}
 		
 		public final XML_node get(String name)
 		{
-			return get_from(name, descendants.stream());
+			return getop(name).get();
 		}
 	}
 	
@@ -151,29 +181,25 @@ public class XML_document implements AutoCloseable
 		}
 	}
 	
-	private static final Stream<XML_node> gets_from(String name, Stream<XML_node> stream)
+	private static final Optional<XML_node> getop_from(Stream<XML_node> stream)
 	{
-		return stream.filter(d -> d.name.equals(name));
+		return stream.reduce((lhs, rhs) -> {throw new IllegalStateException();});
 	}
 	
 	private static final Optional<XML_node> getop_from(String name, Stream<XML_node> stream)
 	{
 		try
 		{
-			return gets_from(name, stream).reduce((lhs, rhs) ->
-			{
-				throw new RuntimeException("Multiple entries of \"" + name + "\" found");
-			});
+			return getop_from(stream.filter(n -> n.name().equals(name)));
 		}
 		catch (NoSuchElementException ex)
 		{
 			throw new NoSuchElementException(ex.getMessage() + ": \"" + name + "\"");
 		}
-	}
-	
-	private static final XML_node get_from(String name, Stream<XML_node> stream)
-	{
-		return getop_from(name, stream).get();
+		catch (IllegalStateException ex)
+		{
+			throw new IllegalStateException("Multiple entries of \"" + name + "\" found");
+		}
 	}
 	
 	private BufferedReader reader;

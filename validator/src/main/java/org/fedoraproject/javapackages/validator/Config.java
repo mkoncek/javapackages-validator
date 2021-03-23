@@ -15,9 +15,7 @@
  */
 package org.fedoraproject.javapackages.validator;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,13 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.events.XMLEvent;
-
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Ansi_colors.Decorator;
+import org.fedoraproject.javapackages.validator.XML_document.XML_node;
 
 /**
  * @author Marián Konček
@@ -70,277 +64,147 @@ public final class Config
 		}
 	}
 	
-	final Rule.Match read_predicate(final String end, XMLEventReader event_reader) throws Exception
+	final Rule.Match read_match_primitive(XML_node node)
 	{
-		switch (end)
+		Rule.Match result = null;
+		
+		try
+		{
+			switch (node.name())
+			{
+			case "name":
+				result = new Rule.Method_match(
+						RpmInfo.class.getMethod("getName"), Pattern.compile(node.content()));
+				break;
+				
+			case "arch":
+				result = new Rule.Method_match(
+						RpmInfo.class.getMethod("getArch"), Pattern.compile(node.content()));
+				break;
+				
+			case "release":
+				result = new Rule.Method_match(
+						RpmInfo.class.getMethod("getRelease"), Pattern.compile(node.content()));
+				break;
+			
+			case "distribution":
+				final boolean want_source;
+				
+				switch (node.content())
+				{
+				case "source":
+					want_source = true;
+					break;
+					
+				case "binary":
+					want_source = false;
+					break;
+					
+				default:
+					throw new RuntimeException(MessageFormat.format(
+							"Found unrecognized type \"{0}\" inside <distribution>",
+							node.content()));
+				}
+				
+				result = new Rule.Match()
+				{
+					@Override
+					public boolean test(RpmInfo rpm_info)
+					{
+						return rpm_info.isSourcePackage() == want_source;
+					}
+					
+					@Override
+					public String to_xml()
+					{
+						return MessageFormat.format("<{0}>{1}</{0}>", node.name(), node.content());
+					}
+				};
+				
+				break;
+				
+			case "rule":
+				var rule = rules.get(node.content());
+				
+				if (rule == null)
+				{
+					throw new RuntimeException(MessageFormat.format(
+							"Referring to a nonexisting rule \"{0}\" in the <match> field",
+							node.content()));
+				}
+				
+				var old_match = rule.match;
+				var result_match = new Rule.Rule_match(rule);
+				
+				rule.match = new Rule.Match()
+				{
+					@Override
+					public boolean test(RpmInfo rpm_info)
+					{
+						result_match.result = old_match.test(rpm_info);
+						return result_match.result;
+					}
+					
+					@Override
+					public String to_xml()
+					{
+						return old_match.to_xml();
+					}
+				};
+				
+				result = result_match;
+				
+				break;
+			}
+		}
+		catch (Exception ex)
+		{
+			throw new RuntimeException(ex);
+		}
+		
+		return result;
+	}
+
+	final Rule.Match read_match_inside(XML_node node)
+	{
+		switch (node.name())
 		{
 		case "and":
-			return new Rule.And_match(read_predicate_list(end, event_reader));
+			return new Rule.And_match(read_match_list(node));
 			
 		case "or":
-			return new Rule.Or_match(read_predicate_list(end, event_reader));
+			return new Rule.Or_match(read_match_list(node));
+			
+		case "not":
+			return new Rule.Not_match(read_match_inside(node.get()));
 			
 		default:
-			break;
+			return read_match_primitive(node);
 		}
-		
-		Rule.Match result = null;
-		
-		loop: while (event_reader.hasNext())
-		{
-			XMLEvent event = event_reader.nextEvent();
-			
-			switch (event.getEventType())
-			{
-			case XMLStreamConstants.END_ELEMENT:
-				var end_name = event.asEndElement().getName().getLocalPart();
-				
-				if (end_name.equals(end))
-				{
-					break loop;
-				}
-				
-				break;
-				
-			case XMLStreamConstants.START_ELEMENT:
-				var start_name = event.asStartElement().getName().getLocalPart();
-				
-				if (end.equals("not"))
-				{
-					if (result != null)
-					{
-						throw new RuntimeException("<not> must contain exactly one element");
-					}
-					
-					result = new Rule.Not_match(read_predicate(start_name, event_reader));
-				}
-				
-				break;
-				
-			case XMLStreamConstants.CHARACTERS:
-				var content = event.asCharacters().getData().strip();
-				
-				if (result != null)
-				{
-					continue;
-				}
-				
-				switch (end)
-				{
-				case "name":
-					result = new Rule.Method_match(
-							RpmInfo.class.getMethod("getName"), Pattern.compile(content));
-					break;
-					
-				case "arch":
-					result = new Rule.Method_match(
-							RpmInfo.class.getMethod("getArch"), Pattern.compile(content));
-					break;
-					
-				case "release":
-					result = new Rule.Method_match(
-							RpmInfo.class.getMethod("getRelease"), Pattern.compile(content));
-					break;
-				
-				case "distribution":
-					final boolean want_source;
-					
-					if (content.equals("source"))
-					{
-						want_source = true;
-					}
-					else if (content.equals("binary"))
-					{
-						want_source = false;
-					}
-					else
-					{
-						throw new RuntimeException(MessageFormat.format(
-								"Found unrecognized type \"{0}\" inside <distribution>",
-								content));
-					}
-					
-					result = new Rule.Match()
-					{
-						@Override
-						public boolean test(RpmInfo rpm_info)
-						{
-							return rpm_info.isSourcePackage() == want_source;
-						}
-						
-						@Override
-						public String to_xml()
-						{
-							return MessageFormat.format("<{0}>{1}</{0}>", end, content);
-						}
-					};
-					
-					break;
-					
-				case "rule":
-					var rule = rules.get(content);
-					
-					if (rule == null)
-					{
-						throw new RuntimeException(MessageFormat.format(
-								"Referring to a nonexisting rule \"{0}\" in the <match> field",
-								content));
-					}
-					
-					var old_match = rule.match;
-					var result_match = new Rule.Rule_match(rule);
-					
-					rule.match = new Rule.Match()
-					{
-						@Override
-						public boolean test(RpmInfo rpm_info)
-						{
-							result_match.result = old_match.test(rpm_info);
-							return result_match.result;
-						}
-						
-						@Override
-						public String to_xml()
-						{
-							return old_match.to_xml();
-						}
-					};
-					
-					result = result_match;
-					
-					break;
-				}
-				
-				break;
-			}
-		}
-		
-		if (result == null)
-		{
-			throw new RuntimeException("Could not read predicate");
-		}
-		
-		return result;
 	}
 	
-	final List<Rule.Match> read_predicate_list(
-			final String end, XMLEventReader event_reader) throws Exception
+	final List<Rule.Match> read_match_list(XML_node node)
 	{
 		var result = new ArrayList<Rule.Match>();
-		
-		loop: while (event_reader.hasNext())
-		{
-			XMLEvent event = event_reader.nextEvent();
-			
-			switch (event.getEventType())
-			{
-			case XMLStreamConstants.START_ELEMENT:
-				var start_name = event.asStartElement().getName().getLocalPart();
-				
-				result.add(read_predicate(start_name, event_reader));
-				
-				break;
-				
-			case XMLStreamConstants.END_ELEMENT:
-				var end_name = event.asEndElement().getName().getLocalPart();
-				
-				if (end_name.equals(end))
-				{
-					break loop;
-				}
-				
-				break;
-			}
-		}
-		
+		node.gets().forEach(n -> result.add(read_match_inside(n)));
 		if (result.isEmpty())
 		{
-			throw new RuntimeException("Trying to read an empty list");
+			throw new RuntimeException("Read an empty list at <" + node.name() + ">");
 		}
-		
 		return result;
 	}
 	
-	static final String read_content(final String end, XMLEventReader event_reader) throws Exception
+	final Rule.Match read_match(XML_node node)
 	{
-		String result = null;
+		Rule.Match result;
 		
-		loop: while (event_reader.hasNext())
+		var inner_node = node.getop();
+		
+		if (inner_node.isPresent())
 		{
-			XMLEvent event = event_reader.nextEvent();
-			
-			switch (event.getEventType())
-			{
-			case XMLStreamConstants.END_ELEMENT:
-				final var end_name = event.asEndElement().getName().getLocalPart();
-				
-				if (end_name.equals(end))
-				{
-					break loop;
-				}
-				
-				break;
-				
-			case XMLStreamConstants.START_ELEMENT:
-				throw new RuntimeException("Reading XML node but expected content");
-				
-			case XMLStreamConstants.CHARACTERS:
-				 result = event.asCharacters().getData().strip();
-				
-				if (result != null)
-				{
-					continue;
-				}
-				
-				break;
-			}
+			result = read_match_inside(inner_node.get());
 		}
-		
-		if (result == null)
-		{
-			throw new RuntimeException("Could not read XML node content");
-		}
-		
-		return result;
-	}
-	
-	final Rule.Match read_match(XMLEventReader event_reader) throws Exception
-	{
-		Rule.Match result = null;
-		
-		loop: while (event_reader.hasNext())
-		{
-			XMLEvent event = event_reader.nextEvent();
-			
-			switch (event.getEventType())
-			{
-			case XMLStreamConstants.END_ELEMENT:
-				var end_name = event.asEndElement().getName().getLocalPart();
-				
-				if (end_name.equals("match"))
-				{
-					break loop;
-				}
-				
-				break;
-				
-			case XMLStreamConstants.START_ELEMENT:
-				var start_name = event.asStartElement().getName().getLocalPart();
-				
-				if (result == null)
-				{
-					result = read_predicate(start_name, event_reader);
-				}
-				else
-				{
-					throw new RuntimeException("<match> can contain at most one node");
-				}
-				
-				break;
-			}
-		}
-		
-		if (result == null)
+		else
 		{
 			result = new Rule.All_match();
 		}
@@ -348,242 +212,117 @@ public final class Config
 		return result;
 	}
 	
-	static final Validator read_validator(final String end, XMLEventReader event_reader) throws Exception
+	final Validator read_validator_body(XML_node node)
 	{
-		String match_type = null;
 		Validator result = null;
 		
-		loop: while (event_reader.hasNext())
+		switch (node.name())
 		{
-			XMLEvent event = event_reader.nextEvent();
+		case "all":
+			result = new Validator.All_validator(read_validator_list(node));
+			break;
 			
-			switch (event.getEventType())
-			{
-			case XMLStreamConstants.START_ELEMENT:
-				var start_name = event.asStartElement().getName().getLocalPart();
-				
-				if (match_type == null)
-				{
-					match_type = start_name;
-				}
-				else
-				{
-					throw new RuntimeException("A rule can contain at most one validator");
-				}
-				
-				switch (start_name)
-				{
-				case "all":
-					result = new Validator.All_validator(read_validator_list(start_name, event_reader));
-					break;
-					
-				case "any":
-					result = new Validator.Any_validator(read_validator_list(start_name, event_reader));
-					break;
-					
-				case "none":
-					result = new Validator.None_validator(read_validator_list(start_name, event_reader));
-					break;
-				
-				case "pass":
-					result = new Validator.Pass_validator();
-					break;
-					
-				case "fail":
-					result = new Validator.Fail_validator();
-					break;
-				}
-				
-				break;
-				
-			case XMLStreamConstants.END_ELEMENT:
-				var end_name = event.asEndElement().getName().getLocalPart();
-				
-				if (end_name.equals(end))
-				{
-					/// We probably read an empty XML body
-					if (result == null)
-					{
-					}
-					
-					break loop;
-				}
-				
-				break;
-				
-			case XMLStreamConstants.CHARACTERS:
-				var content = event.asCharacters().getData().strip();
-				
-				if (match_type == null || result != null)
-				{
-					continue;
-				}
-				
-				switch (match_type)
-				{
-				case "text":
-					result = new Validator.Text_validator(content);
-					break;
-					
-				case "regex":
-					result = new Validator.Regex_validator(content);
-					break;
-					
-				case "int-range":
-					var matcher = int_range_pattern.matcher(content);
-					
-					if (! matcher.matches())
-					{
-						throw new RuntimeException("Could not match <int-range>");
-					}
-					
-					var min_group = matcher.group(1).replaceAll(int_range_replacement_regex, "");
-					var min = min_group.equals("") ? Long.MIN_VALUE : Long.parseLong(min_group);
-					
-					var max_group = matcher.group(2).replaceAll(int_range_replacement_regex, "");
-					var max = max_group.equals("") ? Long.MAX_VALUE : Long.parseLong(max_group);
-					
-					result = new Validator.Int_range_validator(min, max);
-					break;
-				}
-				
-				break;
-			}
-		}
+		case "any":
+			result = new Validator.Any_validator(read_validator_list(node));
+			break;
+			
+		case "none":
+			result = new Validator.None_validator(read_validator_list(node));
+			break;
 		
-		if (result == null)
-		{
-			throw new RuntimeException("internal error: function read_validator returned null, end is " + end);
+		case "pass":
+			result = new Validator.Pass_validator();
+			break;
+			
+		case "fail":
+			result = new Validator.Fail_validator();
+			break;
+			
+		case "text":
+			result = new Validator.Text_validator(node.content());
+			break;
+			
+		case "regex":
+			result = new Validator.Regex_validator(node.content());
+			break;
+			
+		case "int-range":
+			var matcher = int_range_pattern.matcher(node.content());
+			
+			if (! matcher.matches())
+			{
+				throw new RuntimeException("Could not match <int-range>");
+			}
+			
+			var min_group = matcher.group(1).replaceAll(int_range_replacement_regex, "");
+			var min = min_group.equals("") ? Long.MIN_VALUE : Long.parseLong(min_group);
+			
+			var max_group = matcher.group(2).replaceAll(int_range_replacement_regex, "");
+			var max = max_group.equals("") ? Long.MAX_VALUE : Long.parseLong(max_group);
+			
+			result = new Validator.Int_range_validator(min, max);
+			break;
 		}
 		
 		return result;
 	}
 	
-	static final ArrayList<Validator> read_validator_list(
-			final String end, XMLEventReader event_reader) throws Exception
+	final ArrayList<Validator> read_validator_list(XML_node node)
 	{
 		var result = new ArrayList<Validator>();
-		
-		loop: while (event_reader.hasNext())
-		{
-			XMLEvent event = event_reader.peek();
-			
-			switch (event.getEventType())
-			{
-			case XMLStreamConstants.START_ELEMENT:
-				var start_name = event.asStartElement().getName().getLocalPart();
-				result.add(read_validator(start_name, event_reader));
-				
-				break;
-				
-			case XMLStreamConstants.END_ELEMENT:
-				event = event_reader.nextEvent();
-				var end_name = event.asEndElement().getName().getLocalPart();
-				
-				if (end_name.equals(end))
-				{
-					break loop;
-				}
-				
-				break;
-			
-			default:
-				event = event_reader.nextEvent();
-			}
-		}
-		
+		node.gets().forEach(n -> result.add(read_validator_body(n)));
 		if (result.isEmpty())
 		{
-			throw new RuntimeException("Trying to read an empty list");
+			throw new RuntimeException("Read an empty list at <" + node.name() + ">");
 		}
-		
 		return result;
 	}
 	
-	final Rule read_rule(XMLEventReader event_reader) throws Exception
+	final Rule read_rule(XML_node node) throws Exception
 	{
 		Rule result = new Rule();
 		
 		try
 		{
-			loop: while (event_reader.hasNext())
+			node.gets().forEach(inner_node ->
 			{
-				XMLEvent event = event_reader.nextEvent();
-				
-				switch (event.getEventType())
+				switch (inner_node.name())
 				{
-				case XMLStreamConstants.START_ELEMENT:
-					final var start_name = event.asStartElement().getName().getLocalPart();
-					
-					switch (start_name)
+				case "name":
+					result.name = inner_node.content();
+					if (rules.containsKey(result.name))
 					{
-					case "name":
-						final var name = read_content(start_name, event_reader);
-						
-						if (result.name != null)
-						{
-							throw new RuntimeException(MessageFormat.format(
-									"Rule contains multiple name fields: \"{0}\" and \"{1}\"",
-									result.name, name));
-						}
-						
-						result.name = name;
-						
-						if (rules.containsKey(result.name))
-						{
-							throw new RuntimeException(MessageFormat.format(
-									"Found a rule with the same name as a previous rule: \"{0}\"",
-									name));
-						}
-						
-						rules.put(result.name, result);
-						break;
-						
-					case "match":
-						result.match = read_match(event_reader);
-						break;
-					
-					default:
-						if (message_map.keySet().contains(start_name))
-						{
-							result.validators.put(start_name, read_validator(
-									start_name, event_reader));
-						}
-						else
-						{
-							throw new RuntimeException(MessageFormat.format(
-									"Found unrecognized node <{0}> inside <rule>", start_name));
-						}
+						throw new RuntimeException(MessageFormat.format(
+								"Found a rule with the same name as a previous rule: \"{0}\"",
+								result.name));
 					}
 					
+					rules.put(result.name, result);
 					break;
 					
-				case XMLStreamConstants.END_ELEMENT:
-					var end_name = event.asEndElement().getName().getLocalPart();
+				case "match":
+					result.match = read_match(inner_node);
+					break;
 					
-					if (end_name.equals("rule"))
+				default:
+					if (message_map.keySet().contains(inner_node.name()))
 					{
-						break loop;
+						result.validators.put(inner_node.name(), read_validator_body(inner_node.get()));
+					}
+					else
+					{
+						throw new RuntimeException(MessageFormat.format(
+								"Found unrecognized node <{0}> inside <rule>", inner_node.name()));
 					}
 					
 					break;
 				}
-			}
+			});
 		}
 		catch (Exception ex)
 		{
 			throw new RuntimeException(MessageFormat.format(
 					"When reading rule named \"{0}\"", result.name), ex);
-		}
-		
-		if (result.name == null)
-		{
-			throw new RuntimeException("Rule \"" + result.name + "\" does not have a <name>");
-		}
-		
-		if (result.match == null)
-		{
-			throw new RuntimeException("Named rule \"" + result.name + "\" does not contain a <match>");
 		}
 		
 		result.validators.values().forEach(v -> v.rule = result);
@@ -593,55 +332,13 @@ public final class Config
 	
 	public Config(InputStream is) throws Exception
 	{
-		try (var br = new BufferedReader(new InputStreamReader(is)))
+		try (var document = new XML_document(is))
 		{
-			var event_reader = XMLInputFactory.newInstance().createXMLEventReader(br);
+			document.start("config");
 			
-			try
+			for (var rule_node : document.nodes())
 			{
-				loop: while (event_reader.hasNext())
-				{
-					XMLEvent event = event_reader.nextEvent();
-					
-					switch (event.getEventType())
-					{
-					case XMLStreamConstants.START_ELEMENT:
-						var start_name = event.asStartElement().getName().getLocalPart();
-						
-						switch (start_name)
-						{
-						case "rule":
-							read_rule(event_reader);
-							break;
-							
-						case "config":
-							break;
-							
-						default:
-							throw new RuntimeException("Found unrecognized node <"
-									+ start_name + "> during reading the configuration file");
-						}
-						
-						break;
-						
-					case XMLStreamConstants.END_ELEMENT:
-						var end_name = event.asEndElement().getName().getLocalPart();
-						
-						if (end_name.equals("config"))
-						{
-							break loop;
-						}
-						
-						break;
-						
-					default:
-						continue;
-					}
-				}
-			}
-			finally
-			{
-				event_reader.close();
+				read_rule(rule_node);
 			}
 		}
 	}

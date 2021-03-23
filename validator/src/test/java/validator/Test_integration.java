@@ -15,13 +15,7 @@
  */
 package validator;
 
-import java.io.FileInputStream;
-
-import org.fedoraproject.javapackages.validator.Config;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.xmlunit.builder.DiffBuilder;
-import org.xmlunit.builder.Input;
 
 /**
  * @author Marián Konček
