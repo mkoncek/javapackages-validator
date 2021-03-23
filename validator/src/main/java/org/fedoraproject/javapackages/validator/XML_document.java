@@ -21,19 +21,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
 
 /**
  * @author Marián Konček
  */
-public class XML_document
+public class XML_document implements AutoCloseable
 {
 	public static class XML_node
 	{
@@ -81,14 +82,72 @@ public class XML_document
 			return content;
 		}
 		
+		public final Stream<XML_node> gets(String name)
+		{
+			return gets_from(name, descendants.stream());
+		}
+		
+		public final Optional<XML_node> getop(String name)
+		{
+			return getop_from(name, descendants.stream());
+		}
+		
 		public final XML_node get(String name)
 		{
 			return get_from(name, descendants.stream());
 		}
+	}
+	
+	public static class XML_node_iterator implements Iterator<XML_node>
+	{
+		private final XMLEventReader reader;
 		
-		public final Stream<XML_node> gets(String name)
+		public XML_node_iterator(XMLEventReader reader)
 		{
-			return gets_from(name, descendants.stream());
+			this.reader = reader;
+		}
+		
+		@Override
+		public boolean hasNext()
+		{
+			try
+			{
+				loop: while (reader.hasNext())
+				{
+					var event = reader.peek();
+					
+					switch (event.getEventType())
+					{
+					case XMLStreamConstants.END_ELEMENT:
+					case XMLStreamConstants.END_DOCUMENT:
+						break loop;
+						
+					case XMLStreamConstants.START_ELEMENT:
+						return true;
+					}
+					
+					reader.nextEvent();
+				}
+				
+				return false;
+			}
+			catch (XMLStreamException ex)
+			{
+				throw new RuntimeException(ex);
+			}
+		}
+
+		@Override
+		public XML_node next()
+		{
+			try
+			{
+				return read_node(reader);
+			}
+			catch (XMLStreamException ex)
+			{
+				throw new RuntimeException(ex);
+			}
 		}
 	}
 	
@@ -97,14 +156,14 @@ public class XML_document
 		return stream.filter(d -> d.name.equals(name));
 	}
 	
-	private static final XML_node get_from(String name, Stream<XML_node> stream)
+	private static final Optional<XML_node> getop_from(String name, Stream<XML_node> stream)
 	{
 		try
 		{
 			return gets_from(name, stream).reduce((lhs, rhs) ->
 			{
 				throw new RuntimeException("Multiple entries of \"" + name + "\" found");
-			}).get();
+			});
 		}
 		catch (NoSuchElementException ex)
 		{
@@ -112,41 +171,81 @@ public class XML_document
 		}
 	}
 	
-	private ArrayList<XML_node> nodes = new ArrayList<>();
+	private static final XML_node get_from(String name, Stream<XML_node> stream)
+	{
+		return getop_from(name, stream).get();
+	}
+	
+	private BufferedReader reader;
+	private XMLEventReader event_reader;
+	
+	@Override
+	public void close() throws Exception
+	{
+		event_reader.close();
+		reader.close();
+	}
 	
 	public XML_document(InputStream is) throws IOException, XMLStreamException
 	{
-		try (var reader = new BufferedReader(new InputStreamReader(is)))
-		{
-			XMLEventReader event_reader = null;
-			
-			try
-			{
-				event_reader = XMLInputFactory.newInstance().createXMLEventReader(reader);
-				
-				while (event_reader.hasNext())
-				{
-					nodes.add(read_node(event_reader));
-				}
-				
-				nodes.remove(nodes.size() - 1);
-			}
-			catch (XMLStreamException ex)
-			{
-				event_reader.close();
-				throw ex;
-			}
-		}
+		reader = new BufferedReader(new InputStreamReader(is));
+		event_reader = XMLInputFactory.newInstance().createXMLEventReader(reader);
 	}
 	
-	private XML_node read_node(XMLEventReader event_reader) throws XMLStreamException
+	public final XML_document start(String name) throws XMLStreamException
+	{
+		while (event_reader.hasNext())
+		{
+			var event = event_reader.nextEvent();
+			if (event.getEventType() == XMLStreamConstants.START_ELEMENT &&
+					event.asStartElement().getName().getLocalPart().equals(name))
+			{
+				break;
+			}
+		}
+		
+		return this;
+	}
+	
+	public final XML_document end(String name) throws XMLStreamException
+	{
+		while (event_reader.hasNext())
+		{
+			var event = event_reader.nextEvent();
+			if (event.getEventType() == XMLStreamConstants.END_ELEMENT &&
+					event.asEndElement().getName().getLocalPart().equals(name))
+			{
+				break;
+			}
+		}
+		
+		return this;
+	}
+	
+	public final Iterator<XML_node> iterator()
+	{
+		return new XML_node_iterator(event_reader);
+	}
+	
+	public final Iterable<XML_node> nodes()
+	{
+		return new Iterable<XML_document.XML_node>()
+		{
+			@Override
+			public Iterator<XML_node> iterator()
+			{
+				return XML_document.this.iterator();
+			}
+		};
+	}
+	
+	private static XML_node read_node(XMLEventReader event_reader) throws XMLStreamException
 	{
 		var result = new XML_node();
-		XMLEvent event = null;
 		
 		loop: while (event_reader.hasNext())
 		{
-			event = event_reader.peek();
+			var event = event_reader.peek();
 			
 			switch (event.getEventType())
 			{
@@ -209,22 +308,5 @@ public class XML_document
 		}
 		
 		return result;
-	}
-	
-	public final XML_node get(String name)
-	{
-		return get_from(name, nodes.stream());
-	}
-	
-	public final Stream<XML_node> gets(String name)
-	{
-		return gets_from(name, nodes.stream());
-	}
-	
-	public final String dump()
-	{
-		var sb = new StringBuilder();
-		nodes.stream().forEach(n -> n.dump(sb));
-		return sb.toString();
 	}
 }
