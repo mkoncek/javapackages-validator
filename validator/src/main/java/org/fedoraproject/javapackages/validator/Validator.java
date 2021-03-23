@@ -70,7 +70,7 @@ abstract public class Validator
 	Rule rule;
 	private String message_prefix = "";
 	
-	protected abstract Test_result do_validate(String value, RpmInfo rpm_info);
+	protected abstract Test_result do_validate(Object value, RpmInfo rpm_info);
 	public abstract String to_xml();
 	
 	public Validator prefix(String message_prefix)
@@ -79,7 +79,7 @@ abstract public class Validator
 		return this;
 	}
 	
-	public final Test_result validate(String value, String prefix, RpmInfo rpm_info)
+	public final Test_result validate(Object value, String prefix, RpmInfo rpm_info)
 	{
 		final var result = do_validate(value, rpm_info);
 		result.message.insert(0, prefix + message_prefix);
@@ -112,7 +112,7 @@ abstract public class Validator
 	static class Pass_validator extends Validator
 	{
 		@Override
-		protected Test_result do_validate(String value, RpmInfo rpm_info)
+		protected Test_result do_validate(Object value, RpmInfo rpm_info)
 		{
 			final var result = new Test_result(true);
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
@@ -130,7 +130,7 @@ abstract public class Validator
 	static class Fail_validator extends Validator
 	{
 		@Override
-		protected Test_result do_validate(String value, RpmInfo rpm_info)
+		protected Test_result do_validate(Object value, RpmInfo rpm_info)
 		{
 			final var result = new Test_result(false);
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
@@ -156,7 +156,7 @@ abstract public class Validator
 		}
 		
 		@Override
-		protected Test_result do_validate(String value, RpmInfo rpm_info)
+		protected Test_result do_validate(Object value, RpmInfo rpm_info)
 		{
 			final var string = substitute(this.string, rpm_info);
 			
@@ -196,11 +196,11 @@ abstract public class Validator
 		}
 		
 		@Override
-		protected Test_result do_validate(String value, RpmInfo rpm_info)
+		protected Test_result do_validate(Object value, RpmInfo rpm_info)
 		{
 			final var pattern = substitute(this.pattern, rpm_info);
 			
-			final var result = new Test_result(value.matches(pattern));
+			final var result = new Test_result(value.toString().matches(pattern));
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
 			
 			result.verbose_text.append("regex \"");
@@ -238,9 +238,9 @@ abstract public class Validator
 		}
 		
 		@Override
-		protected Test_result do_validate(String value, RpmInfo rpm_info)
+		protected Test_result do_validate(Object value, RpmInfo rpm_info)
 		{
-			final var numeric = Long.parseLong(value);
+			final var numeric = Long.parseLong(value.toString());
 			
 			final var result = new Test_result(min <= numeric && numeric <= max);
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
@@ -281,9 +281,9 @@ abstract public class Validator
 			this.list = new ArrayList<Validator>(list);
 		}
 		
-		protected abstract void do_list_validate(String value, RpmInfo rpm_info, Test_result result);
+		protected abstract void do_list_validate(Object value, RpmInfo rpm_info, Test_result result);
 		
-		protected final void partial_validate(String value, RpmInfo rpm_info, Test_result result)
+		protected final void partial_validate(Object value, RpmInfo rpm_info, Test_result result)
 		{
 			int offset = result.verbose_text.length();
 			
@@ -330,7 +330,7 @@ abstract public class Validator
 		}
 		
 		@Override
-		protected void do_list_validate(String value, RpmInfo rpm_info, Test_result result)
+		protected void do_list_validate(Object value, RpmInfo rpm_info, Test_result result)
 		{
 			for (final var val : list)
 			{
@@ -347,7 +347,7 @@ abstract public class Validator
 		}
 		
 		@Override
-		protected Test_result do_validate(String value, RpmInfo rpm_info)
+		protected Test_result do_validate(Object value, RpmInfo rpm_info)
 		{
 			final var result = new Test_result(true);
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
@@ -373,7 +373,7 @@ abstract public class Validator
 		}
 		
 		@Override
-		protected void do_list_validate(String value, RpmInfo rpm_info, Test_result result)
+		protected void do_list_validate(Object value, RpmInfo rpm_info, Test_result result)
 		{
 			for (final var val : list)
 			{
@@ -390,7 +390,7 @@ abstract public class Validator
 		}
 		
 		@Override
-		protected Test_result do_validate(String value, RpmInfo rpm_info)
+		protected Test_result do_validate(Object value, RpmInfo rpm_info)
 		{
 			final var result = new Test_result(false);
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));
@@ -416,7 +416,7 @@ abstract public class Validator
 		}
 		
 		@Override
-		protected void do_list_validate(String value, RpmInfo rpm_info, Test_result result)
+		protected void do_list_validate(Object value, RpmInfo rpm_info, Test_result result)
 		{
 			for (final var val : list)
 			{
@@ -433,7 +433,7 @@ abstract public class Validator
 		}
 		
 		@Override
-		protected Test_result do_validate(String value, RpmInfo rpm_info)
+		protected Test_result do_validate(Object value, RpmInfo rpm_info)
 		{
 			final var result = new Test_result(true);
 			result.verbose_text = new StringBuilder("\t".repeat(debug_nesting));

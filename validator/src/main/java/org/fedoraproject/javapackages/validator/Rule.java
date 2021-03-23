@@ -246,12 +246,13 @@ public class Rule
 			{
 				String rpm_entry_name = rpm_entry.getName();
 				
+				/// TODO
 				if (rpm_entry_name.startsWith("./"))
 				{
 					rpm_entry_name = rpm_entry_name.substring(1);
 				}
 				
-				result.add(validator.validate(rpm_entry_name, prefix, rpm_info));
+				result.add(validator.validate(rpm_entry, prefix, rpm_info));
 			}
 		}
 		catch (IOException ex)
@@ -271,7 +272,7 @@ public class Rule
 		}
 		
 		@Override
-		protected Test_result do_validate(String value, RpmInfo rpm_info)
+		protected Test_result do_validate(Object value, RpmInfo rpm_info)
 		{
 			return delegate.do_validate(value, rpm_info);
 		}

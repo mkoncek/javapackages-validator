@@ -22,7 +22,6 @@ import java.io.InputStreamReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -92,24 +91,21 @@ public class XML_document implements AutoCloseable
 			return Stream.empty();
 		}
 		
+		private final RuntimeException wrap(RuntimeException ex)
+		{
+			return new RuntimeException("Inside a node named <" + name + ">", ex);
+		}
+		
 		public final Optional<XML_node> getop()
 		{
 			try
 			{
-				return gets().reduce((lhs, rhs) ->
-				{
-					throw new RuntimeException("Multiple entries of \"" + name + "\" found");
-				});
+				return getop_from(gets());
 			}
-			catch (NoSuchElementException ex)
+			catch (RuntimeException ex)
 			{
-				throw new NoSuchElementException(ex.getMessage() + ": \"" + name + "\"");
+				throw wrap(ex);
 			}
-		}
-		
-		public final XML_node get()
-		{
-			return getop().get();
 		}
 		
 		public final Stream<XML_node> gets(String name)
@@ -117,14 +113,38 @@ public class XML_document implements AutoCloseable
 			return gets().filter(n -> n.name().equals(name));
 		}
 		
-		public final Optional<XML_node> getop(String name)
+		private final XML_node get_wrapper(Optional<XML_node> optional)
 		{
-			return getop_from(name, gets());
+			try
+			{
+				return optional.get();
+			}
+			catch (RuntimeException ex)
+			{
+				throw wrap(ex);
+			}
+		}
+		
+		public final XML_node get()
+		{
+			return get_wrapper(getop());
 		}
 		
 		public final XML_node get(String name)
 		{
-			return getop(name).get();
+			return get_wrapper(getop(name));
+		}
+		
+		public final Optional<XML_node> getop(String name)
+		{
+			try
+			{
+				return getop_from(name, gets());
+			}
+			catch (RuntimeException ex)
+			{
+				throw wrap(ex);
+			}
 		}
 	}
 	
@@ -183,7 +203,10 @@ public class XML_document implements AutoCloseable
 	
 	private static final Optional<XML_node> getop_from(Stream<XML_node> stream)
 	{
-		return stream.reduce((lhs, rhs) -> {throw new IllegalStateException();});
+		return stream.reduce((lhs, rhs) ->
+		{
+			throw new RuntimeException("Multiple entries found, expected at most one");
+		});
 	}
 	
 	private static final Optional<XML_node> getop_from(String name, Stream<XML_node> stream)
@@ -192,13 +215,9 @@ public class XML_document implements AutoCloseable
 		{
 			return getop_from(stream.filter(n -> n.name().equals(name)));
 		}
-		catch (NoSuchElementException ex)
+		catch (RuntimeException ex)
 		{
-			throw new NoSuchElementException(ex.getMessage() + ": \"" + name + "\"");
-		}
-		catch (IllegalStateException ex)
-		{
-			throw new IllegalStateException("Multiple entries of \"" + name + "\" found");
+			throw new RuntimeException("Requested entry name was <" + name + ">", ex);
 		}
 	}
 	

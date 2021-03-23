@@ -23,8 +23,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
+import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Ansi_colors.Decorator;
 import org.fedoraproject.javapackages.validator.XML_document.XML_node;
@@ -278,6 +280,62 @@ public final class Config
 		return result;
 	}
 	
+	final Validator read_validator_files(XML_node node) throws Exception
+	{
+		String match = node.get("match").content();
+		
+		Optional<String> symlink = null;
+		
+		{
+			var op_sym = node.getop("symlink");
+			if (op_sym.isPresent())
+			{
+				var op_target = op_sym.get().getop("target");
+				if (op_target.isPresent())
+				{
+					symlink = Optional.of(op_target.get().content());
+				}
+				else
+				{
+					symlink = Optional.empty();
+				}
+			}
+		}
+		
+		boolean want_directory = node.getop("directory").isPresent();
+		
+		return new Validator()
+		{
+			@Override
+			public String to_xml()
+			{
+				/// TODO
+				return "";
+			}
+			
+			@Override
+			protected Test_result do_validate(Object value, RpmInfo rpm_info)
+			{
+				return validate((CpioArchiveEntry) value, rpm_info);
+			}
+			
+			private Test_result validate(CpioArchiveEntry value, RpmInfo rpm_info)
+			{
+				var result = new Test_result(true);
+				
+				if (match == null || value.getName().matches(match))
+				{
+					if (want_directory && ! value.isDirectory())
+					{
+						result.result = false;
+					}
+				}
+				
+				return result;
+			}
+		};
+	}
+	
 	final Rule read_rule(XML_node node) throws Exception
 	{
 		Rule result = new Rule();
@@ -302,6 +360,10 @@ public final class Config
 					
 				case "match":
 					result.match = read_match(inner_node);
+					break;
+					
+				case "files":
+					/// TODO
 					break;
 					
 				default:

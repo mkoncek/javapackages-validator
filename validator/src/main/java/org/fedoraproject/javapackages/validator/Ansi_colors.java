@@ -36,7 +36,7 @@ public class Ansi_colors
 	 * one color value, if none if provided then the default color is white.
 	 * @return Decorated string.
 	 */
-	public static String decorate(String string, Type... types)
+	public static String decorate(Object object, Type... types)
 	{
 		Type color = null;
 		
@@ -133,7 +133,7 @@ public class Ansi_colors
 			break;
 		}
 		
-		result.append(string);
+		result.append(object.toString());
 		result.append("\033[0m");
 		
 		return result.toString();
@@ -141,22 +141,22 @@ public class Ansi_colors
 	
 	static interface Decorator
 	{
-		public String decorate(String string, Type... types);
+		public String decorate(Object object, Type... types);
 	}
 	
 	static class Default_decorator implements Decorator
 	{
-		public String decorate(String string, Type... types)
+		public String decorate(Object object, Type... types)
 		{
-			return Ansi_colors.decorate(string, types);
+			return Ansi_colors.decorate(object, types);
 		}
 	}
 	
 	static class No_decorator implements Decorator
 	{
-		public String decorate(String string, Type... types)
+		public String decorate(Object object, Type... types)
 		{
-			return string;
+			return object.toString();
 		}
 	}
 }
