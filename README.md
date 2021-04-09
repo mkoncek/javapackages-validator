@@ -77,13 +77,36 @@ In order to print only failed checks use the `-n`, `--only-failed` flag.
 ## Configuration
 
 The configuration file is an XML file.
-It contains the main node `<config>`. This contains variable amount of nodes of
-type `<rule>`. Each rule must have exactly one `<name>` and `<match>` node.
+It contains the main node `<config>`. This contains one node `<execution>` and
+a variable amount of nodes of type `<rule>`. Each rule must have exactly one
+`<name>` and `<match>` node.
+
+### Execution
+
+`<execution>` consists of recursive strucutre of `<tag>` nodes optionally
+grouped in logical operators `<all>` and `<any>`.
+
+`<tag>` refers to a group of rules which contain the same `<tag>` node. An empty
+tag is equivalent to a tag containing an empty string.
+
+The validator itself executes the rules in order specified by this node. The
+execution of a `<tag>` means the execution of all the rules of that tag. It only
+succeeds if all the rules succeed. The composite nodes `<all>` and `<any>` are
+self-explanatory.
+
+`<any>` has a special behaviour that it first tries to select a tag for which
+at least one rule is applicable to the given `.rpm`.
+
+Rules may / must contain the following nodes:
 
 ### Name
 
 `<name>` is used to refer to already defined rules. Two rules cannot have the
 same name.
+
+### Tag
+`<tag>` is used to group rules together into an execution as explained above.
+Tag may be omitted in which case it is considered an empty string.
 
 ### Match
 
@@ -144,9 +167,6 @@ are:
 * **`<rpm-file-size-bytes>`** -
 Applies the validator on the file size of the `.rpm` file in bytes.
 
-* **`<files>`** -
-Applies the validator on each file path contained in the `.rpm` file.
-
 * **`<requires>`** -
 Applies the validator on each string in the `requires` section.
 
@@ -156,6 +176,21 @@ Applies the validator on each string in the `provides` section.
 * **`<java-bytecode>`** -
 Applies the validator on each numeric version string of each `.class` file of
 each `.jar` file contained in the `.rpm` file.
+
+* **`<files>`** are more complex
+They contain at least one `<file-rule>`.
+A rule has a `<match>` which is a regular expression and determines whether this
+rule should be applied to the a file by its file name.
+  
+  Further nodes are optional:
+  
+  * `<name>` Applies the inner validator to the file name
+  * `<symlink>` Presence of this node requires the file type to be a symbolic
+  link
+  It may additionally contain an inner node `<target>` which applies its inner
+  validator to the target of the smbolic link.
+  * `<directory/>` Presence of this node requires the file type to be a
+  directory
 
 ### Validators
 
@@ -223,6 +258,16 @@ Examples:
 ## Configuration examples
 
 	<config>
+	  <execution>
+	    <all>
+          <tag>prohibiting</tag>
+          <any>
+            <tag>specific</tag>
+            <tag>generic</tag>
+          </any>
+        </all>
+      </execution>
+      
 	  <!-- Rule for source packages -->
 	  <rule>
 	    <name>source</name>
@@ -237,6 +282,7 @@ Examples:
 	  <!-- Rule for checking the size of every non-source package -->
 	  <rule>
 	    <name>size</name>
+	    <tag>prohibiting</tag>
 	    <match>
 	      <not>
 	        <rule>source</rule>
@@ -250,6 +296,7 @@ Examples:
 	  
 	  <rule>
 	    <name>javadoc</name>
+	    <tag>specific</tag>
 	    <match>
 	      <and>
 	        <not>
@@ -264,6 +311,7 @@ Examples:
 	  
 	  <rule>
 	    <name>javapackages-tools</name>
+	    <tag>specific</tag>
 	    <match>
 	      <and>
 	        <not>
@@ -278,6 +326,7 @@ Examples:
 	  
 	  <rule>
 	    <name>byaccj</name>
+	    <tag>specific</tag>
 	    <match>
 	      <and>
 	        <not>
@@ -293,6 +342,7 @@ Examples:
 	  <!-- Matches all non-source packages -->
 	  <rule>
 	    <name>generic</name>
+	    <tag>generic</tag>
 		<match>
 		  <not>
 	        <rule>source</rule>
