@@ -1,4 +1,8 @@
 <config>
+  <execution>
+    <tag/>
+  </execution>
+  
   <rule>
     <name>source</name>
     <match>
@@ -12,16 +16,34 @@
   <rule>
     <match><rule>source</rule></match>
     <name>javapackages-tools</name>
+    
     <files>
-      <regex>.*</regex>
+      <file-rule>
+        <match/>
+        
+        <name>
+          <any>
+            <regex>.*</regex>
+          </any>
+        </name>
+        
+        <directory/>
+      </file-rule>
     </files>
   </rule>
   
   <rule>
     <match><rule>source</rule></match>
     <name>javadoc</name>
+    
     <files>
-      <regex>.*</regex>
+      <file-rule>
+        <match></match>
+        
+        <symlink>
+          <target><text>/other_file</text></target>
+        </symlink>
+      </file-rule>
     </files>
   </rule>
   

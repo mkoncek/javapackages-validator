@@ -50,9 +50,9 @@ public class Package_test
 	static final Validator symlink_validator = new Validator()
 	{
 		@Override
-		public String to_xml()
+		public void to_xml(StringBuilder result)
 		{
-			return null;
+			/// TODO
 		}
 		
 		@Override
@@ -219,11 +219,9 @@ public class Package_test
 			{
 				final var rpm_path = Paths.get(filename).toAbsolutePath().normalize();
 				final String rpm_name = rpm_path.getFileName().toString();
-				final var rpm_info = new RpmInfo(rpm_path);
 				
 				/// Prefix every message with the RPM file name
-				test_results.addAll(Rule.union(config.rules().stream()
-						.filter(r -> r.is_applicable(rpm_info))).apply(rpm_path,
+				test_results.addAll(config.rule().apply(rpm_path,
 								color_decorator.decorate(rpm_name, Type.bright_cyan) + ": "));
 				
 				try (final var rpm_is = new RpmArchiveInputStream(rpm_path))
@@ -269,7 +267,7 @@ public class Package_test
 							color_decorator.decorate(pair.getKey().rpm_name, Type.bright_cyan)));
 				}
 				
-				message.append(MessageFormat.format(" Symbolic link \"{0}\" ",
+				message.append(MessageFormat.format("Symbolic link \"{0}\" ",
 						color_decorator.decorate(pair.getKey().file_name, Ansi_colors.Type.cyan)));
 				
 				message.append(MessageFormat.format("points to \"{0}\" ",

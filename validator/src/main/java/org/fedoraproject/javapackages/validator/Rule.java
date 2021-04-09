@@ -21,14 +21,12 @@ import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
@@ -41,17 +39,191 @@ import org.fedoraproject.javapackages.validator.Validator.Test_result;
 /**
  * @author Marián Konček
  */
-public class Rule
+public class Rule implements Xml_writable
 {
-	static public interface Match extends Predicate<RpmInfo>
+	public static abstract class Structured implements Xml_writable
 	{
-		public String to_xml();
+		protected abstract boolean apply(List<Test_result> results, Path rpm_path, String prefix);
+		
+		public List<Test_result> apply(Path rpm_path, String prefix)
+		{
+			var result = new ArrayList<Test_result>();
+			apply(result, rpm_path, prefix);
+			return result;
+		}
+		
+		public static class Name extends Structured
+		{
+			Rule rule;
+			
+			Name(Rule rule)
+			{
+				this.rule = rule;
+			}
+			
+			@Override
+			protected boolean apply(List<Test_result> results, Path rpm_path, String prefix)
+			{
+				try
+				{
+					if (rule.is_applicable(new RpmInfo(rpm_path)))
+					{
+						results.addAll(rule.apply(rpm_path, prefix));
+						return true;
+					}
+				}
+				catch (IOException ex)
+				{
+					throw new UncheckedIOException(ex);
+				}
+				
+				return false;
+			}
+			
+			@Override
+			public void to_xml(StringBuilder result)
+			{
+				result.append("<rule>");
+				result.append(rule.name);
+				result.append("</rule>");
+			}
+		}
+		
+		public static class Tag extends Structured
+		{
+			String tag_name;
+			ArrayList<Rule> rules;
+			
+			Tag(String tag_name, List<Rule> rules)
+			{
+				this.tag_name = tag_name;
+				this.rules = new ArrayList<Rule>(rules.size());
+				this.rules.addAll(rules);
+			}
+			
+			@Override
+			protected boolean apply(List<Test_result> results, Path rpm_path, String prefix)
+			{
+				boolean result = false;
+				
+				try
+				{
+					var rpm_info = new RpmInfo(rpm_path);
+					
+					for (var rule : rules)
+					{
+						if (rule.is_applicable(rpm_info))
+						{
+							results.addAll(rule.apply(rpm_path, prefix));
+							result = true;
+						}
+					}
+				}
+				catch (IOException ex)
+				{
+					throw new UncheckedIOException(ex);
+				}
+				
+				return result;
+			}
+			
+			@Override
+			public void to_xml(StringBuilder result)
+			{
+				result.append("<tag>");
+				result.append(tag_name);
+				result.append("</tag>");
+			}
+		}
+		
+		static abstract class Structured_list extends Structured
+		{
+			protected String node_tag;
+			public ArrayList<Structured> rules = new ArrayList<>();
+			
+			Structured_list(String node_tag)
+			{
+				this.node_tag = node_tag;
+			}
+			
+			@Override
+			public void to_xml(StringBuilder result)
+			{
+				result.append("<" + node_tag + ">");
+				rules.stream().forEach(r -> r.to_xml(result));
+				result.append("</" + node_tag + ">");
+			}
+		}
+		
+		public static class All extends Structured_list
+		{
+			public All()
+			{
+				super("all");
+			}
+			
+			@Override
+			protected boolean apply(List<Test_result> results, Path rpm_path, String prefix)
+			{
+				boolean result = false;
+				
+				for (var structured : rules)
+				{
+					if (structured.apply(results, rpm_path, prefix))
+					{
+						result = true;
+					}
+				}
+				
+				return result;
+			}
+		}
+		
+		public static class Any extends Structured_list
+		{
+			public Any()
+			{
+				super("any");
+			}
+			
+			@Override
+			protected boolean apply(List<Test_result> results, Path rpm_path, String prefix)
+			{
+				boolean result = false;
+				var stage_results = new ArrayList<Test_result>();
+				var accumulated_results = new ArrayList<Test_result>();
+				
+				for (var structured : rules)
+				{
+					if (structured.apply(stage_results, rpm_path, prefix))
+					{
+						result = true;
+						
+						if (stage_results.stream().allMatch(tr -> tr.result))
+						{
+							results.addAll(stage_results);
+							return result;
+						}
+						
+						accumulated_results.addAll(stage_results);
+						stage_results.clear();
+					}
+				}
+				
+				results.addAll(accumulated_results);
+				
+				return result;
+			}
+		}
 	}
 	
-	static public class Rule_match implements Match
+	public static interface Match extends Predicate<RpmInfo>, Xml_writable
 	{
-		protected Rule rule;
-		public Boolean result;
+	}
+	
+	public static class Rule_match implements Match
+	{
+		private Rule rule;
 		
 		public Rule_match(Rule rule)
 		{
@@ -62,32 +234,34 @@ public class Rule
 		@Override
 		public boolean test(RpmInfo rpm_info)
 		{
-			return result;
+			return rule.match.test(rpm_info);
 		}
-
+		
 		@Override
-		public String to_xml()
+		public void to_xml(StringBuilder result)
 		{
-			return MessageFormat.format("<{0}>{1}</{0}>", "rule", rule.name);
+			result.append("<rule>");
+			result.append(rule.name);
+			result.append("</rule>");
 		}
 	}
 	
-	static public class All_match implements Match
+	public static class All_match implements Match
 	{
 		@Override
 		public boolean test(RpmInfo rpm_info)
 		{
 			return true;
 		}
-
+		
 		@Override
-		public String to_xml()
+		public void to_xml(StringBuilder result)
 		{
-			return "";
+			/// Empty
 		}
 	}
 	
-	static public class Not_match implements Match
+	public static class Not_match implements Match
 	{
 		protected Match match;
 		
@@ -104,9 +278,11 @@ public class Rule
 		}
 		
 		@Override
-		public String to_xml()
+		public void to_xml(StringBuilder result)
 		{
-			return MessageFormat.format("<{0}>{1}</{0}>", "not", match.to_xml());
+			result.append("<not>");
+			match.to_xml(result);
+			result.append("</not>");
 		}
 	}
 	
@@ -126,16 +302,12 @@ public class Rule
 			this.list = new ArrayList<>(list);
 		}
 		
-		protected final String partial_to_xml()
+		protected final void partial_to_xml(StringBuilder result)
 		{
-			var result = new StringBuilder();
-			
 			for (final var match : list)
 			{
-				result.append(match.to_xml());
+				match.to_xml(result);
 			}
-			
-			return result.toString();
 		}
 	}
 	
@@ -153,9 +325,11 @@ public class Rule
 		}
 		
 		@Override
-		public String to_xml()
+		public void to_xml(StringBuilder result)
 		{
-			return MessageFormat.format("<{0}>{1}</{0}>", "and", partial_to_xml());
+			result.append("<rule>");
+			partial_to_xml(result);
+			result.append("</rule>");
 		}
 	}
 	
@@ -173,13 +347,15 @@ public class Rule
 		}
 		
 		@Override
-		public String to_xml()
+		public void to_xml(StringBuilder result)
 		{
-			return MessageFormat.format("<{0}>{1}</{0}>", "or", partial_to_xml());
+			result.append("<or>");
+			partial_to_xml(result);
+			result.append("</or>");
 		}
 	}
 	
-	static public class Method_match implements Match
+	public static class Method_match implements Match
 	{
 		Method getter;
 		Pattern pattern;
@@ -205,7 +381,7 @@ public class Rule
 		}
 		
 		@Override
-		public String to_xml()
+		public void to_xml(StringBuilder result)
 		{
 			String name = null;
 			
@@ -219,11 +395,17 @@ public class Rule
 				name = "arch";
 				break;
 				
+			case "getRelease":
+				name = "release";
+				break;
+				
 			default:
-				throw new RuntimeException("Invalid " + this.getClass().getSimpleName());
+				throw new RuntimeException("Invalid " + this.getClass().getSimpleName() + ": " + getter.getName());
 			}
 			
-			return MessageFormat.format("<{0}>{1}</{0}>", name, pattern.toString());
+			result.append("<" + name + ">");
+			result.append(pattern.toString());
+			result.append("</" + name + ">");
 		}
 	}
 	
@@ -236,6 +418,17 @@ public class Rule
 		return match.test(rpm_info);
 	}
 	
+	public static class File_validator_args
+	{
+		CpioArchiveEntry entry;
+		byte[] content;
+		
+		@Override
+		public String toString()
+		{
+			return "[Cpio archive entry] " + entry.getName();
+		}
+	}
 	private void validate_files(Validator validator, Path rpm_path, String prefix,
 			RpmInfo rpm_info, List<Test_result> result)
 	{
@@ -244,15 +437,14 @@ public class Rule
 			CpioArchiveEntry rpm_entry;
 			while ((rpm_entry = rpm_is.getNextEntry()) != null)
 			{
-				String rpm_entry_name = rpm_entry.getName();
+				var content = new byte[(int) rpm_entry.getSize()];
+				rpm_is.read(content);
 				
-				/// TODO
-				if (rpm_entry_name.startsWith("./"))
-				{
-					rpm_entry_name = rpm_entry_name.substring(1);
-				}
+				var args = new File_validator_args();
+				args.entry = rpm_entry;
+				args.content = content;
 				
-				result.add(validator.validate(rpm_entry, prefix, rpm_info));
+				result.add(validator.validate(args, prefix, rpm_info));
 			}
 		}
 		catch (IOException ex)
@@ -276,13 +468,14 @@ public class Rule
 		{
 			return delegate.do_validate(value, rpm_info);
 		}
-
-		@Override
-		public String to_xml()
-		{
-			return MessageFormat.format("<{0}>{1}</{0}>", "java-bytecode", delegate.to_xml());
-		}
 		
+		@Override
+		public void to_xml(StringBuilder result)
+		{
+			result.append("<java-bytecode>");
+			delegate.to_xml(result);
+			result.append("</java-bytecode>");
+		}
 	}
 	
 	private void validate_java_bytecode(Validator validator, Path rpm_path,
@@ -352,7 +545,7 @@ public class Rule
 		}
 	}
 	
-	public final List<Test_result> apply(final Path rpm_path, final String prefix)
+	public final List<Test_result> apply(Path rpm_path, String prefix)
 	{
 		RpmInfo rpm_info;
 		
@@ -407,69 +600,14 @@ public class Rule
 		return result;
 	}
 	
-	public static Rule union(Stream<Rule> rules)
-	{
-		final var result = new Rule()
-		{
-			List<String> rule_names = new ArrayList<>();
-			
-			@Override
-			public String description()
-			{
-				return "a union rule of " + rule_names.stream()
-						.map(s -> "\"" + s + "\"").collect(Collectors.joining(", "));
-			}
-		};
-		
-		rules.forEach(rule ->
-		{
-			result.rule_names.add(rule.name);
-			
-			for (final var pair : rule.validators.entrySet())
-			{
-				final String key = pair.getKey();
-				var result_validator = (Validator.Any_validator) result.validators.get(key);
-				
-				if (result_validator == null)
-				{
-					result_validator = new Validator.Any_validator(new ArrayList<Validator>());
-					result_validator.rule = result;
-					result.validators.put(key, result_validator);
-				}
-				
-				Validator validator = pair.getValue();
-				
-				/// JDK 14
-				// if (validator instanceof Validator.Any_validator any_validator)
-				// {
-				// 	result_validator.list.addAll(any_validator.list);
-				// }
-				
-				result_validator.prefix(Config.message_map.get(key));
-				
-				if (validator instanceof Validator.Any_validator)
-				{
-					result_validator.list.addAll(((Validator.Any_validator) validator).list);
-				}
-				else
-				{
-					result_validator.list.add(validator);
-				}
-			}
-		});
-		
-		return result;
-	}
-	
 	public String description()
 	{
 		return "rule \"" + name + "\"";
 	}
 	
-	public String to_xml()
+	@Override
+	public void to_xml(StringBuilder result)
 	{
-		final var result = new StringBuilder();
-		
 		result.append("<rule>");
 		
 		result.append("<name>" + name + "</name>");
@@ -483,7 +621,5 @@ public class Rule
 		}
 		
 		result.append("</rule>");
-		
-		return result.toString();
 	}
 }

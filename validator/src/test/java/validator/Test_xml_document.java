@@ -17,9 +17,11 @@ package validator;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
 import org.fedoraproject.javapackages.validator.XML_document;
+import org.fedoraproject.javapackages.validator.XML_document.XML_node;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.xmlunit.builder.DiffBuilder;
@@ -39,7 +41,7 @@ public class Test_xml_document
 			final var text = FileUtils.readFileToString(new File("src/test/resources/config-1.xml"), "UTF-8");
 			
 			final var myDiff = DiffBuilder.compare(text)
-					.withTest(config.iterator().next().dump())
+					.withTest(config.iterator().next().to_xml())
 					.ignoreElementContentWhitespace()
 					.ignoreComments()
 					
@@ -66,20 +68,28 @@ public class Test_xml_document
 			config.start("config");
 			var it = config.iterator();
 			
-			var first_rule = it.next();
-			Assertions.assertEquals("source", first_rule.get("name").content());
+			var execution = it.next();
+			Assertions.assertEquals("tag", execution.get().name());
 			
-			var second_rule = it.next();
-			Assertions.assertEquals("javapackages-tools", second_rule.get("name").content());
-			Assertions.assertEquals("source", second_rule.get("match").get("rule").content());
-			Assertions.assertEquals(".*", second_rule.get("files").get("regex").content());
-			Assertions.assertFalse(second_rule.getop("nonexisting").isPresent());
-			Assertions.assertFalse(second_rule.get("files").getop("nonexisting").isPresent());
+			var rules = new ArrayList<XML_node>();
 			
-			it.next();
-			var fourth_rule = it.next();
-			Assertions.assertNull(fourth_rule.get("match").content());
-			Assertions.assertEquals(".*", fourth_rule.get("requires").get("any").get("all").get("none").get("regex").content());
+			rules.add(it.next());
+			rules.add(it.next());
+			rules.add(it.next());
+			rules.add(it.next());
+			
+			Assertions.assertEquals("source", rules.get(0).get("name").content());
+			
+			Assertions.assertEquals("javapackages-tools", rules.get(1).get("name").content());
+			Assertions.assertEquals("source", rules.get(1).get("match").get("rule").content());
+			Assertions.assertEquals(".*", rules.get(1).get("files").get("file-rule").get("name").get("any").get("regex").content());
+			Assertions.assertFalse(rules.get(1).getop("nonexisting").isPresent());
+			Assertions.assertFalse(rules.get(1).get("files").getop("nonexisting").isPresent());
+			
+			Assertions.assertEquals("/other_file", rules.get(2).get("files").get("file-rule").get("symlink").get("target").get("text").content());
+			
+			Assertions.assertNull(rules.get(3).get("match").content());
+			Assertions.assertEquals(".*", rules.get(3).get("requires").get("any").get("all").get("none").get("regex").content());
 			
 			Assertions.assertFalse(it.hasNext());
 		}

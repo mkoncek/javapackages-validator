@@ -51,7 +51,7 @@ class Test_config_read
 		
 		for (var diff : myDiff.getDifferences())
 		{
-			System.out.println(diff.toString());
+			System.err.println(diff.toString());
 		}
 		
 		Assertions.assertFalse(myDiff.hasDifferences());

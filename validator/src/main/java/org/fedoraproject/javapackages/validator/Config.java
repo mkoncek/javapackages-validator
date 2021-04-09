@@ -18,28 +18,33 @@ package org.fedoraproject.javapackages.validator;
 import java.io.InputStream;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Ansi_colors.Decorator;
+import org.fedoraproject.javapackages.validator.Validator.File_multivalidator;
+import org.fedoraproject.javapackages.validator.Validator.File_validator;
 import org.fedoraproject.javapackages.validator.XML_document.XML_node;
 
 /**
  * @author Marián Konček
  */
-public final class Config
+public final class Config implements Xml_writable
 {
 	static final Pattern int_range_pattern = Pattern.compile("(['_0-9]*)\\s*-\\s*(['_0-9]*)");
 	static final String int_range_replacement_regex = "[_']";
 	
-	private Map<String, Rule> rules = new LinkedHashMap<>();
+	private Map<String, Rule> rules_by_name = new LinkedHashMap<>();
+	private Map<String, List<Rule>> rules_by_tag = new LinkedHashMap<>();
+	private Rule.Structured rule;
+	
 	static final Decorator decor = Package_test.color_decorator();
 	
 	static final Map<String, String> message_map = new HashMap<>();
@@ -117,16 +122,18 @@ public final class Config
 					}
 					
 					@Override
-					public String to_xml()
+					public void to_xml(StringBuilder result)
 					{
-						return MessageFormat.format("<{0}>{1}</{0}>", node.name(), node.content());
+						result.append("<" + node.name() + ">");
+						result.append(node.content());
+						result.append("</" + node.name() + ">");
 					}
 				};
 				
 				break;
 				
 			case "rule":
-				var rule = rules.get(node.content());
+				var rule = rules_by_name.get(node.content());
 				
 				if (rule == null)
 				{
@@ -135,27 +142,7 @@ public final class Config
 							node.content()));
 				}
 				
-				var old_match = rule.match;
-				var result_match = new Rule.Rule_match(rule);
-				
-				rule.match = new Rule.Match()
-				{
-					@Override
-					public boolean test(RpmInfo rpm_info)
-					{
-						result_match.result = old_match.test(rpm_info);
-						return result_match.result;
-					}
-					
-					@Override
-					public String to_xml()
-					{
-						return old_match.to_xml();
-					}
-				};
-				
-				result = result_match;
-				
+				result = new Rule.Rule_match(rule);
 				break;
 			}
 		}
@@ -266,6 +253,11 @@ public final class Config
 			break;
 		}
 		
+		if (result == null)
+		{
+			throw new RuntimeException("Could not read validator named \"" + node.name() + "\"");
+		}
+		
 		return result;
 	}
 	
@@ -280,60 +272,64 @@ public final class Config
 		return result;
 	}
 	
-	final Validator read_validator_files(XML_node node) throws Exception
+	final File_validator read_validator_files(XML_node node)
 	{
-		String match = node.get("match").content();
+		var match = node.get("match");
+		var result = new File_validator(match.content());
 		
-		Optional<String> symlink = null;
-		
+		var op_name = node.getop("name");
+		if (op_name.isPresent())
 		{
-			var op_sym = node.getop("symlink");
-			if (op_sym.isPresent())
+			result.name_validator = read_validator_body(op_name.get().get());
+		}
+		
+		var op_symlink = node.getop("symlink");
+		if (op_symlink.isPresent())
+		{
+			result.symlink_target = Optional.empty();
+			
+			var op_target = op_symlink.get().getop("target");
+			if (op_target.isPresent())
 			{
-				var op_target = op_sym.get().getop("target");
-				if (op_target.isPresent())
-				{
-					symlink = Optional.of(op_target.get().content());
-				}
-				else
-				{
-					symlink = Optional.empty();
-				}
+				result.symlink_target = Optional.of(read_validator_body(op_target.get().get()));
 			}
 		}
 		
-		boolean want_directory = node.getop("directory").isPresent();
-		
-		return new Validator()
+		if (node.getop("directory").isPresent())
 		{
-			@Override
-			public String to_xml()
-			{
-				/// TODO
-				return "";
-			}
+			result.want_directory = true;
+		}
+		
+		return result;
+	}
+	
+	final Rule.Structured read_execution_inside(XML_node node)
+	{
+		switch (node.name())
+		{
+		case "rule":
+			return new Rule.Structured.Name(rules_by_name.get(node.content()));
 			
-			@Override
-			protected Test_result do_validate(Object value, RpmInfo rpm_info)
-			{
-				return validate((CpioArchiveEntry) value, rpm_info);
-			}
-			
-			private Test_result validate(CpioArchiveEntry value, RpmInfo rpm_info)
-			{
-				var result = new Test_result(true);
-				
-				if (match == null || value.getName().matches(match))
-				{
-					if (want_directory && ! value.isDirectory())
-					{
-						result.result = false;
-					}
-				}
-				
-				return result;
-			}
-		};
+		case "tag":
+		{
+			var tag = node.content() != null ? node.content() : "";
+			return new Rule.Structured.Tag(tag, rules_by_tag.getOrDefault(tag, Collections.emptyList()));
+		}	
+		case "all":
+		{
+			var result = new Rule.Structured.All();
+			node.gets().forEach(n -> result.rules.add(read_execution_inside(n)));
+			return result;
+		}	
+		case "any":
+		{
+			var result = new Rule.Structured.Any();
+			node.gets().forEach(n -> result.rules.add(read_execution_inside(n)));
+			return result;
+		}
+		default:
+			throw new RuntimeException("Unrecognized node <" + node.name() + "> inside <execution>");
+		}
 	}
 	
 	final Rule read_rule(XML_node node) throws Exception
@@ -342,20 +338,26 @@ public final class Config
 		
 		try
 		{
-			node.gets().forEach(inner_node ->
+			String tag = null;
+			
+			for (var inner_node : node.getr())
 			{
 				switch (inner_node.name())
 				{
 				case "name":
 					result.name = inner_node.content();
-					if (rules.containsKey(result.name))
+					if (rules_by_name.containsKey(result.name))
 					{
 						throw new RuntimeException(MessageFormat.format(
 								"Found a rule with the same name as a previous rule: \"{0}\"",
 								result.name));
 					}
 					
-					rules.put(result.name, result);
+					rules_by_name.put(result.name, result);
+					break;
+					
+				case "tag":
+					tag = inner_node.content();
 					break;
 					
 				case "match":
@@ -363,8 +365,13 @@ public final class Config
 					break;
 					
 				case "files":
-					/// TODO
+				{
+					result.validators.put(inner_node.name(),
+							new File_multivalidator(inner_node.gets()
+							.map((x) -> read_validator_files(x))
+							.collect(Collectors.toCollection(ArrayList::new))));
 					break;
+				}
 					
 				default:
 					if (message_map.keySet().contains(inner_node.name()))
@@ -379,7 +386,12 @@ public final class Config
 					
 					break;
 				}
-			});
+			}
+			
+			tag = tag != null ? tag : "";
+			var list = rules_by_tag.getOrDefault(tag, new ArrayList<Rule>());
+			list.add(result);
+			rules_by_tag.put(tag, list);
 		}
 		catch (Exception ex)
 		{
@@ -398,31 +410,45 @@ public final class Config
 		{
 			document.start("config");
 			
-			for (var rule_node : document.nodes())
+			XML_node execution = null;
+			
+			for (var node : document.nodes())
 			{
-				read_rule(rule_node);
+				switch (node.name())
+				{
+				case "rule":
+					read_rule(node);
+					break;
+					
+				case "execution":
+					execution = node;
+					break;
+				}
 			}
+			
+			rule = read_execution_inside(execution.get());
 		}
 	}
 	
-	public final Collection<Rule> rules()
+	public final Rule.Structured rule()
 	{
-		return rules.values();
+		return rule;
 	}
 	
-	public final String to_xml()
+	@Override
+	public void to_xml(StringBuilder result)
 	{
-		var result = new StringBuilder();
-		
 		result.append("<config>");
 		
-		for (var rule : rules())
+		result.append("<execution>");
+		rule.to_xml(result);
+		result.append("</execution>");
+		
+		for (var rule : rules_by_name.values())
 		{
-			result.append(rule.to_xml());
+			rule.to_xml(result);
 		}
 		
 		result.append("</config>");
-		
-		return result.toString();
 	}
 }

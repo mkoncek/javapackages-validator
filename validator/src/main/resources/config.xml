@@ -1,4 +1,17 @@
 <config>
+  <execution>
+    <tag/>
+    <!--
+    <all>
+      <tag>blacklisting</tag>
+      <any>
+        <tag>specific</tag>
+        <tag>generic</tag>
+      </any>
+    </all>
+    -->
+  </execution>
+  
   <rule>
     <name>source arch</name>
     <match>

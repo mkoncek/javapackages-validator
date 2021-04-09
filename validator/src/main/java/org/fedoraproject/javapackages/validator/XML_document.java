@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -35,13 +37,14 @@ import javax.xml.stream.XMLStreamException;
  */
 public class XML_document implements AutoCloseable
 {
-	public static class XML_node
+	public static class XML_node implements Xml_writable
 	{
 		private String name = null;
 		private String content = null;
 		private ArrayList<XML_node> descendants = null;
 		
-		private StringBuilder dump(StringBuilder result)
+		@Override
+		public void to_xml(StringBuilder result)
 		{
 			if (content == null && descendants == null)
 			{
@@ -57,18 +60,11 @@ public class XML_document implements AutoCloseable
 				}
 				else
 				{
-					descendants.stream().forEach(d -> d.dump(result));
+					descendants.stream().forEach(d -> d.to_xml(result));
 				}
 				
 				result.append("</" + name + ">");
 			}
-			
-			return result;
-		}
-		
-		public final String dump()
-		{
-			return dump(new StringBuilder()).toString();
 		}
 		
 		public final String name()
@@ -81,19 +77,24 @@ public class XML_document implements AutoCloseable
 			return content;
 		}
 		
-		public final Stream<XML_node> gets()
-		{
-			if (descendants != null)
-			{
-				return descendants.stream();
-			}
-			
-			return Stream.empty();
-		}
-		
 		private final RuntimeException wrap(RuntimeException ex)
 		{
 			return new RuntimeException("Inside a node named <" + name + ">", ex);
+		}
+		
+		public final Collection<XML_node> getr()
+		{
+			if (descendants != null)
+			{
+				return descendants;
+			}
+			
+			return Collections.emptyList();
+		}
+		
+		public final Stream<XML_node> gets()
+		{
+			return getr().stream();
 		}
 		
 		public final Optional<XML_node> getop()
