@@ -1,0 +1,1013 @@
+<config>
+  <rule>
+    <name>ant java bytecode</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module ant</rule>
+    </match>
+    
+    <java-bytecode>
+      <!-- TODO fails in ant module, after it is fixed, set to 49 - 52 -->
+      <int-range>49 - 55</int-range>
+    </java-bytecode>
+  </rule>
+
+  <rule>
+    <name>module ant filesize</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module ant</rule>
+    </match>
+    
+    <rpm-file-size-bytes>
+      <int-range>- 5'000'000</int-range>
+    </rpm-file-size-bytes>
+  </rule>
+  
+  <rule>
+    <name>module ant provides</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module ant</rule>
+    </match>
+    
+    <provides>
+      <any>
+        <text>ant-antlr</text>
+        <text>ant-apache-bcel</text>
+        <text>ant-apache-bsf</text>
+        <text>ant-apache-log4j</text>
+        <text>ant-apache-oro</text>
+        <text>ant-apache-regexp</text>
+        <text>ant-apache-resolver</text>
+        <text>ant-apache-xalan2</text>
+        <text>ant-commons-logging</text>
+        <text>ant-commons-net</text>
+        <text>ant-imageio</text>
+        <text>ant-javadoc</text>
+        <text>ant-javamail</text>
+        <text>ant-jdepend</text>
+        <text>ant-jmf</text>
+        <text>ant-jsch</text>
+        <text>ant-junit5</text>
+        <text>ant-junit</text>
+        <text>ant-lib</text>
+        <text>antlr-C++</text>
+        <text>antlr-C++(x86-64)</text>
+        <text>antlr-javadoc</text>
+        <text>antlr-manual</text>
+        <text>antlr-static</text>
+        <text>antlr</text>
+        <text>antlr-tool</text>
+        <text>ant-manual</text>
+        <text>ant-swing</text>
+        <text>ant-testutil</text>
+        <text>ant</text>
+        <text>ant-xz</text>
+        <text>apache-commons-logging-javadoc</text>
+        <text>apache-commons-logging</text>
+        <text>apache-commons-net-javadoc</text>
+        <text>apache-commons-net</text>
+        <text>apiguardian-javadoc</text>
+        <text>apiguardian</text>
+        <text>bcel-javadoc</text>
+        <text>bcel</text>
+        <text>bsf</text>
+        <text>config(ant-antlr)</text>
+        <text>config(ant-apache-bcel)</text>
+        <text>config(ant-apache-bsf)</text>
+        <text>config(ant-apache-log4j)</text>
+        <text>config(ant-apache-oro)</text>
+        <text>config(ant-apache-regexp)</text>
+        <text>config(ant-apache-resolver)</text>
+        <text>config(ant-apache-xalan2)</text>
+        <text>config(ant-commons-logging)</text>
+        <text>config(ant-commons-net)</text>
+        <text>config(ant-imageio)</text>
+        <text>config(ant-javamail)</text>
+        <text>config(ant-jdepend)</text>
+        <text>config(ant-jmf)</text>
+        <text>config(ant-jsch)</text>
+        <text>config(ant-junit5)</text>
+        <text>config(ant-junit)</text>
+        <text>config(ant-swing)</text>
+        <text>config(ant-testutil)</text>
+        <text>config(ant)</text>
+        <text>config(ant-xz)</text>
+        <text>hamcrest-javadoc</text>
+        <text>hamcrest</text>
+        <text>jakarta-oro-javadoc</text>
+        <text>jakarta-oro</text>
+        <text>javamail-javadoc</text>
+        <text>javamail-monolithic</text>
+        <text>javamail</text>
+        <text>javax.mail</text>
+        <text>jaxp_parser_impl</text>
+        <text>jaxp_transform_impl</text>
+        <text>jdepend-demo</text>
+        <text>jdepend-javadoc</text>
+        <text>jdepend</text>
+        <text>jsch-javadoc</text>
+        <text>jsch</text>
+        <text>junit5-javadoc</text>
+        <text>junit5</text>
+        <text>junit-javadoc</text>
+        <text>junit-manual</text>
+        <text>junit</text>
+        <text>jzlib-demo</text>
+        <text>jzlib-javadoc</text>
+        <text>jzlib</text>
+        <text>log4j12-javadoc</text>
+        <text>log4j12</text>
+        <text>mvn(ant:ant-launcher:pom:)</text>
+        <text>mvn(ant:ant-launcher)</text>
+        <text>mvn(ant:ant:pom:)</text>
+        <text>mvn(ant:ant)</text>
+        <text>mvn(antlr:antlrall:pom:)</text>
+        <text>mvn(antlr:antlrall)</text>
+        <text>mvn(antlr:antlr:pom:)</text>
+        <text>mvn(antlr:antlr)</text>
+        <text>mvn(apache:ant:pom:)</text>
+        <text>mvn(apache:ant)</text>
+        <text>mvn(apache:bcel:pom:)</text>
+        <text>mvn(apache:bcel)</text>
+        <text>mvn(apache:commons-logging-adapters)</text>
+        <text>mvn(apache:commons-logging-api:pom:)</text>
+        <text>mvn(apache:commons-logging-api)</text>
+        <text>mvn(apache:commons-logging:pom:)</text>
+        <text>mvn(apache:commons-logging)</text>
+        <text>mvn(apache:xerces-j2:pom:)</text>
+        <text>mvn(apache:xerces-j2)</text>
+        <text>mvn(bcel:bcel:pom:)</text>
+        <text>mvn(bcel:bcel)</text>
+        <text>mvn(bsf:bsf:pom:)</text>
+        <text>mvn(bsf:bsf)</text>
+        <text>mvn(com.jcraft:jsch:pom:)</text>
+        <text>mvn(com.jcraft:jsch)</text>
+        <text>mvn(com.jcraft:jzlib:pom:)</text>
+        <text>mvn(com.jcraft:jzlib)</text>
+        <text>mvn(commons-logging:commons-logging-adapters)</text>
+        <text>mvn(commons-logging:commons-logging-api:pom:)</text>
+        <text>mvn(commons-logging:commons-logging-api)</text>
+        <text>mvn(commons-logging:commons-logging:pom:)</text>
+        <text>mvn(commons-logging:commons-logging)</text>
+        <text>mvn(commons-net:commons-net:pom:)</text>
+        <text>mvn(commons-net:commons-net)</text>
+        <text>mvn(com.sun.mail:all:pom:)</text>
+        <text>mvn(com.sun.mail:android-activation:pom:)</text>
+        <text>mvn(com.sun.mail:android-activation)</text>
+        <text>mvn(com.sun.mail:android:pom:)</text>
+        <text>mvn(com.sun.mail:gimap:pom:)</text>
+        <text>mvn(com.sun.mail:gimap)</text>
+        <text>mvn(com.sun.mail:imap:pom:)</text>
+        <text>mvn(com.sun.mail:imap)</text>
+        <text>mvn(com.sun.mail:javax.mail:pom:)</text>
+        <text>mvn(com.sun.mail:javax.mail)</text>
+        <text>mvn(com.sun.mail:logging-mailhandler:pom:)</text>
+        <text>mvn(com.sun.mail:logging-mailhandler)</text>
+        <text>mvn(com.sun.mail:mailapi:pom:)</text>
+        <text>mvn(com.sun.mail:mailapi)</text>
+        <text>mvn(com.sun.mail:pop3:pom:)</text>
+        <text>mvn(com.sun.mail:pop3)</text>
+        <text>mvn(com.sun.mail:smtp:pom:)</text>
+        <text>mvn(com.sun.mail:smtp)</text>
+        <text>mvn(com.univocity:univocity-parsers:pom:)</text>
+        <text>mvn(com.univocity:univocity-parsers)</text>
+        <text>mvn(jakarta-regexp:jakarta-regexp:pom:)</text>
+        <text>mvn(jakarta-regexp:jakarta-regexp)</text>
+        <text>mvn(javax.mail:javax.mail-api:pom:)</text>
+        <text>mvn(javax.mail:javax.mail-api)</text>
+        <text>mvn(javax.mail:mailapi:pom:)</text>
+        <text>mvn(javax.mail:mailapi)</text>
+        <text>mvn(javax.mail:mail:pom:)</text>
+        <text>mvn(javax.mail:mail)</text>
+        <text>mvn(jdepend:jdepend:pom:)</text>
+        <text>mvn(jdepend:jdepend)</text>
+        <text>mvn(junit:junit:pom:)</text>
+        <text>mvn(junit:junit)</text>
+        <text>mvn(log4j:log4j:1.2.12)</text>
+        <text>mvn(log4j:log4j:1.2.13)</text>
+        <text>mvn(log4j:log4j:1.2.14)</text>
+        <text>mvn(log4j:log4j:1.2.15)</text>
+        <text>mvn(log4j:log4j:1.2.16)</text>
+        <text>mvn(log4j:log4j:1.2.17)</text>
+        <text>mvn(log4j:log4j:12)</text>
+        <text>mvn(log4j:log4j:pom:1.2.12)</text>
+        <text>mvn(log4j:log4j:pom:1.2.13)</text>
+        <text>mvn(log4j:log4j:pom:1.2.14)</text>
+        <text>mvn(log4j:log4j:pom:1.2.15)</text>
+        <text>mvn(log4j:log4j:pom:1.2.16)</text>
+        <text>mvn(log4j:log4j:pom:1.2.17)</text>
+        <text>mvn(log4j:log4j:pom:12)</text>
+        <text>mvn(org.apache.ant:ant-antlr:pom:)</text>
+        <text>mvn(org.apache.ant:ant-antlr)</text>
+        <text>mvn(org.apache.ant:ant-apache-bcel:pom:)</text>
+        <text>mvn(org.apache.ant:ant-apache-bcel)</text>
+        <text>mvn(org.apache.ant:ant-apache-bsf:pom:)</text>
+        <text>mvn(org.apache.ant:ant-apache-bsf)</text>
+        <text>mvn(org.apache.ant:ant-apache-log4j:pom:)</text>
+        <text>mvn(org.apache.ant:ant-apache-log4j)</text>
+        <text>mvn(org.apache.ant:ant-apache-oro:pom:)</text>
+        <text>mvn(org.apache.ant:ant-apache-oro)</text>
+        <text>mvn(org.apache.ant:ant-apache-regexp:pom:)</text>
+        <text>mvn(org.apache.ant:ant-apache-regexp)</text>
+        <text>mvn(org.apache.ant:ant-apache-resolver:pom:)</text>
+        <text>mvn(org.apache.ant:ant-apache-resolver)</text>
+        <text>mvn(org.apache.ant:ant-apache-xalan2:pom:)</text>
+        <text>mvn(org.apache.ant:ant-apache-xalan2)</text>
+        <text>mvn(org.apache.ant:ant-bootstrap)</text>
+        <text>mvn(org.apache.ant:ant-commons-logging:pom:)</text>
+        <text>mvn(org.apache.ant:ant-commons-logging)</text>
+        <text>mvn(org.apache.ant:ant-commons-net:pom:)</text>
+        <text>mvn(org.apache.ant:ant-commons-net)</text>
+        <text>mvn(org.apache.ant:ant-imageio:pom:)</text>
+        <text>mvn(org.apache.ant:ant-imageio)</text>
+        <text>mvn(org.apache.ant:ant-javamail:pom:)</text>
+        <text>mvn(org.apache.ant:ant-javamail)</text>
+        <text>mvn(org.apache.ant:ant-jdepend:pom:)</text>
+        <text>mvn(org.apache.ant:ant-jdepend)</text>
+        <text>mvn(org.apache.ant:ant-jmf:pom:)</text>
+        <text>mvn(org.apache.ant:ant-jmf)</text>
+        <text>mvn(org.apache.ant:ant-jsch:pom:)</text>
+        <text>mvn(org.apache.ant:ant-jsch)</text>
+        <text>mvn(org.apache.ant:ant-junit4:pom:)</text>
+        <text>mvn(org.apache.ant:ant-junit4)</text>
+        <text>mvn(org.apache.ant:ant-junitlauncher:pom:)</text>
+        <text>mvn(org.apache.ant:ant-junitlauncher)</text>
+        <text>mvn(org.apache.ant:ant-junit:pom:)</text>
+        <text>mvn(org.apache.ant:ant-junit)</text>
+        <text>mvn(org.apache.ant:ant-launcher:pom:)</text>
+        <text>mvn(org.apache.ant:ant-launcher)</text>
+        <text>mvn(org.apache.ant:ant-nodeps:pom:)</text>
+        <text>mvn(org.apache.ant:ant-nodeps)</text>
+        <text>mvn(org.apache.ant:ant-parent:pom:)</text>
+        <text>mvn(org.apache.ant:ant:pom:)</text>
+        <text>mvn(org.apache.ant:ant-swing:pom:)</text>
+        <text>mvn(org.apache.ant:ant-swing)</text>
+        <text>mvn(org.apache.ant:ant-testutil:pom:)</text>
+        <text>mvn(org.apache.ant:ant-testutil)</text>
+        <text>mvn(org.apache.ant:ant)</text>
+        <text>mvn(org.apache.ant:ant-xz:pom:)</text>
+        <text>mvn(org.apache.ant:ant-xz)</text>
+        <text>mvn(org.apache.bcel:bcel:pom:)</text>
+        <text>mvn(org.apache.bcel:bcel)</text>
+        <text>mvn(org.apache.bsf:bsf:pom:)</text>
+        <text>mvn(org.apache.bsf:bsf)</text>
+        <text>mvn(org.apache.commons:commons-logging-adapters)</text>
+        <text>mvn(org.apache.commons:commons-logging-api:pom:)</text>
+        <text>mvn(org.apache.commons:commons-logging-api)</text>
+        <text>mvn(org.apache.commons:commons-logging:pom:)</text>
+        <text>mvn(org.apache.commons:commons-logging)</text>
+        <text>mvn(org.apache.commons:commons-net:pom:)</text>
+        <text>mvn(org.apache.commons:commons-net)</text>
+        <text>mvn(org.apiguardian:apiguardian-api:pom:)</text>
+        <text>mvn(org.apiguardian:apiguardian-api)</text>
+        <text>mvn(org.eclipse.jetty.orbit:javax.mail.glassfish:pom:)</text>
+        <text>mvn(org.eclipse.jetty.orbit:javax.mail.glassfish)</text>
+        <text>mvn(org.hamcrest:hamcrest-all:pom:)</text>
+        <text>mvn(org.hamcrest:hamcrest-all)</text>
+        <text>mvn(org.hamcrest:hamcrest-core:pom:)</text>
+        <text>mvn(org.hamcrest:hamcrest-core)</text>
+        <text>mvn(org.hamcrest:hamcrest-library:pom:)</text>
+        <text>mvn(org.hamcrest:hamcrest-library)</text>
+        <text>mvn(org.hamcrest:hamcrest:pom:)</text>
+        <text>mvn(org.hamcrest:hamcrest)</text>
+        <text>mvn(org.junit:junit-bom:pom:)</text>
+        <text>mvn(org.junit.jupiter:junit-jupiter-api:pom:)</text>
+        <text>mvn(org.junit.jupiter:junit-jupiter-api)</text>
+        <text>mvn(org.junit.jupiter:junit-jupiter-engine:pom:)</text>
+        <text>mvn(org.junit.jupiter:junit-jupiter-engine)</text>
+        <text>mvn(org.junit.jupiter:junit-jupiter-migrationsupport:pom:)</text>
+        <text>mvn(org.junit.jupiter:junit-jupiter-migrationsupport)</text>
+        <text>mvn(org.junit.jupiter:junit-jupiter-params:pom:)</text>
+        <text>mvn(org.junit.jupiter:junit-jupiter-params)</text>
+        <text>mvn(org.junit.jupiter:junit-jupiter:pom:)</text>
+        <text>mvn(org.junit.jupiter:junit-jupiter)</text>
+        <text>mvn(org.junit.platform:junit-platform-commons:pom:)</text>
+        <text>mvn(org.junit.platform:junit-platform-commons)</text>
+        <text>mvn(org.junit.platform:junit-platform-engine:pom:)</text>
+        <text>mvn(org.junit.platform:junit-platform-engine)</text>
+        <text>mvn(org.junit.platform:junit-platform-launcher:pom:)</text>
+        <text>mvn(org.junit.platform:junit-platform-launcher)</text>
+        <text>mvn(org.junit.platform:junit-platform-reporting:pom:)</text>
+        <text>mvn(org.junit.platform:junit-platform-reporting)</text>
+        <text>mvn(org.junit.platform:junit-platform-runner:pom:)</text>
+        <text>mvn(org.junit.platform:junit-platform-runner)</text>
+        <text>mvn(org.junit.platform:junit-platform-suite-api:pom:)</text>
+        <text>mvn(org.junit.platform:junit-platform-suite-api)</text>
+        <text>mvn(org.junit.vintage:junit-vintage-engine:pom:)</text>
+        <text>mvn(org.junit.vintage:junit-vintage-engine)</text>
+        <text>mvn(org.opentest4j:opentest4j:pom:)</text>
+        <text>mvn(org.opentest4j:opentest4j)</text>
+        <text>mvn(org.tukaani:xz:pom:)</text>
+        <text>mvn(org.tukaani:xz)</text>
+        <text>mvn(oro:oro:pom:)</text>
+        <text>mvn(oro:oro)</text>
+        <text>mvn(regexp:regexp:pom:)</text>
+        <text>mvn(regexp:regexp)</text>
+        <text>mvn(xalan:serializer:pom:)</text>
+        <text>mvn(xalan:serializer)</text>
+        <text>mvn(xalan:xalan:pom:)</text>
+        <text>mvn(xalan:xalan)</text>
+        <text>mvn(xalan:xsltc:pom:)</text>
+        <text>mvn(xalan:xsltc)</text>
+        <text>mvn(xerces:dom3-xml-apis:pom:)</text>
+        <text>mvn(xerces:dom3-xml-apis)</text>
+        <text>mvn(xerces:xercesImpl:pom:)</text>
+        <text>mvn(xerces:xercesImpl)</text>
+        <text>mvn(xerces:xerces:pom:)</text>
+        <text>mvn(xerces:xerces)</text>
+        <text>mvn(xerces:xmlParserAPIs:pom:)</text>
+        <text>mvn(xerces:xmlParserAPIs)</text>
+        <text>mvn(xml-apis:xml-apis-ext:pom:)</text>
+        <text>mvn(xml-apis:xml-apis-ext)</text>
+        <text>mvn(xml-apis:xml-apis:pom:)</text>
+        <text>mvn(xml-apis:xml-apis)</text>
+        <text>mvn(xml-resolver:xml-resolver:pom:)</text>
+        <text>mvn(xml-resolver:xml-resolver)</text>
+        <text>opentest4j-javadoc</text>
+        <text>opentest4j</text>
+        <text>osgi(com.jcraft.jsch)</text>
+        <text>osgi(com.jcraft.jzlib)</text>
+        <text>osgi(com.sun.mail.android-activation)</text>
+        <text>osgi(com.sun.mail.gimap)</text>
+        <text>osgi(com.sun.mail.imap)</text>
+        <text>osgi(com.sun.mail.javax.mail)</text>
+        <text>osgi(com.sun.mail.logging-mailhandler)</text>
+        <text>osgi(com.sun.mail.pop3)</text>
+        <text>osgi(com.sun.mail.smtp)</text>
+        <text>osgi(com.univocity.parsers)</text>
+        <text>osgi(javax.mail-api)</text>
+        <text>osgi(javax.mail.api)</text>
+        <text>osgi(javax.xml)</text>
+        <text>osgi(org.apache.bcel)</text>
+        <text>osgi(org.apache.commons.logging.adapters)</text>
+        <text>osgi(org.apache.commons.logging.api)</text>
+        <text>osgi(org.apache.commons.logging)</text>
+        <text>osgi(org.apache.commons.net)</text>
+        <text>osgi(org.apache.log4j)</text>
+        <text>osgi(org.apache.oro)</text>
+        <text>osgi(org.apache.regexp)</text>
+        <text>osgi(org.apache.xalan)</text>
+        <text>osgi(org.apache.xerces)</text>
+        <text>osgi(org.apache.xml.resolver)</text>
+        <text>osgi(org.apache.xml.serializer)</text>
+        <text>osgi(org.apiguardian)</text>
+        <text>osgi(org.junit.jupiter.api)</text>
+        <text>osgi(org.junit.jupiter.engine)</text>
+        <text>osgi(org.junit.jupiter.migrationsupport)</text>
+        <text>osgi(org.junit.jupiter.params)</text>
+        <text>osgi(org.junit.jupiter)</text>
+        <text>osgi(org.junit.platform.commons)</text>
+        <text>osgi(org.junit.platform.engine)</text>
+        <text>osgi(org.junit.platform.launcher)</text>
+        <text>osgi(org.junit.platform.reporting)</text>
+        <text>osgi(org.junit.platform.runner)</text>
+        <text>osgi(org.junit.platform.suite.api)</text>
+        <text>osgi(org.junit)</text>
+        <text>osgi(org.junit.vintage.engine)</text>
+        <text>osgi(org.opentest4j)</text>
+        <text>osgi(org.tukaani.xz)</text>
+        <text>osgi(org.w3c.dom.svg)</text>
+        <text>regexp-javadoc</text>
+        <text>regexp</text>
+        <text>univocity-parsers-javadoc</text>
+        <text>univocity-parsers</text>
+        <text>xalan-j2-manual</text>
+        <text>xalan-j2</text>
+        <text>xalan-j2-xsltc</text>
+        <text>xerces-j2-demo</text>
+        <text>xerces-j2-scripts</text>
+        <text>xerces-j2</text>
+        <text>xml-commons-apis-javadoc</text>
+        <text>xml-commons-apis-manual</text>
+        <text>xml-commons-apis</text>
+        <text>xml-commons-jaxp-1.3-apis</text>
+        <text>xml-commons-resolver-javadoc</text>
+        <text>xml-commons-resolver</text>
+        <text>xml-commons</text>
+        <text>xz-java-javadoc</text>
+        <text>xz-java</text>
+      </any>
+    </provides>
+  </rule>
+  
+  <rule>
+    <name>module ant requires</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module ant</rule>
+    </match>
+    
+    <requires>
+      <any>
+        <text>ant-junit</text>
+        <text>ant-lib</text>
+        <text>ant</text>
+        <text>apache-commons-logging</text>
+        <text>apache-parent</text>
+        <text>asciidoc</text>
+        <text>bcel</text>
+        <text>/bin/sh</text>
+        <text>config(ant-antlr)</text>
+        <text>config(ant-apache-bcel)</text>
+        <text>config(ant-apache-bsf)</text>
+        <text>config(ant-apache-log4j)</text>
+        <text>config(ant-apache-oro)</text>
+        <text>config(ant-apache-regexp)</text>
+        <text>config(ant-apache-resolver)</text>
+        <text>config(ant-apache-xalan2)</text>
+        <text>config(ant-commons-logging)</text>
+        <text>config(ant-commons-net)</text>
+        <text>config(ant-imageio)</text>
+        <text>config(ant-javamail)</text>
+        <text>config(ant-jdepend)</text>
+        <text>config(ant-jmf)</text>
+        <text>config(ant-jsch)</text>
+        <text>config(ant-junit5)</text>
+        <text>config(ant-junit)</text>
+        <text>config(ant-swing)</text>
+        <text>config(ant-testutil)</text>
+        <text>config(ant)</text>
+        <text>config(ant-xz)</text>
+        <text>gcc-c++</text>
+        <text>java_cup</text>
+        <text>java-devel</text>
+        <text>(java-headless or java-11-headless)</text>
+        <text>java-headless</text>
+        <text>javapackages-filesystem</text>
+        <text>javapackages-local</text>
+        <text>javapackages-tools</text>
+        <text>jdepend</text>
+        <text>junit5</text>
+        <text>jzlib</text>
+        <text>make</text>
+        <text>maven-local</text>
+        <text>mvn(antlr:antlr)</text>
+        <text>mvn(bcel:bcel)</text>
+        <text>mvn(bsf:bsf)</text>
+        <text>mvn(com.jcraft:jsch)</text>
+        <text>mvn(com.jcraft:jzlib)</text>
+        <text>mvn(commons-logging:commons-logging-api)</text>
+        <text>mvn(commons-logging:commons-logging)</text>
+        <text>mvn(commons-net:commons-net)</text>
+        <text>mvn(com.sun.mail:android-activation)</text>
+        <text>mvn(com.sun.mail:javax.mail)</text>
+        <text>mvn(com.univocity:univocity-parsers)</text>
+        <text>mvn(jakarta-regexp:jakarta-regexp)</text>
+        <text>mvn(javax.mail:mail)</text>
+        <text>mvn(javax.servlet:servlet-api)</text>
+        <text>mvn(jdepend:jdepend)</text>
+        <text>mvn(junit:junit)</text>
+        <text>mvn(log4j:log4j:1.2.13)</text>
+        <text>mvn(log4j:log4j:1.2.17)</text>
+        <text>mvn(org.apache.ant:ant-junit)</text>
+        <text>mvn(org.apache.ant:ant-nodeps)</text>
+        <text>mvn(org.apache.ant:ant)</text>
+        <text>mvn(org.apache.bcel:bcel)</text>
+        <text>mvn(org.apache.commons:commons-parent:pom:)</text>
+        <text>mvn(org.apache.felix:maven-bundle-plugin)</text>
+        <text>mvn(org.apache.maven.plugins:maven-antrun-plugin)</text>
+        <text>mvn(org.apache.maven.plugins:maven-assembly-plugin)</text>
+        <text>mvn(org.apache.maven.plugins:maven-dependency-plugin)</text>
+        <text>mvn(org.apache.maven.plugins:maven-enforcer-plugin)</text>
+        <text>mvn(org.apache.maven.plugins:maven-failsafe-plugin)</text>
+        <text>mvn(org.apache.maven.plugins:maven-source-plugin)</text>
+        <text>mvn(org.apache.maven.surefire:surefire-junit4)</text>
+        <text>mvn(org.apiguardian:apiguardian-api)</text>
+        <text>mvn(org.codehaus.mojo:build-helper-maven-plugin)</text>
+        <text>mvn(org.hamcrest:hamcrest-core)</text>
+        <text>mvn(org.hamcrest:hamcrest-library)</text>
+        <text>mvn(org.junit.platform:junit-platform-launcher)</text>
+        <text>mvn(org.opentest4j:opentest4j)</text>
+        <text>mvn(org.sonatype.oss:oss-parent:pom:)</text>
+        <text>mvn(org.tukaani:xz)</text>
+        <text>mvn(oro:oro)</text>
+        <text>mvn(regexp:regexp)</text>
+        <text>mvn(xalan:xalan)</text>
+        <text>mvn(xml-apis:xml-apis)</text>
+        <text>mvn(xml-resolver:xml-resolver)</text>
+        <text>osgi(javax.xml)</text>
+        <text>osgi(org.apache.xerces)</text>
+        <text>osgi(org.apache.xml.resolver)</text>
+        <text>regexp</text>
+        <text>rpmlib(BuiltinLuaScripts)</text>
+        <text>rpmlib(CompressedFileNames)</text>
+        <text>rpmlib(FileDigests)</text>
+        <text>rpmlib(PayloadFilesHavePrefix)</text>
+        <text>rpmlib(PayloadIsZstd)</text>
+        <text>rpmlib(RichDependencies)</text>
+        <text>sed</text>
+        <text>/usr/bin/bash</text>
+        <text>/usr/bin/sh</text>
+        <text>xalan-j2</text>
+        <text>xerces-j2</text>
+        <text>xml-commons-apis</text>
+        <text>xml-commons-resolver</text>
+        <text>xmlto</text>
+        <text>zip</text>
+      </any>
+    </requires>
+  </rule>
+  
+  <rule>
+    <name>module ant recommends</name>
+    <tag>specific</tag>
+    <match>
+      <and>
+        <rule>module ant</rule>
+        <name>ant</name>
+      </and>
+    </match>
+    
+    <recommends>
+      <text>java-devel</text>
+    </recommends>
+  </rule>
+  
+  <rule>
+    <name>module ant files ant components</name>
+    <tag>specific</tag>
+    <match>
+      <and>
+        <rule>module ant</rule>
+        <distribution>binary</distribution>
+        <name>ant.*</name>
+      </and>
+    </match>
+    
+    <files>
+      <file-rule>
+        <match/>
+        
+        <filename>
+          <!-- TODO -->
+          <pass/>
+        </filename>
+      </file-rule>
+    </files>
+  </rule>
+  
+  <rule>
+    <name>module ant files jdepend</name>
+    <tag>specific</tag>
+    <match>
+      <and>
+        <rule>module ant</rule>
+        <distribution>binary</distribution>
+        <name>jdepend-demo</name>
+      </and>
+    </match>
+    
+    <files>
+      <file-rule>
+        <match/>
+        
+        <filename>
+          <!-- TODO -->
+          <pass/>
+        </filename>
+      </file-rule>
+    </files>
+  </rule>
+  
+  <rule>
+    <name>module ant files special cases</name>
+    <tag>specific</tag>
+    <match>
+      <and>
+        <rule>module ant</rule>
+        <distribution>binary</distribution>
+        <or>
+          <name>apache-commons-logging</name>
+          <name>apache-commons-logging-javadoc</name>
+          <name>apache-commons-net</name>
+          <name>javamail</name>
+          <name>jzlib-demo</name>
+          <name>log4j12</name>
+          <name>jakarta-oro</name>
+          <name>xz-java</name>
+          <name>xml-commons-resolver</name>
+          <name>xalan-j2.*</name>
+          <name>xerces-j2</name>
+          <name>xerces-j2-demo</name>
+          <name>xml-commons-apis</name>
+        </or>
+      </and>
+    </match>
+    
+    <files>
+      <file-rule>
+        <match/>
+        
+        <filename>
+          <!-- TODO -->
+          <pass/>
+        </filename>
+      </file-rule>
+    </files>
+  </rule>
+  
+  <rule>
+    <name>module ant files</name>
+    <tag>specific</tag>
+    <match>
+      <and>
+        <rule>module ant</rule>
+        <distribution>binary</distribution>
+        <not><rule>module ant files ant components</rule></not>
+        <not><rule>module ant files jdepend</rule></not>
+        <not><rule>module ant files special cases</rule></not>
+      </and>
+    </match>
+    
+    <files>
+      <file-rule>
+        <name>jars</name>
+        <match><filename>.*\.jar$</filename></match>
+        
+        <filename>
+          <any>
+            <regex>/usr/share/java/.*\.jar</regex>
+            <regex>/usr/share/ant/lib/ant.*\.jar</regex>
+            <text>/usr/share/xerces-j2/xerces-j2-samples.jar</text>
+          </any>
+        </filename>
+      </file-rule>
+      
+      <file-rule>
+        <name>poms</name>
+        <match><filename>.*\.pom$</filename></match>
+        
+        <filename>
+          <any>
+            <regex>/usr/share/maven-poms/.*</regex>
+          </any>
+        </filename>
+      </file-rule>
+      
+      <file-rule>
+        <name>header files</name>
+        <match><filename>.*\.hpp$</filename></match>
+        <filename>
+          <regex>/usr/include/antlr.*</regex>
+        </filename>
+      </file-rule>
+      
+      <file-rule>
+        <name>license files</name>
+        <match><filename>.*(?:LICENSE|NOTICE).*</filename></match>
+        
+        <filename>
+          <any>
+            <regex>/usr/share/doc/#{NAME}/.*</regex>
+            <regex>/usr/share/licenses/#{NAME}/.*</regex>
+            
+            <regex>/usr/share/doc/#{NAME%-javadoc}/.*</regex>
+            <regex>/usr/share/licenses/#{NAME%-javadoc}/.*</regex>
+          </any>
+        </filename>
+      </file-rule>
+      
+      <file-rule>
+        <name>rest</name>
+        <match>
+          <not>
+            <and>
+              <file-rule>jars</file-rule>
+              <file-rule>poms</file-rule>
+              <file-rule>header files</file-rule>
+              <file-rule>license files</file-rule>
+            </and>
+          </not>  
+        </match>
+        
+        <filename>
+          <any>
+            <regex>/usr/share/javadoc/#{NAME%-javadoc}.*</regex>
+            <regex>/usr/share/doc/#{NAME}.*</regex>
+            <regex>/usr/share/licenses/#{NAME}.*</regex>
+            <regex>/usr/share/maven-poms/#{NAME}.*</regex>
+            <regex>/usr/share/java/#{NAME}.*</regex>
+            <regex>/usr/share/maven-metadata/#{NAME}.*</regex>
+          </any>
+        </filename>
+      </file-rule>
+    </files>
+  </rule>
+    
+  <!-- Explicit symlinks generated by a script -->
+      
+  <rule>
+    <name>module ant files symlinks</name>
+    <tag>specific</tag>
+    <match>
+      <and>
+        <rule>module ant</rule>
+        <distribution>binary</distribution>
+      </and>
+    </match>
+    
+    <files>
+      <file-rule>
+        <match><filename>./usr/share/java/xz.jar</filename></match>
+        <symlink><target><text>xz-java.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/xz.pom</filename></match>
+        <symlink><target><text>xz-java.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/javamail/mail.jar</filename></match>
+        <symlink><target><text>javax.mail.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/javax.mail/javax.mail.jar</filename></match>
+        <symlink><target><text>../javamail/javax.mail.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/javamail/mail.pom</filename></match>
+        <symlink><target><text>javax.mail.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/apache-commons-logging-adapters.jar</filename></match>
+        <symlink><target><text>commons-logging-adapters.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/apache-commons-logging-api.jar</filename></match>
+        <symlink><target><text>commons-logging-api.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/apache-commons-logging.jar</filename></match>
+        <symlink><target><text>commons-logging.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/apache-commons-logging-api.pom</filename></match>
+        <symlink><target><text>commons-logging-api.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/apache-commons-logging.pom</filename></match>
+        <symlink><target><text>commons-logging.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/apache-commons-net.jar</filename></match>
+        <symlink><target><text>commons-net.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/apache-commons-net.pom</filename></match>
+        <symlink><target><text>commons-net.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-imageio.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-imageio.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-jsch.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-jsch.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-jdepend.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-jdepend.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-commons-net.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-commons-net.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-apache-bsf.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-apache-bsf.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-junitlauncher.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-junitlauncher.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-commons-logging.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-commons-logging.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-bootstrap.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-bootstrap.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-launcher.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-launcher.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/ant-bootstrap.jar</filename></match>
+        <symlink><target><text>ant/ant-bootstrap.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/ant-launcher.jar</filename></match>
+        <symlink><target><text>ant/ant-launcher.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/ant.jar</filename></match>
+        <symlink><target><text>ant/ant.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/ant-launcher.pom</filename></match>
+        <symlink><target><text>ant/ant-launcher.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/ant.pom</filename></match>
+        <symlink><target><text>ant/ant.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/bin/ant</filename></match>
+        <symlink><target><text>/usr/bin/ant</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-apache-resolver.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-apache-resolver.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-apache-regexp.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-apache-regexp.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-xz.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-xz.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-javamail.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-javamail.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-apache-log4j.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-apache-log4j.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-testutil.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-testutil.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-junit.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-junit.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-junit4.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-junit4.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/doc/ant-manual/api</filename></match>
+        <symlink><target><text>/usr/share/javadoc/ant</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-swing.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-swing.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-apache-bcel.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-apache-bcel.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-apache-oro.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-apache-oro.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-apache-xalan2.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-apache-xalan2.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-antlr.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-antlr.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/ant/lib/ant-jmf.jar</filename></match>
+        <symlink><target><text>../../java/ant/ant-jmf.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/xml-resolver.jar</filename></match>
+        <symlink><target><text>xml-commons-resolver.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/xml-resolver.pom</filename></match>
+        <symlink><target><text>xml-commons-resolver.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/jaxp_parser_impl.jar</filename></match>
+        <symlink><target><text>xerces-j2.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/jaxp_parser_impl.pom</filename></match>
+        <symlink><target><text>xerces-j2.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/oro.jar</filename></match>
+        <symlink><target><text>jakarta-oro.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/oro.pom</filename></match>
+        <symlink><target><text>jakarta-oro.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/log4j-1.jar</filename></match>
+        <symlink><target><text>log4j-1.2.17.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/log4j12-1.2.17.jar</filename></match>
+        <symlink><target><text>log4j-1.2.17.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/log4j12-1.2.17.pom</filename></match>
+        <symlink><target><text>log4j-1.2.17.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/jaxp_transform_impl.jar</filename></match>
+        <symlink><target><text>xalan-j2.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/jaxp_transform_impl.pom</filename></match>
+        <symlink><target><text>xalan-j2.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/jaxp.jar</filename></match>
+        <symlink><target><text>xml-commons-apis.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/jaxp13.jar</filename></match>
+        <symlink><target><text>xml-commons-apis.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/java/xml-commons-jaxp-1.3-apis.jar</filename></match>
+        <symlink><target><text>xml-commons-apis.jar</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/jaxp.pom</filename></match>
+        <symlink><target><text>xml-commons-apis.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/jaxp13.pom</filename></match>
+        <symlink><target><text>xml-commons-apis.pom</text></target></symlink>
+      </file-rule>
+      
+      <file-rule>
+        <match><filename>./usr/share/maven-poms/xml-commons-jaxp-1.3-apis.pom</filename></match>
+        <symlink><target><text>xml-commons-apis.pom</text></target></symlink>
+      </file-rule>
+    </files>
+  </rule>
+</config>

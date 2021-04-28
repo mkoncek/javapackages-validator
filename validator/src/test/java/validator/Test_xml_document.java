@@ -82,11 +82,12 @@ public class Test_xml_document
 			
 			Assertions.assertEquals("javapackages-tools", rules.get(1).get("name").content());
 			Assertions.assertEquals("source", rules.get(1).get("match").get("rule").content());
-			Assertions.assertEquals(".*", rules.get(1).get("files").get("file-rule").get("name").get("any").get("regex").content());
+			Assertions.assertEquals(".*", rules.get(1).get("files").get("file-rule").get("filename").get("any").get("regex").content());
 			Assertions.assertFalse(rules.get(1).getop("nonexisting").isPresent());
 			Assertions.assertFalse(rules.get(1).get("files").getop("nonexisting").isPresent());
 			
-			Assertions.assertEquals("/other_file", rules.get(2).get("files").get("file-rule").get("symlink").get("target").get("text").content());
+			Assertions.assertEquals("/other_file", rules.get(2).get("files").gets("file-rule")
+					.reduce((first, second) -> first).get().get("symlink").get("target").get("text").content());
 			
 			Assertions.assertNull(rules.get(3).get("match").content());
 			Assertions.assertEquals(".*", rules.get(3).get("requires").get("any").get("all").get("none").get("regex").content());

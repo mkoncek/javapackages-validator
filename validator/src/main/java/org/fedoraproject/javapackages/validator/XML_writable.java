@@ -1,6 +1,6 @@
 package org.fedoraproject.javapackages.validator;
 
-public interface Xml_writable
+public interface XML_writable
 {
 	void to_xml(StringBuilder result);
 	

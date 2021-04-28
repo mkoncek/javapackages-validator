@@ -17,9 +17,13 @@ package org.fedoraproject.javapackages.validator;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
@@ -29,7 +33,7 @@ import org.fedoraproject.javapackages.validator.Rule.File_validator_args;
 /**
  * @author Marián Konček
  */
-abstract public class Validator implements Xml_writable
+abstract public class Validator implements XML_writable
 {
 	static private final Ansi_colors.Decorator decor()
 	{
@@ -96,25 +100,106 @@ abstract public class Validator implements Xml_writable
 		if (result.result)
 		{
 			result.message.append(decor().decorate("passed", Type.green, Type.bold));
-			result.message.append(" with value \"");
-			result.message.append(decor().decorate(value, Type.yellow));
-			result.message.append("\"");
 		}
 		else
 		{
 			result.message.append(decor().decorate("failed", Type.red, Type.bold));
-			result.message.append(" with value \"");
-			result.message.append(decor().decorate(value, Type.yellow));
-			result.message.append("\"");
 		}
+		
+		result.message.append(" with type [");
+		result.message.append(decor().decorate(value.getClass().getSimpleName(), Type.bright_blue));
+		result.message.append("] of value \"");
+		result.message.append(decor().decorate(value, Type.yellow));
+		result.message.append("\"");
 		
 		return result;
 	}
 	
+	static final Pattern substitution_pattern = Pattern.compile(
+			"(.*?)#\\{([^\\/#%]*)([\\/#%])?([^\\/#%]*)([\\/#%])?([^\\/#%]*)\\}"
+	);
+	
+	static final Map<String, Function<RpmInfo, String>> substitution_map = Map.ofEntries(
+			Map.entry("NAME", (rpm_info) -> rpm_info.getName())
+	);
+	
 	static protected String substitute(String string, RpmInfo rpm_info)
 	{
-		string = string.replace("#{NAME}", rpm_info.getName());
-		return string;
+		var result = new StringBuilder();
+		
+		var end = 0;
+		var matcher = substitution_pattern.matcher(string);
+		while (matcher.find())
+		{
+			end += matcher.group(0).length();
+			
+			result.append(matcher.group(1));
+			
+			var substituted = substitution_map.get(matcher.group(2)).apply(rpm_info);
+			
+			if (matcher.group(3) != null)
+			{
+				final var delimiter = matcher.group(3).charAt(0);
+				final var target = matcher.group(4);
+				
+				if (matcher.group(5) != null)
+				{
+					if (delimiter != matcher.group(5).charAt(0))
+					{
+						throw new RuntimeException("Non-matching delimiters \"" +
+								delimiter + " and \"" + matcher.group(4).charAt(0) +
+								"\" inside \"" + string + "\"");
+					}
+					
+					final var replacement = matcher.group(6);
+					
+					switch (delimiter)
+					{
+					case '/':
+					{
+						substituted = substituted.replace(target, replacement);
+						break;
+					}
+					default:
+						throw new RuntimeException("Invalid delimiter \"" + delimiter + "\" inside \"" + string + "\"");
+					}
+				}
+				else
+				{
+					switch (delimiter)
+					{
+					case '#':
+					{
+						if (substituted.startsWith(target))
+						{
+							substituted = substituted.substring(target.length());
+						}
+						break;
+					}					
+					case '%':
+					{
+						if (substituted.endsWith(target))
+						{
+							substituted = substituted.substring(0, substituted.length() - target.length());
+						}
+						break;
+					}
+					default:
+						throw new RuntimeException("Invalid delimiter \"" + delimiter + "\" inside \"" + string + "\"");
+					}
+				}
+			}
+			else if (matcher.group(5) != null)
+			{
+				throw new RuntimeException("Invalid pattern \"" + string + "\"");
+			}
+			
+			result.append(Pattern.quote(substituted));
+		}
+		
+		result.append(string, end, string.length());
+		
+		return result.toString();
 	}
 	
 	static class Pass_validator extends Validator
@@ -270,7 +355,7 @@ abstract public class Validator implements Xml_writable
 			result.verbose_text.append("int-range [");
 			result.verbose_text.append(decor().decorate(min == Long.MIN_VALUE ? "" : Long.toString(min)));
 			result.verbose_text.append(decor().decorate(" - "));
-			result.verbose_text.append(decor().decorate((max == Long.MAX_VALUE ? "" : Long.toString(max)), Type.cyan));
+			result.verbose_text.append(decor().decorate((max == Long.MAX_VALUE ? "" : Long.toString(max))));
 			result.verbose_text.append("] ");
 			
 			if (result.result)
@@ -496,7 +581,7 @@ abstract public class Validator implements Xml_writable
 		{
 			final var result = new Test_result(true);
 			result.verbose_text = new StringBuilder();
-			result.verbose_text.append("union validator of <files> ");
+			result.verbose_text.append("union validator of <files>:");
 			++debug_nesting;
 			
 			for (var fv : list)
@@ -526,53 +611,166 @@ abstract public class Validator implements Xml_writable
 		}
 	}
 	
-	static class File_validator implements Xml_writable
+	static class File_validator implements XML_writable
 	{
+		String name = null;
 		Match match;
 		Validator name_validator = null;
 		boolean want_directory = false;
 		Optional<Validator> symlink_target = null;
 		
-		private static interface Match extends Predicate<CpioArchiveEntry>, Xml_writable
+		public static interface Match extends Predicate<CpioArchiveEntry>, XML_writable
 		{
 		}
 		
-		public File_validator(String name_match)
+		public static class Empty_match implements Match
 		{
-			if (name_match != null && ! name_match.isEmpty())
+			@Override
+			public boolean test(CpioArchiveEntry value)
 			{
-				this.match = new Match()
-				{
-					@Override
-					public void to_xml(StringBuilder result)
-					{
-						result.append(name_match);
-					}
-					
-					@Override
-					public boolean test(CpioArchiveEntry value)
-					{
-						return value.getName().matches(name_match);
-					}
-				};
+				return true;
 			}
-			else
+			
+			@Override
+			public void to_xml(StringBuilder result)
 			{
-				this.match = new Match()
-				{
-					@Override
-					public void to_xml(StringBuilder result)
-					{
-						/// Empty
-					}
-					
-					@Override
-					public boolean test(CpioArchiveEntry value)
-					{
-						return true;
-					}
-				};
+				/// Empty
 			}
+		}
+		
+		public static final Match EMPTY_MATCH = new Empty_match();
+		
+		public static class Name_match implements Match
+		{
+			String name;
+			
+			public Name_match(String name)
+			{
+				this.name = name;
+			}
+			
+			@Override
+			public boolean test(CpioArchiveEntry value)
+			{
+				return value.getName().matches(name);
+			}
+			
+			@Override
+			public void to_xml(StringBuilder result)
+			{
+				result.append("<name>");
+				result.append(name);
+				result.append("</name>");
+			}
+		}
+		
+		public static class Rule_match implements Match
+		{
+			File_validator validator;
+			
+			public Rule_match(File_validator validator)
+			{
+				this.validator = validator;
+			}
+			
+			@Override
+			public boolean test(CpioArchiveEntry value)
+			{
+				return validator.match.test(value);
+			}
+			
+			@Override
+			public void to_xml(StringBuilder result)
+			{
+				result.append("<file-rule>");
+				result.append(validator.name);
+				result.append("</file-rule>");
+			}
+		}
+		
+		public static class Not_match implements Match
+		{
+			Match match;
+			
+			public Not_match(Match match)
+			{
+				this.match = match;
+			}
+			
+			@Override
+			public boolean test(CpioArchiveEntry value)
+			{
+				return ! match.test(value);
+			}
+			
+			@Override
+			public void to_xml(StringBuilder result)
+			{
+				result.append("<not>");
+				match.to_xml(result);
+				result.append("</not>");
+			}
+		}
+		
+		public static abstract class List_match implements Match
+		{
+			List<Match> list = new ArrayList<>();
+			
+			public List_match(Collection<Match> matches)
+			{
+				super();
+				list.addAll(matches);
+			}
+		}
+		
+		public static class Or_match extends List_match
+		{
+			public Or_match(Collection<Match> matches)
+			{
+				super(matches);
+			}
+			
+			@Override
+			public boolean test(CpioArchiveEntry value)
+			{
+				return this.list.stream().anyMatch(m -> m.test(value));
+			}
+			
+			@Override
+			public void to_xml(StringBuilder result)
+			{
+				result.append("<or>");
+				list.forEach(m -> m.to_xml(result));
+				result.append("</or>");
+			}
+		}
+		
+		public static class And_match extends List_match
+		{
+			public And_match(Collection<Match> matches)
+			{
+				super(matches);
+			}
+			
+			@Override
+			public boolean test(CpioArchiveEntry value)
+			{
+				return this.list.stream().allMatch(m -> m.test(value));
+			}
+			
+			@Override
+			public void to_xml(StringBuilder result)
+			{
+				result.append("<and>");
+				list.forEach(m -> m.to_xml(result));
+				result.append("</and>");
+			}
+		}
+		
+		public File_validator(String name, Match match)
+		{
+			this.name = name;
+			this.match = match;
 		}
 		
 		private Test_result do_validate_file(File_validator_args args, RpmInfo rpm_info)
@@ -691,15 +889,23 @@ abstract public class Validator implements Xml_writable
 		public void to_xml(StringBuilder result)
 		{
 			result.append("<file-rule>");
+			
+			if (name != null)
+			{
+				result.append("<name>");
+				result.append(name);
+				result.append("</name>");
+			}
+			
 			result.append("<match>");
 			match.to_xml(result);
 			result.append("</match>");
 			
 			if (name_validator != null)
 			{
-				result.append("<name>");
+				result.append("<filename>");
 				name_validator.to_xml(result);
-				result.append("</name>");
+				result.append("</filename>");
 			}
 			
 			if (want_directory)

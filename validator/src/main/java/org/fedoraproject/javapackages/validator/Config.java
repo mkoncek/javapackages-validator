@@ -15,15 +15,17 @@
  */
 package org.fedoraproject.javapackages.validator;
 
-import java.io.InputStream;
+import java.io.FileInputStream;
+import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -36,7 +38,7 @@ import org.fedoraproject.javapackages.validator.XML_document.XML_node;
 /**
  * @author Marián Konček
  */
-public final class Config implements Xml_writable
+public final class Config implements XML_writable
 {
 	static final Pattern int_range_pattern = Pattern.compile("(['_0-9]*)\\s*-\\s*(['_0-9]*)");
 	static final String int_range_replacement_regex = "[_']";
@@ -47,7 +49,7 @@ public final class Config implements Xml_writable
 	
 	static final Decorator decor = Package_test.color_decorator();
 	
-	static final Map<String, String> message_map = new HashMap<>();
+	static final Map<String, String> message_map = new TreeMap<>();
 	static
 	{
 		message_map.put("files", "[Files]");
@@ -272,32 +274,99 @@ public final class Config implements Xml_writable
 		return result;
 	}
 	
-	final File_validator read_validator_files(XML_node node)
+	static final File_validator.Match read_file_match(XML_node node, Map<String, File_validator> file_rules)
 	{
-		var match = node.get("match");
-		var result = new File_validator(match.content());
+		final Supplier<List<File_validator.Match>> collector = (() ->
+				node.gets().map(n -> read_file_match(n, file_rules)).collect(Collectors.toList())
+		);
+		
+		switch (node.name())
+		{
+		case "and":
+			return new File_validator.And_match(collector.get());
+			
+		case "or":
+			return new File_validator.Or_match(collector.get());
+			
+		case "not":
+			return new File_validator.Not_match(read_file_match(node.get(), file_rules));
+			
+		case "filename":
+			return new File_validator.Name_match(node.content());
+			
+		case "file-rule":
+			return new File_validator.Rule_match(file_rules.get(node.content()));
+			
+		default:
+			throw new RuntimeException("Invalid node <" + node.name() + "> inside a <file-rule> <match>");
+		}
+	}
+	
+	final File_validator read_file_rule(XML_node node, Map<String, File_validator> file_rules)
+	{
+		var match_node = node.get("match");
+		File_validator.Match match;
+		
+		if (match_node.content() != null)
+		{
+			throw new RuntimeException("<match> may not have content \"" + match_node.content() + "\"");
+		}
+		
+		if (match_node.getr().isEmpty())
+		{
+			match = File_validator.EMPTY_MATCH;
+		}
+		else
+		{
+			match = read_file_match(match_node.get(), file_rules);
+		}
 		
 		var op_name = node.getop("name");
+		String name = null;
+		
 		if (op_name.isPresent())
 		{
-			result.name_validator = read_validator_body(op_name.get().get());
+			name = op_name.get().content();
 		}
 		
-		var op_symlink = node.getop("symlink");
-		if (op_symlink.isPresent())
+		var result = new File_validator(name, match);
+		
+		node.gets().forEach(inner_node ->
 		{
-			result.symlink_target = Optional.empty();
-			
-			var op_target = op_symlink.get().getop("target");
-			if (op_target.isPresent())
+			switch (inner_node.name())
 			{
-				result.symlink_target = Optional.of(read_validator_body(op_target.get().get()));
+			case "match":
+				break;
+				
+			case "name":
+				break;
+				
+			case "filename":
+				result.name_validator = read_validator_body(inner_node.get());
+				break;
+				
+			case "symlink":
+				result.symlink_target = Optional.empty();
+				
+				var op_target = inner_node.getop("target");
+				if (op_target.isPresent())
+				{
+					result.symlink_target = Optional.of(read_validator_body(op_target.get().get()));
+				}
+				break;
+				
+			case "directory":
+				result.want_directory = true;
+				break;
+				
+			default:
+				throw new RuntimeException("Invalid node <" + inner_node.name() + "> inside <file-rule>");
 			}
-		}
+		});
 		
-		if (node.getop("directory").isPresent())
+		if (name != null)
 		{
-			result.want_directory = true;
+			file_rules.put(name, result);
 		}
 		
 		return result;
@@ -366,9 +435,11 @@ public final class Config implements Xml_writable
 					
 				case "files":
 				{
+					var file_rules = new TreeMap<String, File_validator>();
+					
 					result.validators.put(inner_node.name(),
 							new File_multivalidator(inner_node.gets()
-							.map((x) -> read_validator_files(x))
+							.map((x) -> read_file_rule(x, file_rules))
 							.collect(Collectors.toCollection(ArrayList::new))));
 					break;
 				}
@@ -404,15 +475,64 @@ public final class Config implements Xml_writable
 		return result;
 	}
 	
-	public Config(InputStream is) throws Exception
+	private void resolve(XML_node node, Path path)
 	{
+		if (node.descendants != null)
+		{
+			var expanded = new ArrayList<XML_node>();
+			
+			node.descendants.forEach(inner_node ->
+			{
+				if (inner_node.name().equals("include-file"))
+				{
+					var include_path = path.resolve(inner_node.content());
+					
+					try (var included = new XML_document(new FileInputStream(include_path.toFile())))
+					{
+						included.start();
+						included.nodes().forEach(n ->
+						{
+							resolve(n, include_path.getParent());
+							expanded.add(n);
+						});
+						included.end();
+					}
+					catch (Exception ex)
+					{
+						throw new RuntimeException(ex);
+					}
+				}
+				else
+				{
+					expanded.add(inner_node);
+				}
+			});
+			
+			node.descendants = expanded;
+		}
+	}
+	
+	public Config(Path path) throws Exception
+	{
+		var is = new FileInputStream(path.toFile());
+		
 		try (var document = new XML_document(is))
 		{
 			document.start("config");
 			
-			XML_node execution = null;
+			var config_node = new XML_node();
+			config_node.descendants = new ArrayList<>();
 			
 			for (var node : document.nodes())
+			{
+				config_node.descendants.add(node);
+			}
+			
+			resolve(config_node, path.toAbsolutePath().getParent());
+			
+			XML_node execution = null;
+			
+			for (var node : config_node.descendants)
 			{
 				switch (node.name())
 				{
@@ -426,7 +546,14 @@ public final class Config implements Xml_writable
 				}
 			}
 			
-			rule = read_execution_inside(execution.get());
+			try
+			{
+				rule = read_execution_inside(execution.get());
+			}
+			catch (NullPointerException ex)
+			{
+				throw new RuntimeException("No node named <execution> found");
+			}
 		}
 	}
 	

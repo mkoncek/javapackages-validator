@@ -25,23 +25,26 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.EndElement;
+import javax.xml.stream.events.StartElement;
 
 /**
  * @author Marián Konček
  */
 public class XML_document implements AutoCloseable
 {
-	public static class XML_node implements Xml_writable
+	public static class XML_node implements XML_writable
 	{
 		private String name = null;
-		private String content = null;
-		private ArrayList<XML_node> descendants = null;
+		public String content = null;
+		public ArrayList<XML_node> descendants = null;
 		
 		@Override
 		public void to_xml(StringBuilder result)
@@ -238,13 +241,38 @@ public class XML_document implements AutoCloseable
 		event_reader = XMLInputFactory.newInstance().createXMLEventReader(reader);
 	}
 	
-	public final XML_document start(String name) throws XMLStreamException
+	private final XML_document start(Predicate<StartElement> acceptor) throws XMLStreamException
 	{
 		while (event_reader.hasNext())
 		{
 			var event = event_reader.nextEvent();
 			if (event.getEventType() == XMLStreamConstants.START_ELEMENT &&
-					event.asStartElement().getName().getLocalPart().equals(name))
+					acceptor.test(event.asStartElement()))
+			{
+				break;
+			}
+		}
+		
+		return this;
+	}
+	
+	public final XML_document start(String name) throws XMLStreamException
+	{
+		return start(se -> se.getName().getLocalPart().equals(name));
+	}
+	
+	public final XML_document start() throws XMLStreamException
+	{
+		return start(se -> true);
+	}
+	
+	private final XML_document end(Predicate<EndElement> acceptor) throws XMLStreamException
+	{
+		while (event_reader.hasNext())
+		{
+			var event = event_reader.nextEvent();
+			if (event.getEventType() == XMLStreamConstants.END_ELEMENT &&
+					acceptor.test(event.asEndElement()))
 			{
 				break;
 			}
@@ -255,17 +283,12 @@ public class XML_document implements AutoCloseable
 	
 	public final XML_document end(String name) throws XMLStreamException
 	{
-		while (event_reader.hasNext())
-		{
-			var event = event_reader.nextEvent();
-			if (event.getEventType() == XMLStreamConstants.END_ELEMENT &&
-					event.asEndElement().getName().getLocalPart().equals(name))
-			{
-				break;
-			}
-		}
-		
-		return this;
+		return end(se -> se.getName().getLocalPart().equals(name));
+	}
+	
+	public final XML_document end() throws XMLStreamException
+	{
+		return end(se -> true);
 	}
 	
 	public final Iterator<XML_node> iterator()

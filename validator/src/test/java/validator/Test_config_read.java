@@ -16,7 +16,7 @@
 package validator;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
 import org.fedoraproject.javapackages.validator.Config;
@@ -34,7 +34,7 @@ class Test_config_read
 	@Test
 	void config_1() throws Exception
 	{
-		final var config = new Config(new FileInputStream("src/test/resources/config-1.xml"));
+		final var config = new Config(Paths.get("src/test/resources/config-1.xml"));
 		
 		final var text = FileUtils.readFileToString(new File("src/test/resources/config-1.xml"), "UTF-8");
 		

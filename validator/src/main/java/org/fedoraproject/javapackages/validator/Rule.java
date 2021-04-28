@@ -39,9 +39,9 @@ import org.fedoraproject.javapackages.validator.Validator.Test_result;
 /**
  * @author Marián Konček
  */
-public class Rule implements Xml_writable
+public class Rule implements XML_writable
 {
-	public static abstract class Structured implements Xml_writable
+	public static abstract class Structured implements XML_writable
 	{
 		protected abstract boolean apply(List<Test_result> results, Path rpm_path, String prefix);
 		
@@ -217,7 +217,7 @@ public class Rule implements Xml_writable
 		}
 	}
 	
-	public static interface Match extends Predicate<RpmInfo>, Xml_writable
+	public static interface Match extends Predicate<RpmInfo>, XML_writable
 	{
 	}
 	
@@ -426,7 +426,7 @@ public class Rule implements Xml_writable
 		@Override
 		public String toString()
 		{
-			return "[Cpio archive entry] " + entry.getName();
+			return entry.getName();
 		}
 	}
 	private void validate_files(Validator validator, Path rpm_path, String prefix,

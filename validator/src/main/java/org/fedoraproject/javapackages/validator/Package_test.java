@@ -140,7 +140,7 @@ public class Package_test
 			Package_test.color_decorator = new Ansi_colors.Default_decorator();
 		}
 		
-		final var config = new Config(new FileInputStream(arguments.config_file));
+		final var config = new Config(Paths.get(arguments.config_file));
 		
 		if (arguments.dump_config)
 		{
@@ -167,7 +167,7 @@ public class Package_test
 				
 				try (var br = new BufferedReader(new InputStreamReader(is)))
 				{
-					br.lines().forEachOrdered((filename) ->
+					br.lines().forEach(filename ->
 					{
 						var path = Paths.get(filename);
 						

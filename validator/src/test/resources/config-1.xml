@@ -21,11 +21,11 @@
       <file-rule>
         <match/>
         
-        <name>
+        <filename>
           <any>
             <regex>.*</regex>
           </any>
-        </name>
+        </filename>
         
         <directory/>
       </file-rule>
@@ -38,7 +38,21 @@
     
     <files>
       <file-rule>
+        <name>all</name>
         <match></match>
+        
+        <symlink>
+          <target><text>/other_file</text></target>
+        </symlink>
+      </file-rule>
+      
+      <file-rule>
+        <name>none</name>
+        <match>
+          <and>
+            <not><file-rule>all</file-rule></not>
+          </and>
+        </match>
         
         <symlink>
           <target><text>/other_file</text></target>
