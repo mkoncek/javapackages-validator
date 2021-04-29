@@ -481,7 +481,7 @@ public final class Config implements XML_writable
 		{
 			var expanded = new ArrayList<XML_node>();
 			
-			node.descendants.forEach(inner_node ->
+			for (var inner_node : node.descendants)
 			{
 				if (inner_node.name().equals("include-file"))
 				{
@@ -489,13 +489,9 @@ public final class Config implements XML_writable
 					
 					try (var included = new XML_document(new FileInputStream(include_path.toFile())))
 					{
-						included.start();
-						included.nodes().forEach(n ->
-						{
-							resolve(n, include_path.getParent());
-							expanded.add(n);
-						});
-						included.end();
+						var included_root = included.read();
+						resolve(included_root, include_path.getParent());
+						expanded.addAll(included_root.getr());
 					}
 					catch (Exception ex)
 					{
@@ -506,7 +502,7 @@ public final class Config implements XML_writable
 				{
 					expanded.add(inner_node);
 				}
-			});
+			}
 			
 			node.descendants = expanded;
 		}

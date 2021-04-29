@@ -308,6 +308,11 @@ public class XML_document implements AutoCloseable
 		};
 	}
 	
+	public final XML_node read() throws XMLStreamException
+	{
+		return read_node(event_reader);
+	}
+	
 	private static XML_node read_node(XMLEventReader event_reader) throws XMLStreamException
 	{
 		var result = new XML_node();
