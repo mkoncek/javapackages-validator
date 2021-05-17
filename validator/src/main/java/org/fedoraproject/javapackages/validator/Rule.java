@@ -34,6 +34,7 @@ import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
+import org.fedoraproject.javapackages.validator.Ansi_colors.Type;
 import org.fedoraproject.javapackages.validator.Validator.Test_result;
 
 /**
@@ -43,12 +44,12 @@ public class Rule implements XML_writable
 {
 	public static abstract class Structured implements XML_writable
 	{
-		protected abstract boolean apply(List<Test_result> results, Path rpm_path, String prefix);
+		protected abstract boolean do_apply(List<Test_result> results, Path rpm_path, String prefix);
 		
 		public List<Test_result> apply(Path rpm_path, String prefix)
 		{
 			var result = new ArrayList<Test_result>();
-			apply(result, rpm_path, prefix);
+			do_apply(result, rpm_path, prefix);
 			return result;
 		}
 		
@@ -62,7 +63,7 @@ public class Rule implements XML_writable
 			}
 			
 			@Override
-			protected boolean apply(List<Test_result> results, Path rpm_path, String prefix)
+			protected boolean do_apply(List<Test_result> results, Path rpm_path, String prefix)
 			{
 				try
 				{
@@ -102,7 +103,7 @@ public class Rule implements XML_writable
 			}
 			
 			@Override
-			protected boolean apply(List<Test_result> results, Path rpm_path, String prefix)
+			protected boolean do_apply(List<Test_result> results, Path rpm_path, String prefix)
 			{
 				boolean result = false;
 				
@@ -163,13 +164,13 @@ public class Rule implements XML_writable
 			}
 			
 			@Override
-			protected boolean apply(List<Test_result> results, Path rpm_path, String prefix)
+			protected boolean do_apply(List<Test_result> results, Path rpm_path, String prefix)
 			{
 				boolean result = false;
 				
 				for (var structured : rules)
 				{
-					if (structured.apply(results, rpm_path, prefix))
+					if (structured.do_apply(results, rpm_path, prefix))
 					{
 						result = true;
 					}
@@ -187,7 +188,7 @@ public class Rule implements XML_writable
 			}
 			
 			@Override
-			protected boolean apply(List<Test_result> results, Path rpm_path, String prefix)
+			protected boolean do_apply(List<Test_result> results, Path rpm_path, String prefix)
 			{
 				boolean result = false;
 				var stage_results = new ArrayList<Test_result>();
@@ -195,7 +196,7 @@ public class Rule implements XML_writable
 				
 				for (var structured : rules)
 				{
-					if (structured.apply(stage_results, rpm_path, prefix))
+					if (structured.do_apply(stage_results, rpm_path, prefix))
 					{
 						result = true;
 						
@@ -538,10 +539,12 @@ public class Rule implements XML_writable
 	private void validate_trait(RpmInfo rpm_info, Stream<String> stream, String name, String prefix, List<Test_result> result)
 	{
 		final Validator validator = validators.get(name);
+		var full_prefix = prefix + Package_test.color_decorator().decorate(
+		        Config.message_map.get(name), Type.bright_white);
 		
 		if (validator != null)
 		{
-			stream.map((s) -> validator.validate(s, prefix, rpm_info)).forEachOrdered(result::add);
+			stream.map((s) -> validator.validate(s, full_prefix, rpm_info)).forEachOrdered(result::add);
 		}
 	}
 	

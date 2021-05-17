@@ -1,0 +1,314 @@
+<config>
+  <rule>
+    <name>module jp-tools java bytecode</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module jp-tools</rule>
+    </match>
+    
+    <java-bytecode>
+      <int-range>49 - 55</int-range>
+    </java-bytecode>
+  </rule>
+  
+  <rule>
+    <name>module jp-tools large filesize</name>
+    <tag>specific</tag>
+    <match>
+      <and>
+        <rule>module jp-tools</rule>
+        <and>
+          <name>apache-commons-compress</name>
+          <distribution>source</distribution>
+        </and>
+      </and>
+    </match>
+    
+    <rpm-file-size-bytes>
+      <int-range>- 13'000'000</int-range>
+    </rpm-file-size-bytes>
+  </rule>
+  
+  <rule>
+    <name>module jp-tools filesize</name>
+    <tag>specific</tag>
+    <match>
+      <and>
+        <rule>module jp-tools</rule>
+        <not><rule>module jp-tools large filesize</rule></not>
+      </and>
+    </match>
+    
+    <rpm-file-size-bytes>
+      <int-range>- 6'000'000</int-range>
+    </rpm-file-size-bytes>
+  </rule>
+  
+  <rule>
+    <name>module jp-tools provides</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module jp-tools</rule>
+    </match>
+    
+    <provides>
+      <any>
+        <regex>.*ant-.*</regex>
+        <regex>.*apache.commons.*</regex>
+        <regex>.*apache-parent.*</regex>
+        <regex>.*apache-resource.*</regex>
+        <regex>.*apiguardian.*</regex>
+        <regex>.*aqute-bnd.*</regex>
+        <regex>.*assertj.*</regex>
+        <regex>.*atinject.*</regex>
+        <regex>.*jcommander.*</regex>
+        <regex>.*byte-buddy.*</regex>
+        <regex>.*cdi-api.*</regex>
+        <regex>.*cglib.*</regex>
+        <regex>.*easymock.*</regex>
+        <regex>.*felix.*</regex>
+        <regex>.*fusesource.*</regex>
+        <regex>.*google.*</regex>
+        <regex>.*guice.*</regex>
+        <regex>.*guava.*</regex>
+        <regex>.*hamcrest.*</regex>
+        <regex>.*httpcomponents.*</regex>
+        <regex>.*jakarta.*</regex>
+        <regex>.*jansi.*</regex>
+        <regex>.*java_cup.*</regex>
+        <regex>.*jdom.*</regex>
+        <regex>.*jflex.*</regex>
+        <regex>.*jsoup.*</regex>
+        <regex>.*jsr-305.*</regex>
+        <regex>.*junit.*</regex>
+        <regex>.*maven.*</regex>
+        <regex>.*mockito.*</regex>
+        <regex>.*modello.*</regex>
+        <regex>.*mojo.*</regex>
+        <regex>.*asm.*</regex>
+        <regex>.*objenesis.*</regex>
+        <regex>.*opentest4j.*</regex>
+        <regex>^.*[^>]osgi.*</regex>
+        <regex>.*plexus.*</regex>
+        <regex>.*qdox.*</regex>
+        <regex>.*sisu.*</regex>
+        <regex>.*slf4j.*</regex>
+        <regex>.*sonatype.*</regex>
+        <regex>.*testng.*</regex>
+        <regex>.*univocity.*</regex>
+        <regex>.*velocity.*</regex>
+        <regex>.*xbean.*</regex>
+        <regex>.*xmlunit.*</regex>
+        <regex>.*xmvn.*</regex>
+        <regex>.*xz.*</regex>
+        
+        <regex>.*aQute.*</regex>
+        <regex>.*byaccj.*</regex>
+        <regex>.*javapackages.*</regex>
+        <regex>.*classworlds.*</regex>
+        <regex>.*mvn\(commons.*</regex>
+        <regex>.*javax.*</regex>
+        <regex>.*javax.*</regex>
+        <regex>.*mvn\(org\.apache.*</regex>
+        <regex>.*mvn\(org\.eclipse\.aether.*</regex>
+        <regex>.*mvn\(org\.eclipse\.ee4j.*</regex>
+        <regex>.*osgi-annotation.*</regex>
+        <regex>.*osgi-compendium.*</regex>
+        <regex>.*osgi-core.*</regex>
+        
+        <text>ant</text>
+        <text>config(ant)</text>
+        <text>mvn(ant:ant:pom:)</text>
+        <text>mvn(ant:ant)</text>
+        <text>mvn(apache:ant:pom:)</text>
+        <text>mvn(apache:ant)</text>
+        <text>debuginfo(build-id)</text>
+        <text>eclipse-filesystem</text>
+        <text>gradle-local</text>
+        <text>ivy-local</text>
+        <text>jpackage-utils</text>
+        <text>mvn(com.sun:tools)</text>
+        <text>mvn(sun.jdk:jconsole)</text>
+      </any>
+    </provides>
+  </rule>
+  
+  <rule>
+    <name>module jp-tools requires</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module jp-tools</rule>
+    </match>
+    
+    <requires>
+      <any>
+        <regex>.*ant-.*</regex>
+        <regex>.*maven.*</regex>
+        <regex>.*apache.*</regex>
+        <regex>.*javapackages.*</regex>
+        <regex>.*xmvn.*</regex>
+        <regex>.*guice.*</regex>
+        <regex>.*java.*</regex>
+        
+        <regex>.*commons.*</regex>
+        <regex>.*plexus.*</regex>
+        <regex>.*slf4j.*</regex>
+        <regex>.*sonatype.*</regex>
+        <regex>.*testng.*</regex>
+        <regex>.*aQute.*</regex>
+        <regex>.*cglib.*</regex>
+        <regex>.*classworlds.*</regex>
+        <regex>.*jcommander.*</regex>
+        <regex>.*bytebuddy.*</regex>
+        <regex>.*google.*</regex>
+        <regex>.*qdox.*</regex>
+        <regex>.*eclipse.*</regex>
+        <regex>.*hamcrest.*</regex>
+        <regex>.*junit.*</regex>
+        <regex>.*osgi.*</regex>
+        <regex>.*xmlunit.*</regex>
+        <regex>.*jdom.*</regex>
+        <regex>.*univocity.*</regex>
+        <regex>.*jakarta.*</regex>
+        <regex>.*ow2.*</regex>
+        <regex>.*fusesource.*</regex>
+        <regex>.*opentest4j.*</regex>
+        <regex>.*apiguardian.</regex>
+        <regex>.*assertj.*</regex>
+        <regex>.*codehaus.*</regex>
+        <regex>.*easymock.*</regex>
+        <regex>.*jsoup.*</regex>
+        <regex>.*mockito.*</regex>
+        <regex>.*objenesis.*</regex>
+        <regex>.*apiguardian.*</regex>
+        <regex>.*tukaani.*</regex>
+        
+        <text>ant</text>
+        <text>config(ant)</text>
+        <text>alternatives</text>
+        <text>atinject</text>
+        <text>/bin/sh</text>
+        <text>byaccj</text>
+        <text>config(aqute-bnd)</text>
+        <text>coreutils</text>
+        <text>findutils</text>
+        <text>gcc</text>
+        <text>gradle</text>
+        <text>guava</text>
+        <text>jflex</text>
+        <text>libc.so.6()(64bit)</text>
+        <text>libc.so.6(GLIBC_2.14)(64bit)</text>
+        <text>libc.so.6(GLIBC_2.2.5)(64bit)</text>
+        <text>libc.so.6(GLIBC_2.3.4)(64bit)</text>
+        <text>libc.so.6(GLIBC_2.3)(64bit)</text>
+        <text>libc.so.6(GLIBC_2.4)(64bit)</text>
+        <text>make</text>
+        <text>procps-ng</text>
+        <text>publicsuffix-list</text>
+        <text>python3-devel</text>
+        <text>python3-lxml</text>
+        <text>python3-pytest-cov</text>
+        <text>python3-pytest</text>
+        <text>python3-setuptools</text>
+        <text>python(abi)</text>
+        <text>rpmlib(CompressedFileNames)</text>
+        <text>rpmlib(FileDigests)</text>
+        <text>rpmlib(PartialHardlinkSets)</text>
+        <text>rpmlib(PayloadFilesHavePrefix)</text>
+        <text>rpmlib(PayloadIsZstd)</text>
+        <text>rpmlib(RichDependencies)</text>
+        <text>rpmlib(TildeInVersions)</text>
+        <text>rtld(GNU_HASH)</text>
+        <text>sisu</text>
+        <text>/usr/bin/bash</text>
+        <text>/usr/bin/mvn</text>
+        <text>/usr/bin/python3</text>
+        <text>/usr/bin/sh</text>
+        <text>which</text>
+      </any>
+    </requires>
+  </rule>
+  
+  <rule>
+    <name>module jp-tools recommends</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module jp-tools</rule>
+    </match>
+    
+    <recommends>
+      <any>
+        <text>byaccj-debugsource(x86-64)</text>
+        <text>java-devel</text>
+      </any>
+    </recommends>
+  </rule>
+  
+  <rule>
+    <name>module jp-tools suggests</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module jp-tools</rule>
+    </match>
+    
+    <suggests>
+      <any>
+        <text>maven-openjdk11</text>
+      </any>
+    </suggests>
+  </rule>
+  
+  <rule>
+    <name>module jp-tools supplements</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module jp-tools</rule>
+    </match>
+    
+    <supplements>
+      <any>
+        <fail/>
+      </any>
+    </supplements>
+  </rule>
+  
+  <rule>
+    <name>module jp-tools enhances</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module jp-tools</rule>
+    </match>
+    
+    <enhances>
+      <any>
+        <fail/>
+      </any>
+    </enhances>
+  </rule>
+  
+  <rule>
+    <name>module jp-tools order-with-requires</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module jp-tools</rule>
+    </match>
+    
+    <order-with-requires>
+      <any>
+        <text>xmvn-minimal</text>
+      </any>
+    </order-with-requires>
+  </rule>
+  
+  <rule>
+    <name>module jp-tools files</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module jp-tools</rule>
+    </match>
+    
+    <files>
+      <!-- TODO -->
+    </files>
+  </rule>
+</config>

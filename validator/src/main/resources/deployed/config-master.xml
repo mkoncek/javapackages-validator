@@ -17,11 +17,23 @@
         <arch>nosrc</arch>
       </or>
     </match>
-    
-    <rpm-file-size-bytes>
-      <fail/>
-    </rpm-file-size-bytes>
   </rule>
+  
+  <!-- Template
+  <rule>
+    <name>module XXX YYY</name>
+    <tag>specific</tag>
+    <match>
+      <rule>module XXX</rule>
+    </match>
+    
+    <YYY>
+      <any>
+        <fail/>
+      </any>
+    </YYY>
+  </rule>
+  -->
   
   <!-- Module rules -->
   
@@ -60,6 +72,17 @@
     </match>
   </rule>
   
+  <rule>
+    <name>filesize</name>
+    <tag>blacklisting</tag>
+    <match/>
+    
+    <rpm-file-size-bytes>
+      <int-range>- 50'000'000</int-range>
+    </rpm-file-size-bytes>
+  </rule>
+  
+  <!--
   <rule>
     <name>provides</name>
     <tag>generic</tag>
@@ -149,6 +172,11 @@
       <fail/>
     </order-with-requires>
   </rule>
+  -->
   
   <include-file>config-ant.xml</include-file>
+  <include-file>config-maven.xml</include-file>
+  <include-file>config-javapackages-bootstrap.xml</include-file>
+  <include-file>config-javapackages-runtime.xml</include-file>
+  <include-file>config-javapackages-tools.xml</include-file>
 </config>

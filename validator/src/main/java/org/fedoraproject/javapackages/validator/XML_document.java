@@ -147,7 +147,7 @@ public class XML_document implements AutoCloseable
 			}
 			catch (RuntimeException ex)
 			{
-				throw wrap(ex);
+				throw new RuntimeException("When trying to get a node named <" + name + "> ", wrap(ex));
 			}
 		}
 	}

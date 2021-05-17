@@ -11,7 +11,7 @@
       <int-range>49 - 55</int-range>
     </java-bytecode>
   </rule>
-
+  
   <rule>
     <name>module ant filesize</name>
     <tag>specific</tag>
@@ -33,96 +33,46 @@
     
     <provides>
       <any>
-        <regex>ant.*</regex>
-        <regex>apache-commons-.*</regex>
-        <text>apiguardian-javadoc</text>
-        <text>apiguardian</text>
-        <text>bcel-javadoc</text>
-        <text>bcel</text>
+        <regex>.*ant-.*</regex>
+        <regex>.*apache.*</regex>
+        <regex>.*commons-.*</regex>
+        <regex>.*apiguardian.*</regex>
+        <regex>.*hamcrest.*</regex>
+        <regex>.*jakarta.*</regex>
+        <regex>.*junit.*</regex>
+        <regex>.*opentest4j.*</regex>
+        <regex>.*univocity.*</regex>
+        <regex>.*tukaani.*</regex>
+        <regex>.*xz-java.*</regex>
+        <regex>.*antlr.*</regex>
+        <regex>.*bcel.*</regex>
+        <regex>.*log4j.*</regex>
+        <regex>.*jdepend.*</regex>
+        <regex>.*log4j.*</regex>
+        <regex>.*javax.*</regex>
+        <regex>.*javamail.*</regex>
+        <regex>.*jcraft.*</regex>
+        <regex>.*sun\.mail.*</regex>
+        <regex>.*xalan.*</regex>
+        <regex>.*xerces.*</regex>
+        <regex>.*xml-.*</regex>
+        <regex>.*regexp.*</regex>
+        <regex>.*jzlib.*</regex>
+        
+        <text>ant</text>
         <text>bsf</text>
-        <regex>config\(ant.*</regex>
-        <text>hamcrest-javadoc</text>
-        <text>hamcrest</text>
-        <text>jakarta-oro-javadoc</text>
-        <text>jakarta-oro</text>
-        <text>javamail-javadoc</text>
-        <text>javamail-monolithic</text>
-        <text>javamail</text>
+        <text>config(ant)</text>
         <text>jaxp_parser_impl</text>
         <text>jaxp_transform_impl</text>
-        <text>jdepend-demo</text>
-        <text>jdepend-javadoc</text>
-        <text>jdepend</text>
         <text>jsch-javadoc</text>
         <text>jsch</text>
-        <text>junit5-javadoc</text>
-        <text>junit5</text>
-        <text>junit-javadoc</text>
-        <text>junit-manual</text>
-        <text>junit</text>
-        <text>jzlib-demo</text>
-        <text>jzlib-javadoc</text>
-        <text>jzlib</text>
-        <text>log4j12-javadoc</text>
-        <text>log4j12</text>
-        <regex>mvn\(ant.*</regex>
-        <regex>mvn\(apache.*</regex>
-        <text>mvn(bcel:bcel:pom:)</text>
-        <text>mvn(bcel:bcel)</text>
+        <text>mvn(ant:ant:pom:)</text>
+        <text>mvn(ant:ant)</text>
         <text>mvn(bsf:bsf:pom:)</text>
         <text>mvn(bsf:bsf)</text>
-        <regex>mvn\(com.jcraft.*</regex>
-        <regex>mvn\(commons-logging:commons-logging.*</regex>
-        <text>mvn(commons-net:commons-net:pom:)</text>
-        <text>mvn(commons-net:commons-net)</text>
-        <regex>mvn\(com.sun.mail.*</regex>
-        <text>mvn(com.univocity:univocity-parsers:pom:)</text>
-        <text>mvn(com.univocity:univocity-parsers)</text>
-        <text>mvn(jakarta-regexp:jakarta-regexp:pom:)</text>
-        <text>mvn(jakarta-regexp:jakarta-regexp)</text>
-        <regex>.*javax.mail.*</regex>
-        <text>mvn(jdepend:jdepend:pom:)</text>
-        <text>mvn(jdepend:jdepend)</text>
-        <text>mvn(junit:junit:pom:)</text>
-        <text>mvn(junit:junit)</text>
-        <regex>mvn\(log4j:log4j.*</regex>
-        <regex>mvn\(org.apache.ant:ant.*</regex>
-        <text>mvn(org.apache.bcel:bcel:pom:)</text>
-        <text>mvn(org.apache.bcel:bcel)</text>
-        <text>mvn(org.apache.bsf:bsf:pom:)</text>
-        <text>mvn(org.apache.bsf:bsf)</text>
-        <regex>mvn\(org.apache.commons.*</regex>
-        <text>mvn(org.apiguardian:apiguardian-api:pom:)</text>
-        <text>mvn(org.apiguardian:apiguardian-api)</text>
-        <regex>mvn\(org.hamcrest:hamcrest.*</regex>
-        <regex>mvn\(org.junit.*</regex>
-        <regex>.*opentest4j.*</regex>
-        <text>mvn(org.tukaani:xz:pom:)</text>
-        <text>mvn(org.tukaani:xz)</text>
         <text>mvn(oro:oro:pom:)</text>
         <text>mvn(oro:oro)</text>
-        <text>mvn(regexp:regexp:pom:)</text>
-        <text>mvn(regexp:regexp)</text>
-        <regex>(:?mvn\()?xalan.*</regex>
-        <regex>(:?mvn\()?xerces.*</regex>
-        <regex>mvn\(xml.*</regex>
-        <text>osgi(com.jcraft.jsch)</text>
-        <text>osgi(com.jcraft.jzlib)</text>
-        <regex>osgi\(com.sun.mail.*</regex>
-        <text>osgi(com.univocity.parsers)</text>
-        <text>osgi(javax.xml)</text>
-        <regex>osgi\(org.apache.*</regex>
-        <text>osgi(org.apiguardian)</text>
-        <regex>osgi\(org.junit.*</regex>
-        <text>osgi(org.tukaani.xz)</text>
         <text>osgi(org.w3c.dom.svg)</text>
-        <text>regexp-javadoc</text>
-        <text>regexp</text>
-        <text>univocity-parsers-javadoc</text>
-        <text>univocity-parsers</text>
-        <regex>xml-commons.*</regex>
-        <text>xz-java-javadoc</text>
-        <text>xz-java</text>
       </any>
     </provides>
   </rule>
@@ -136,64 +86,42 @@
     
     <requires>
       <any>
-        <text>ant-junit</text>
-        <text>ant-lib</text>
+        <regex>.*ant-.*</regex>
+        <regex>.*apache.*</regex>
+        <regex>.*commons-.*</regex>
+        <regex>.*apiguardian.*</regex>
+        <regex>.*hamcrest.*</regex>
+        <regex>.*junit.*</regex>
+        <regex>.*opentest4j.*</regex>
+        <regex>.*antlr.*</regex>
+        <regex>.*bcel.*</regex>
+        <regex>.*univocity.*</regex>
+        <regex>.*tukaani.*</regex>
+        <regex>.*jdepend.*</regex>
+        <regex>.*log4j.*</regex>
+        <regex>.*javax.*</regex>
+        <regex>.*javamail.*</regex>
+        <regex>.*jcraft.*</regex>
+        <regex>.*sun\.mail.*</regex>
+        <regex>.*xalan.*</regex>
+        <regex>.*xerces.*</regex>
+        <regex>.*xml-.*</regex>
+        <regex>.*regexp.*</regex>
+        <regex>.*jzlib.*</regex>
+        <regex>java.*</regex>
+        
         <text>ant</text>
-        <text>apache-commons-logging</text>
-        <text>apache-parent</text>
         <text>asciidoc</text>
-        <text>bcel</text>
         <text>/bin/sh</text>
-        <regex>config\(ant.*</regex>
+        <text>config(ant)</text>
         <text>gcc-c++</text>
-        <text>java_cup</text>
-        <text>java-devel</text>
         <text>(java-headless or java-11-headless)</text>
-        <text>java-headless</text>
-        <text>javapackages-filesystem</text>
-        <text>javapackages-local</text>
-        <text>javapackages-tools</text>
-        <text>jdepend</text>
-        <text>junit5</text>
-        <text>jzlib</text>
         <text>make</text>
         <text>maven-local</text>
-        <text>mvn(antlr:antlr)</text>
-        <text>mvn(bcel:bcel)</text>
         <text>mvn(bsf:bsf)</text>
-        <text>mvn(com.jcraft:jsch)</text>
-        <text>mvn(com.jcraft:jzlib)</text>
-        <text>mvn(commons-logging:commons-logging-api)</text>
-        <text>mvn(commons-logging:commons-logging)</text>
-        <text>mvn(commons-net:commons-net)</text>
-        <text>mvn(com.sun.mail:android-activation)</text>
-        <text>mvn(com.sun.mail:javax.mail)</text>
-        <text>mvn(com.univocity:univocity-parsers)</text>
-        <text>mvn(jakarta-regexp:jakarta-regexp)</text>
-        <text>mvn(javax.mail:mail)</text>
-        <text>mvn(javax.servlet:servlet-api)</text>
-        <text>mvn(jdepend:jdepend)</text>
-        <text>mvn(junit:junit)</text>
-        <text>mvn(log4j:log4j:1.2.13)</text>
-        <text>mvn(log4j:log4j:1.2.17)</text>
-        <regex>mvn\(org.apache.*</regex>
-        <text>mvn(org.apiguardian:apiguardian-api)</text>
         <text>mvn(org.codehaus.mojo:build-helper-maven-plugin)</text>
-        <text>mvn(org.hamcrest:hamcrest-core)</text>
-        <text>mvn(org.hamcrest:hamcrest-library)</text>
-        <text>mvn(org.junit.platform:junit-platform-launcher)</text>
-        <text>mvn(org.opentest4j:opentest4j)</text>
         <text>mvn(org.sonatype.oss:oss-parent:pom:)</text>
-        <text>mvn(org.tukaani:xz)</text>
         <text>mvn(oro:oro)</text>
-        <text>mvn(regexp:regexp)</text>
-        <text>mvn(xalan:xalan)</text>
-        <text>mvn(xml-apis:xml-apis)</text>
-        <text>mvn(xml-resolver:xml-resolver)</text>
-        <text>osgi(javax.xml)</text>
-        <text>osgi(org.apache.xerces)</text>
-        <text>osgi(org.apache.xml.resolver)</text>
-        <text>regexp</text>
         <text>rpmlib(BuiltinLuaScripts)</text>
         <text>rpmlib(CompressedFileNames)</text>
         <text>rpmlib(FileDigests)</text>
@@ -203,10 +131,6 @@
         <text>sed</text>
         <text>/usr/bin/bash</text>
         <text>/usr/bin/sh</text>
-        <text>xalan-j2</text>
-        <text>xerces-j2</text>
-        <text>xml-commons-apis</text>
-        <text>xml-commons-resolver</text>
         <text>xmlto</text>
         <text>zip</text>
       </any>
@@ -376,12 +300,12 @@
         <name>rest</name>
         <match>
           <not>
-            <and>
+            <or>
               <file-rule>jars</file-rule>
               <file-rule>poms</file-rule>
               <file-rule>header files</file-rule>
               <file-rule>license files</file-rule>
-            </and>
+            </or>
           </not>  
         </match>
         
