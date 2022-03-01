@@ -30,6 +30,8 @@ import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 
 public class ClassBytecodeVersionCheck {
+	private static final String INCOMPLETE_READ = "Incomplete read in RPM stream";
+	
     static Collection<String> checkClassBytecodeVersion(Path path, int lower, int upper) throws IOException {
         if (lower > upper) {
             throw new IllegalArgumentException("ClassBytecodeVersionCheck::checkClassBytecodeVersion: parameter `lower` is larger than parameter `upper`");
@@ -41,7 +43,7 @@ public class ClassBytecodeVersionCheck {
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
                 var content = new byte[(int) rpmEntry.getSize()];
                 if (is.read(content) != content.length) {
-                    throw new IOException("Incomplete read in RPM stream");
+                    throw new IOException(INCOMPLETE_READ);
                 }
 
                 if (! rpmEntry.isSymbolicLink() && rpmEntry.getName().endsWith(".jar")) {
@@ -54,17 +56,20 @@ public class ClassBytecodeVersionCheck {
                             if (className.endsWith(".class")) {
                                 // Read 6-th and 7-th bytes which indicate the .class bytecode version
                                 if (jarStream.skip(6) != 6) {
-                                    throw new IOException("Incomplete read in RPM stream");
+                                    throw new IOException(INCOMPLETE_READ);
                                 }
 
-
+                                // ByteBuffer's initial byte order is big endian
+                                // which is the same as is used in java .class files
                                 var versionBuffer = ByteBuffer.allocate(2);
                                 if (jarStream.read(versionBuffer.array()) != versionBuffer.capacity()) {
-                                    throw new IOException("Incomplete read in RPM stream");
+                                    throw new IOException(INCOMPLETE_READ);
                                 }
 
                                 var version = versionBuffer.getShort();
 
+                                System.out.println("version is: " + version);
+                                
                                 if (version < lower || upper < version) {
                                     result.add(MessageFormat.format(
                                             "{0}: {1}: {2}: class bytecode version is {3} which is not in range <{4}-{5}>",
