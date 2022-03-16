@@ -30,18 +30,12 @@ import java.util.stream.Stream;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 
-public class SymlinkCheck {
-    static SortedMap<String, String> filesAndSymlinks(Path path) throws IOException {
-        var result = new TreeMap<String, String>();
+public class FilepathsCheck {
+    static SortedMap<CpioArchiveEntry, String> filesAndSymlinks(Path path) throws IOException {
+        var result = new TreeMap<CpioArchiveEntry, String>((lhs, rhs) -> lhs.getName().compareTo(rhs.getName()));
 
         try (var is = new RpmArchiveInputStream(path)) {
             for (CpioArchiveEntry rpmEntry; (rpmEntry = is.getNextEntry()) != null;) {
-                String rpmEntryName = rpmEntry.getName();
-
-                if (rpmEntryName.startsWith("./")) {
-                    rpmEntryName = rpmEntryName.substring(1);
-                }
-
                 var content = new byte[(int) rpmEntry.getSize()];
                 if (is.read(content) != content.length) {
                     throw new IOException("Incomplete read in RPM stream");
@@ -58,7 +52,7 @@ public class SymlinkCheck {
                     target = parent.resolve(Paths.get(target)).normalize().toString();
                 }
 
-                result.put(rpmEntryName, target);
+                result.put(rpmEntry, target);
             }
         }
 
@@ -69,27 +63,34 @@ public class SymlinkCheck {
         var result = new ArrayList<String>(0);
 
         // The union of file paths present in all RPM files mapped to the RPM file names they are present in
-        var files = new TreeMap<String, String>();
+        var files = new TreeMap<String, ArrayList<String>>();
 
         // The map of symbolic link names to their targets present in all RPM files
         var symlinks = new TreeMap<String, String>();
 
         for (var path : paths) {
             for (var pair : filesAndSymlinks(path).entrySet()) {
-                String previousRPM = null;
-                if ((previousRPM = files.put(pair.getKey(), path.toString())) != null) {
-                    result.add("Duplicate file present in " + previousRPM + " and in " + path.toString());
+                var providers = files.computeIfAbsent(pair.getKey().getName().substring(1), key -> new ArrayList<String>());
+                providers.add(path.toString());
+                if (providers.size() != 1) {
+                	if (!pair.getKey().isDirectory() && !pair.getKey().getName().startsWith("./usr/share/licenses/")) {
+                		result.add(MessageFormat.format("[FAIL] {0}: File {1} provided by multiple packages: {2}",
+                        		path, pair.getKey().getName().substring(1), providers));
+                	}
                 }
                 if (pair.getValue() != null) {
-                    symlinks.put(pair.getKey(), pair.getValue());
+                    symlinks.put(pair.getKey().getName().substring(1), pair.getValue());
                 }
             }
         }
-
+        
         for (var pair : symlinks.entrySet()) {
             if (!files.containsKey(pair.getValue())) {
-                result.add(MessageFormat.format("{0}: {1} points to {2} which is not present in the RPM set",
+                result.add(MessageFormat.format("[FAIL] {0}: Link {1} points to {2} which is not present in the RPM set",
                         files.get(pair.getKey()), pair.getKey(), pair.getValue()));
+            } else {
+            	System.err.println(MessageFormat.format("[INFO] {0}: Link {1} points to file {2} provided by {3}",
+                        files.get(pair.getKey()), pair.getKey(), pair.getValue(), files.get(pair.getValue())));
             }
         }
 

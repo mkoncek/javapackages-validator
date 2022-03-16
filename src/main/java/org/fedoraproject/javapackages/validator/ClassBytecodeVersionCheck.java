@@ -67,13 +67,15 @@ public class ClassBytecodeVersionCheck {
                                 }
 
                                 var version = versionBuffer.getShort();
-
-                                System.out.println("version is: " + version);
                                 
                                 if (version < lower || upper < version) {
                                     result.add(MessageFormat.format(
-                                            "{0}: {1}: {2}: class bytecode version is {3} which is not in range <{4}-{5}>",
+                                            "[FAIL] {0}: {1}: {2}: class bytecode version is {3} which is not in range [{4}-{5}]",
                                             path, jarName, className, version, lower, upper));
+                                } else {
+                                	System.err.println(MessageFormat.format(
+                                            "[INFO] {0}: {1}: {2}: class bytecode version is {3}",
+                                            path, jarName, className, version));
                                 }
                             }
                         }
