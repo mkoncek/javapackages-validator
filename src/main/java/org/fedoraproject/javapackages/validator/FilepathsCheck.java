@@ -73,23 +73,26 @@ public class FilepathsCheck {
                 var providers = files.computeIfAbsent(pair.getKey().getName().substring(1), key -> new ArrayList<String>());
                 providers.add(path.toString());
                 if (providers.size() != 1) {
-                	if (!pair.getKey().isDirectory() && !pair.getKey().getName().startsWith("./usr/share/licenses/")) {
-                		result.add(MessageFormat.format("[FAIL] {0}: File {1} provided by multiple packages: {2}",
-                        		path, pair.getKey().getName().substring(1), providers));
-                	}
+                    if (!pair.getKey().isDirectory() && !pair.getKey().getName().startsWith("./usr/share/licenses/")) {
+                        result.add(MessageFormat.format("[FAIL] {0}: File {1} provided by multiple packages: {2}",
+                                path, pair.getKey().getName().substring(1), providers));
+                    } else {
+                        System.err.println(MessageFormat.format("[INFO] {0}: File {1} provided by multiple packages - allowed",
+                                path, pair.getKey().getName().substring(1)));
+                    }
                 }
                 if (pair.getValue() != null) {
                     symlinks.put(pair.getKey().getName().substring(1), pair.getValue());
                 }
             }
         }
-        
+
         for (var pair : symlinks.entrySet()) {
             if (!files.containsKey(pair.getValue())) {
                 result.add(MessageFormat.format("[FAIL] {0}: Link {1} points to {2} which is not present in the RPM set",
                         files.get(pair.getKey()), pair.getKey(), pair.getValue()));
             } else {
-            	System.err.println(MessageFormat.format("[INFO] {0}: Link {1} points to file {2} provided by {3}",
+                System.err.println(MessageFormat.format("[INFO] {0}: Link {1} points to file {2} provided by {3}",
                         files.get(pair.getKey()), pair.getKey(), pair.getValue(), files.get(pair.getValue())));
             }
         }

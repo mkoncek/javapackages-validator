@@ -30,8 +30,8 @@ import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 
 public class ClassBytecodeVersionCheck {
-	private static final String INCOMPLETE_READ = "Incomplete read in RPM stream";
-	
+    private static final String INCOMPLETE_READ = "Incomplete read in RPM stream";
+
     static Collection<String> checkClassBytecodeVersion(Path path, int lower, int upper) throws IOException {
         if (lower > upper) {
             throw new IllegalArgumentException("ClassBytecodeVersionCheck::checkClassBytecodeVersion: parameter `lower` is larger than parameter `upper`");
@@ -67,13 +67,13 @@ public class ClassBytecodeVersionCheck {
                                 }
 
                                 var version = versionBuffer.getShort();
-                                
+
                                 if (version < lower || upper < version) {
                                     result.add(MessageFormat.format(
                                             "[FAIL] {0}: {1}: {2}: class bytecode version is {3} which is not in range [{4}-{5}]",
                                             path, jarName, className, version, lower, upper));
                                 } else {
-                                	System.err.println(MessageFormat.format(
+                                    System.err.println(MessageFormat.format(
                                             "[INFO] {0}: {1}: {2}: class bytecode version is {3}",
                                             path, jarName, className, version));
                                 }
