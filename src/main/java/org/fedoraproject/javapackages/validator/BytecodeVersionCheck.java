@@ -28,20 +28,26 @@ import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
+import org.fedoraproject.javapackages.validator.config.BytecodeVersion;
 
-public class ClassBytecodeVersionCheck {
+public class BytecodeVersionCheck {
     private static final String INCOMPLETE_READ = "Incomplete read in RPM stream";
 
-    static Collection<String> checkClassBytecodeVersion(Path path, int lower, int upper) throws IOException {
-        if (lower > upper) {
-            throw new IllegalArgumentException("ClassBytecodeVersionCheck::checkClassBytecodeVersion: parameter `lower` is larger than parameter `upper`");
+    static Collection<String> checkClassBytecodeVersion(Path path, String packageName, BytecodeVersion config) throws IOException {
+        var result = new ArrayList<String>(0);
+
+        Path rpmFilePath = path.getFileName();
+
+        if (rpmFilePath == null) {
+            throw new IllegalArgumentException("Invalid RPM name: " + path.toString());
         }
 
-        var result = new ArrayList<String>(0);
+        String rpmName = rpmFilePath.toString();
 
         try (var is = new RpmArchiveInputStream(path)) {
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
                 var content = new byte[(int) rpmEntry.getSize()];
+
                 if (is.read(content) != content.length) {
                     throw new IOException(INCOMPLETE_READ);
                 }
@@ -62,16 +68,18 @@ public class ClassBytecodeVersionCheck {
                                 // ByteBuffer's initial byte order is big endian
                                 // which is the same as is used in java .class files
                                 var versionBuffer = ByteBuffer.allocate(2);
+
                                 if (jarStream.read(versionBuffer.array()) != versionBuffer.capacity()) {
                                     throw new IOException(INCOMPLETE_READ);
                                 }
 
                                 var version = versionBuffer.getShort();
+                                var range = config.versionRangeOf(packageName, rpmName, jarName, className);
 
-                                if (version < lower || upper < version) {
+                                if (!range.contains(version)) {
                                     result.add(MessageFormat.format(
                                             "[FAIL] {0}: {1}: {2}: class bytecode version is {3} which is not in range [{4}-{5}]",
-                                            path, jarName, className, version, lower, upper));
+                                            path, jarName, className, version, range.min, range.max));
                                 } else {
                                     System.err.println(MessageFormat.format(
                                             "[INFO] {0}: {1}: {2}: class bytecode version is {3}",
@@ -87,19 +95,19 @@ public class ClassBytecodeVersionCheck {
         return result;
     }
 
-    public static void main(String[] args) throws IOException {
-        int returnCode = 0;
+    public static void main(String[] args) throws Exception {
+        int exitcode = 0;
 
-        int lower = Integer.parseInt(args[0]);
-        int upper = Integer.parseInt(args[1]);
+        var configClass = Class.forName("org.fedoraproject.javapackages.validator.config.BytecodeVersionConfig");
+        var config = (BytecodeVersion) configClass.getDeclaredField("INSTANCE").get(null);
 
-        for (int i = 2; i != args.length; ++i) {
-            for (var message : checkClassBytecodeVersion(Paths.get(args[i]).resolve(".").toAbsolutePath().normalize(), lower, upper)) {
-                returnCode = 1;
+        for (int i = 1; i != args.length; ++i) {
+            for (var message : checkClassBytecodeVersion(Paths.get(args[i]).resolve(".").toAbsolutePath().normalize(), args[0], config)) {
+                exitcode = 1;
                 System.out.println(message);
             }
         }
 
-        System.exit(returnCode);
+        System.exit(exitcode);
     }
 }

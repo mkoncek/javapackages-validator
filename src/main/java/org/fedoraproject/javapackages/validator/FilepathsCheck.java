@@ -17,6 +17,7 @@ package org.fedoraproject.javapackages.validator;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
@@ -25,18 +26,29 @@ import java.util.Collection;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
+import org.fedoraproject.javapackages.validator.config.Filepaths;
 
 public class FilepathsCheck {
+    /**
+     * @param path
+     * @return A map of file paths mapped to either the target of the symlink
+     * or null, if the file pat is not a symlink.
+     * @throws IOException
+     */
     static SortedMap<CpioArchiveEntry, String> filesAndSymlinks(Path path) throws IOException {
         var result = new TreeMap<CpioArchiveEntry, String>((lhs, rhs) -> lhs.getName().compareTo(rhs.getName()));
 
         try (var is = new RpmArchiveInputStream(path)) {
             for (CpioArchiveEntry rpmEntry; (rpmEntry = is.getNextEntry()) != null;) {
+                if (rpmEntry.isDirectory()) {
+                    continue;
+                }
+
                 var content = new byte[(int) rpmEntry.getSize()];
+
                 if (is.read(content) != content.length) {
                     throw new IOException("Incomplete read in RPM stream");
                 }
@@ -45,10 +57,12 @@ public class FilepathsCheck {
 
                 if (rpmEntry.isSymbolicLink()) {
                     target = new String(content, StandardCharsets.UTF_8);
-                    Path parent = Paths.get(rpmEntry.getName()).getParent();
+                    Path parent = Paths.get(rpmEntry.getName().substring(1)).getParent();
+
                     if (parent == null) {
                         throw new IllegalStateException("Path::getParent of " + rpmEntry.getName() + " returned null");
                     }
+
                     target = parent.resolve(Paths.get(target)).normalize().toString();
                 }
 
@@ -59,7 +73,7 @@ public class FilepathsCheck {
         return result;
     }
 
-    static Collection<String> checkSymlinks(Iterable<Path> paths) throws IOException {
+    static Collection<String> checkSymlinks(String packageName, Filepaths config, Iterable<Path> paths) throws IOException {
         var result = new ArrayList<String>(0);
 
         // The union of file paths present in all RPM files mapped to the RPM file names they are present in
@@ -69,49 +83,67 @@ public class FilepathsCheck {
         var symlinks = new TreeMap<String, String>();
 
         for (var path : paths) {
+            var filePath = path.getFileName();
+            if (filePath == null) {
+                throw new IllegalArgumentException("Invalid RPM path: " + path);
+            }
+
+            String rpmName = path.toString();
+
             for (var pair : filesAndSymlinks(path).entrySet()) {
-                var providers = files.computeIfAbsent(pair.getKey().getName().substring(1), key -> new ArrayList<String>());
-                providers.add(path.toString());
-                if (providers.size() != 1) {
-                    if (!pair.getKey().isDirectory() && !pair.getKey().getName().startsWith("./usr/share/licenses/")) {
-                        result.add(MessageFormat.format("[FAIL] {0}: File {1} provided by multiple packages: {2}",
-                                path, pair.getKey().getName().substring(1), providers));
-                    } else {
-                        System.err.println(MessageFormat.format("[INFO] {0}: File {1} provided by multiple packages - allowed",
-                                path, pair.getKey().getName().substring(1)));
-                    }
-                }
+                files.computeIfAbsent(pair.getKey().getName().substring(1), key -> new ArrayList<String>()).add(rpmName);
+
                 if (pair.getValue() != null) {
                     symlinks.put(pair.getKey().getName().substring(1), pair.getValue());
                 }
             }
         }
 
+        for (var pair : files.entrySet()) {
+            if (pair.getValue().size() > 1) {
+                if (!config.allowedDuplicateFile(packageName, pair.getKey(), pair.getValue().stream().map(
+                        s -> Paths.get(s).getFileName().toString()).collect(Collectors.toUnmodifiableList()))) {
+                    result.add(MessageFormat.format("[FAIL] File {0} provided by multiple RPMs: {1}",
+                            pair.getKey(), pair.getValue()));
+                } else {
+                    System.err.println(MessageFormat.format("[INFO] Allowed duplicate file {0} provided by multiple RPMs: {1}",
+                            pair.getKey(), pair.getValue()));
+                }
+            }
+        }
+
         for (var pair : symlinks.entrySet()) {
-            if (!files.containsKey(pair.getValue())) {
-                result.add(MessageFormat.format("[FAIL] {0}: Link {1} points to {2} which is not present in the RPM set",
+            if (!Files.exists(Paths.get(pair.getValue()))) {
+                result.add(MessageFormat.format("[FAIL] {0}: Link {1} points to {2} which is not present on the filesystem",
                         files.get(pair.getKey()), pair.getKey(), pair.getValue()));
             } else {
-                System.err.println(MessageFormat.format("[INFO] {0}: Link {1} points to file {2} provided by {3}",
-                        files.get(pair.getKey()), pair.getKey(), pair.getValue(), files.get(pair.getValue())));
+                System.err.println(MessageFormat.format("[INFO] {0}: Link {1} points to file {2} which is present on the filesystem",
+                        files.get(pair.getKey()), pair.getKey(), pair.getValue()));
             }
         }
 
         return result;
     }
 
-    public static void main(String[] args) throws IOException {
-        int returnCode = 0;
+    public static void main(String[] args) throws Exception {
+        int exitcode = 0;
 
-        var result = checkSymlinks(Stream.of(args)
-                .map(arg -> Paths.get(arg).resolve(".").toAbsolutePath().normalize())
-                .collect(Collectors.toUnmodifiableList()));
+        var configClass = Class.forName("org.fedoraproject.javapackages.validator.config.FilepathsConfig");
+        var config = (Filepaths) configClass.getDeclaredField("INSTANCE").get(null);
 
-        for (var message : result) {
-            returnCode = 1;
+        var paths = new ArrayList<Path>(args.length - 1);
+
+        for (int i = 1; i != args.length; ++i) {
+            paths.add(Paths.get(args[i]).resolve(".").toAbsolutePath().normalize());
+        }
+
+        var messages = checkSymlinks(args[0], config, paths);
+
+        for (var message : messages) {
+            exitcode = 1;
             System.out.println(message);
         }
 
-        System.exit(returnCode);
+        System.exit(exitcode);
     }
 }
