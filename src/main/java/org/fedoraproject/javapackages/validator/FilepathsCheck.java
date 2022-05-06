@@ -31,6 +31,8 @@ import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javapackages.validator.config.Filepaths;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class FilepathsCheck {
     /**
      * @param path
@@ -50,7 +52,7 @@ public class FilepathsCheck {
                 var content = new byte[(int) rpmEntry.getSize()];
 
                 if (is.read(content) != content.length) {
-                    throw new IOException("Incomplete read in RPM stream");
+                    throw Common.INCOMPLETE_READ;
                 }
 
                 String target = null;
@@ -73,18 +75,18 @@ public class FilepathsCheck {
         return result;
     }
 
-    static Collection<String> checkSymlinks(String packageName, Filepaths config, Iterable<Path> paths) throws IOException {
+    static Collection<String> checkSymlinks(String packageName, Filepaths config, Path envRoot, Iterable<Path> paths) throws IOException {
         var result = new ArrayList<String>(0);
 
         // The union of file paths present in all RPM files mapped to the RPM file names they are present in
         var files = new TreeMap<String, ArrayList<String>>();
 
         // The map of symbolic link names to their targets present in all RPM files
-        var symlinks = new TreeMap<String, String>();
+        var symlinks = new TreeMap<String, Path>();
 
         for (var path : paths) {
-            var filePath = path.getFileName();
-            if (filePath == null) {
+            var filename = path.getFileName();
+            if (filename == null) {
                 throw new IllegalArgumentException("Invalid RPM path: " + path);
             }
 
@@ -94,7 +96,8 @@ public class FilepathsCheck {
                 files.computeIfAbsent(pair.getKey().getName().substring(1), key -> new ArrayList<String>()).add(rpmName);
 
                 if (pair.getValue() != null) {
-                    symlinks.put(pair.getKey().getName().substring(1), pair.getValue());
+                    symlinks.put(pair.getKey().getName().substring(1),
+                            envRoot.resolve(Paths.get("." + pair.getValue())).toAbsolutePath().normalize());
                 }
             }
         }
@@ -113,7 +116,7 @@ public class FilepathsCheck {
         }
 
         for (var pair : symlinks.entrySet()) {
-            if (!Files.exists(Paths.get(pair.getValue()))) {
+            if (!Files.exists(pair.getValue())) {
                 result.add(MessageFormat.format("[FAIL] {0}: Link {1} points to {2} which is not present on the filesystem",
                         files.get(pair.getKey()), pair.getKey(), pair.getValue()));
             } else {
@@ -125,19 +128,31 @@ public class FilepathsCheck {
         return result;
     }
 
+    @SuppressFBWarnings("DMI_HARDCODED_ABSOLUTE_FILENAME")
     public static void main(String[] args) throws Exception {
         int exitcode = 0;
 
+        int argsBegin = 0;
+
+        Path envRoot = Paths.get("/");
+
+        for (int i = 0; i != args.length; ++i) {
+            if (args[i].equals("--envroot")) {
+                envRoot = Paths.get(args[i + 1]).resolve(".").toAbsolutePath().normalize();
+                argsBegin += 2;
+            }
+        }
+
         var configClass = Class.forName("org.fedoraproject.javapackages.validator.config.FilepathsConfig");
-        var config = (Filepaths) configClass.getDeclaredField("INSTANCE").get(null);
+        var config = (Filepaths) configClass.getConstructor().newInstance();
 
-        var paths = new ArrayList<Path>(args.length - 1);
+        var paths = new ArrayList<Path>(args.length - 1 - argsBegin);
 
-        for (int i = 1; i != args.length; ++i) {
+        for (int i = argsBegin + 1; i != args.length; ++i) {
             paths.add(Paths.get(args[i]).resolve(".").toAbsolutePath().normalize());
         }
 
-        var messages = checkSymlinks(args[0], config, paths);
+        var messages = checkSymlinks(args[argsBegin], config, envRoot, paths);
 
         for (var message : messages) {
             exitcode = 1;

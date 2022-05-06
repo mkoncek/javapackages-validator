@@ -19,5 +19,13 @@ public interface BytecodeVersion {
         }
     }
 
+    /**
+     * Return the allowed version range for a given class.
+     * @param packageName Package name.
+     * @param rpmName The base file name of the RPM file that is being inspected.
+     * @param jarName The full path to the .jar archive that is being inspected.
+     * @param className The full relative path to the .class file inside the .jar archive
+     * @return Allowed version range for @param className.
+     */
     VersionRange versionRangeOf(String packageName, String rpmName, String jarName, String className);
 }

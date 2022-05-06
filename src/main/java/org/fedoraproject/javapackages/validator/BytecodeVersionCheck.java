@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.TreeSet;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
@@ -31,8 +32,6 @@ import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javapackages.validator.config.BytecodeVersion;
 
 public class BytecodeVersionCheck {
-    private static final String INCOMPLETE_READ = "Incomplete read in RPM stream";
-
     static Collection<String> checkClassBytecodeVersion(Path path, String packageName, BytecodeVersion config) throws IOException {
         var result = new ArrayList<String>(0);
 
@@ -49,20 +48,21 @@ public class BytecodeVersionCheck {
                 var content = new byte[(int) rpmEntry.getSize()];
 
                 if (is.read(content) != content.length) {
-                    throw new IOException(INCOMPLETE_READ);
+                    throw Common.INCOMPLETE_READ;
                 }
 
                 if (! rpmEntry.isSymbolicLink() && rpmEntry.getName().endsWith(".jar")) {
                     String jarName = rpmEntry.getName().substring(1);
 
                     try (var jarStream = new JarArchiveInputStream(new ByteArrayInputStream(content))) {
+                        var foundVersions = new TreeSet<Short>();
                         for (JarArchiveEntry jarEntry; ((jarEntry = jarStream.getNextJarEntry()) != null);) {
                             String className = jarEntry.getName();
 
                             if (className.endsWith(".class")) {
                                 // Read 6-th and 7-th bytes which indicate the .class bytecode version
                                 if (jarStream.skip(6) != 6) {
-                                    throw new IOException(INCOMPLETE_READ);
+                                    throw Common.INCOMPLETE_READ;
                                 }
 
                                 // ByteBuffer's initial byte order is big endian
@@ -70,7 +70,7 @@ public class BytecodeVersionCheck {
                                 var versionBuffer = ByteBuffer.allocate(2);
 
                                 if (jarStream.read(versionBuffer.array()) != versionBuffer.capacity()) {
-                                    throw new IOException(INCOMPLETE_READ);
+                                    throw Common.INCOMPLETE_READ;
                                 }
 
                                 var version = versionBuffer.getShort();
@@ -80,12 +80,17 @@ public class BytecodeVersionCheck {
                                     result.add(MessageFormat.format(
                                             "[FAIL] {0}: {1}: {2}: class bytecode version is {3} which is not in range [{4}-{5}]",
                                             path, jarName, className, version, range.min, range.max));
-                                } else {
-                                    System.err.println(MessageFormat.format(
-                                            "[INFO] {0}: {1}: {2}: class bytecode version is {3}",
-                                            path, jarName, className, version));
+                                    foundVersions = null;
+                                } else if (foundVersions != null) {
+                                    foundVersions.add(version);
                                 }
                             }
+                        }
+
+                        if (foundVersions != null) {
+                            System.err.println(MessageFormat.format(
+                                    "[INFO] {0}: {1}: found bytecode versions: {2}",
+                                    path, jarName, foundVersions));
                         }
                     }
                 }
@@ -99,7 +104,7 @@ public class BytecodeVersionCheck {
         int exitcode = 0;
 
         var configClass = Class.forName("org.fedoraproject.javapackages.validator.config.BytecodeVersionConfig");
-        var config = (BytecodeVersion) configClass.getDeclaredField("INSTANCE").get(null);
+        var config = (BytecodeVersion) configClass.getConstructor().newInstance();
 
         for (int i = 1; i != args.length; ++i) {
             for (var message : checkClassBytecodeVersion(Paths.get(args[i]).resolve(".").toAbsolutePath().normalize(), args[0], config)) {
