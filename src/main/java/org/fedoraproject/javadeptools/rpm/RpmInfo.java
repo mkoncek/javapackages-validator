@@ -35,6 +35,7 @@ import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_PROVIDENAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_RECOMMENDNAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_REQUIRENAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_SOURCEPACKAGE;
+import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_SOURCERPM;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_SUGGESTNAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_SUPPLEMENTNAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NODSA;
@@ -120,6 +121,7 @@ public class RpmInfo {
                 orderWithRequires = headerGetList(h, RPMTAG_ORDERNAME);
                 archiveFormat = headerGetString(h, RPMTAG_PAYLOADFORMAT);
                 compressionMethod = headerGetString(h, RPMTAG_PAYLOADCOMPRESSOR);
+                sourceRPM = headerGetString(h, RPMTAG_SOURCERPM);
                 sourcePackage = headerGetNumber(h, RPMTAG_SOURCEPACKAGE) != 0;
             } finally {
                 headerFree(h);
@@ -144,6 +146,7 @@ public class RpmInfo {
     private final List<String> orderWithRequires;
     private final String archiveFormat;
     private final String compressionMethod;
+    private final String sourceRPM;
     private final long headerSize;
 
     public NEVRA getNEVRA() {
@@ -168,6 +171,10 @@ public class RpmInfo {
 
     public String getArch() {
         return nevra.getArch();
+    }
+
+    public String getSourceRPM() {
+        return sourceRPM;
     }
 
     public boolean isSourcePackage() {
