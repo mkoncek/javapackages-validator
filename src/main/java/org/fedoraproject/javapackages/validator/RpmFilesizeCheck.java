@@ -16,12 +16,10 @@ public class RpmFilesizeCheck {
         var configClass = Class.forName("org.fedoraproject.javapackages.validator.config.RpmFilesizeConfig");
         var config = (RpmFilesize) configClass.getConstructor().newInstance();
 
-        String packageName = args[0];
-
         var messages = new ArrayList<String>();
         var numberFormat = NumberFormat.getInstance(Locale.ENGLISH);
 
-        for (int i = 1; i != args.length; ++i) {
+        for (int i = 0; i != args.length; ++i) {
             var filepath = Paths.get(args[i]);
             var filename = filepath.getFileName();
             if (filename == null) {
@@ -31,7 +29,7 @@ public class RpmFilesizeCheck {
             long filesize = Files.size(filepath);
             String formattedFilesize = numberFormat.format(filesize);
 
-            if (!config.allowedFilesize(packageName, filename.toString(), filesize)) {
+            if (!config.allowedFilesize(Common.getPackageName(filepath), filename.toString(), filesize)) {
                 messages.add(MessageFormat.format("[FAIL] {0}: file size is: {1} bytes", filepath, formattedFilesize));
             } else {
                 System.err.println(MessageFormat.format("[INFO] {0}: file size is: {1} bytes", filepath, formattedFilesize));

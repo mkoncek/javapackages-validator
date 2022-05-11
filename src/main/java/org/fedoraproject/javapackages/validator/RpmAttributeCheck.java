@@ -15,11 +15,9 @@ public class RpmAttributeCheck {
         var configClass = Class.forName("org.fedoraproject.javapackages.validator.config.RpmAttributeConfig");
         var config = (RpmAttribute) configClass.getConstructor().newInstance();
 
-        String packageName = args[0];
-
         var messages = new ArrayList<String>();
 
-        for (int i = 1; i != args.length; ++i) {
+        for (int i = 0; i != args.length; ++i) {
             var filepath = Paths.get(args[i]);
             var filename = filepath.getFileName();
             if (filename == null) {
@@ -37,7 +35,7 @@ public class RpmAttributeCheck {
                     var attributeValue = String.class.cast(attributeObject);
                     boolean ok = true;
 
-                    if (!Boolean.class.cast(filter.invoke(config, packageName, filename, attributeValue))) {
+                    if (!Boolean.class.cast(filter.invoke(config, Common.getPackageName(filepath), filename, attributeValue))) {
                         ok = false;
                         messages.add(MessageFormat.format("[FAIL] {0}: Attribute [{1}] with invalid value: {2}",
                                 filepath, attributeName, attributeValue));

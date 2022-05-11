@@ -146,13 +146,19 @@ public class FilepathsCheck {
         var configClass = Class.forName("org.fedoraproject.javapackages.validator.config.FilepathsConfig");
         var config = (Filepaths) configClass.getConstructor().newInstance();
 
-        var paths = new ArrayList<Path>(args.length - 1 - argsBegin);
+        // A map of package name -> collection of all binary rpms that were built from it
+        var packages = new TreeMap<String, Collection<Path>>();
 
-        for (int i = argsBegin + 1; i != args.length; ++i) {
-            paths.add(Paths.get(args[i]).resolve(".").toAbsolutePath().normalize());
+        for (int i = argsBegin; i != args.length; ++i) {
+            packages.computeIfAbsent(Common.getPackageName(Paths.get(args[i])), k -> new ArrayList<>())
+                .add(Paths.get(args[i]).resolve(".").toAbsolutePath().normalize());
         }
 
-        var messages = checkSymlinks(args[argsBegin], config, envRoot, paths);
+        var messages = new ArrayList<String>(0);
+
+        for (var pair : packages.entrySet()) {
+            messages.addAll(checkSymlinks(pair.getKey(), config, envRoot, pair.getValue()));
+        }
 
         for (var message : messages) {
             exitcode = 1;

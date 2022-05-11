@@ -32,7 +32,7 @@ import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javapackages.validator.config.BytecodeVersion;
 
 public class BytecodeVersionCheck {
-    static Collection<String> checkClassBytecodeVersion(Path path, String packageName, BytecodeVersion config) throws IOException {
+    static Collection<String> checkClassBytecodeVersion(Path path, BytecodeVersion config) throws IOException {
         var result = new ArrayList<String>(0);
 
         Path rpmFilePath = path.getFileName();
@@ -74,7 +74,7 @@ public class BytecodeVersionCheck {
                                 }
 
                                 var version = versionBuffer.getShort();
-                                var range = config.versionRangeOf(packageName, rpmName, jarName, className);
+                                var range = config.versionRangeOf(Common.getPackageName(path), rpmName, jarName, className);
 
                                 if (!range.contains(version)) {
                                     result.add(MessageFormat.format(
@@ -106,8 +106,8 @@ public class BytecodeVersionCheck {
         var configClass = Class.forName("org.fedoraproject.javapackages.validator.config.BytecodeVersionConfig");
         var config = (BytecodeVersion) configClass.getConstructor().newInstance();
 
-        for (int i = 1; i != args.length; ++i) {
-            for (var message : checkClassBytecodeVersion(Paths.get(args[i]).resolve(".").toAbsolutePath().normalize(), args[0], config)) {
+        for (int i = 0; i != args.length; ++i) {
+            for (var message : checkClassBytecodeVersion(Paths.get(args[i]).resolve(".").toAbsolutePath().normalize(), config)) {
                 exitcode = 1;
                 System.out.println(message);
             }
