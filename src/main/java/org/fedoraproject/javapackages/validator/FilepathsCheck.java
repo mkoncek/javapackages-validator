@@ -37,7 +37,7 @@ public class FilepathsCheck {
     /**
      * @param path
      * @return A map of file paths mapped to either the target of the symlink
-     * or null, if the file pat is not a symlink.
+     * or null, if the file path is not a symlink.
      * @throws IOException
      */
     static SortedMap<CpioArchiveEntry, String> filesAndSymlinks(Path path) throws IOException {
@@ -154,15 +154,11 @@ public class FilepathsCheck {
                 .add(Paths.get(args[i]).resolve(".").toAbsolutePath().normalize());
         }
 
-        var messages = new ArrayList<String>(0);
-
         for (var pair : packages.entrySet()) {
-            messages.addAll(checkSymlinks(pair.getKey(), config, envRoot, pair.getValue()));
-        }
-
-        for (var message : messages) {
-            exitcode = 1;
-            System.out.println(message);
+            for (var message : checkSymlinks(pair.getKey(), config, envRoot, pair.getValue())) {
+                exitcode = 1;
+                System.out.println(message);
+            }
         }
 
         System.exit(exitcode);

@@ -51,7 +51,7 @@ public class BytecodeVersionCheck {
                     throw Common.INCOMPLETE_READ;
                 }
 
-                if (! rpmEntry.isSymbolicLink() && rpmEntry.getName().endsWith(".jar")) {
+                if (!rpmEntry.isSymbolicLink() && rpmEntry.getName().endsWith(".jar")) {
                     String jarName = rpmEntry.getName().substring(1);
 
                     try (var jarStream = new JarArchiveInputStream(new ByteArrayInputStream(content))) {
