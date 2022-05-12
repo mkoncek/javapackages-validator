@@ -104,12 +104,12 @@ public class FilepathsCheck {
 
         for (var pair : files.entrySet()) {
             if (pair.getValue().size() > 1) {
-                if (!config.allowedDuplicateFile(packageName, pair.getKey(), pair.getValue().stream().map(
+                if (config != null && config.allowedDuplicateFile(packageName, pair.getKey(), pair.getValue().stream().map(
                         s -> Paths.get(s).getFileName().toString()).collect(Collectors.toUnmodifiableList()))) {
-                    result.add(MessageFormat.format("[FAIL] File {0} provided by multiple RPMs: {1}",
+                    System.err.println(MessageFormat.format("[INFO] Allowed duplicate file {0} provided by multiple RPMs: {1}",
                             pair.getKey(), pair.getValue()));
                 } else {
-                    System.err.println(MessageFormat.format("[INFO] Allowed duplicate file {0} provided by multiple RPMs: {1}",
+                    result.add(MessageFormat.format("[FAIL] File {0} provided by multiple RPMs: {1}",
                             pair.getKey(), pair.getValue()));
                 }
             }
