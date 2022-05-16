@@ -32,10 +32,8 @@ final class Rpm {
 
     static final int RPMVSF_NOHDRCHK = 1 << 0;
     static final int RPMVSF_NOSHA1HEADER = 1 << 8;
-    static final int RPMVSF_NOMD5HEADER = 1 << 9;
     static final int RPMVSF_NODSAHEADER = 1 << 10;
     static final int RPMVSF_NORSAHEADER = 1 << 11;
-    static final int RPMVSF_NOSHA1 = 1 << 16;
     static final int RPMVSF_NOMD5 = 1 << 17;
     static final int RPMVSF_NODSA = 1 << 18;
     static final int RPMVSF_NORSA = 1 << 19;

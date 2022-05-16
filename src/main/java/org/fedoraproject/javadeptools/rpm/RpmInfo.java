@@ -42,10 +42,8 @@ import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NODSA;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NODSAHEADER;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NOHDRCHK;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NOMD5;
-import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NOMD5HEADER;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NORSA;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NORSAHEADER;
-import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NOSHA1;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NOSHA1HEADER;
 import static org.fedoraproject.javadeptools.rpm.Rpm.headerFree;
 import static org.fedoraproject.javadeptools.rpm.Rpm.headerGet;
@@ -99,8 +97,8 @@ public class RpmInfo {
         try {
             if (Ferror(fd))
                 throw error(path, Fstrerror(fd));
-            rpmtsSetVSFlags(ts, RPMVSF_NOHDRCHK | RPMVSF_NOSHA1HEADER | RPMVSF_NOMD5HEADER | RPMVSF_NODSAHEADER
-                    | RPMVSF_NORSAHEADER | RPMVSF_NOSHA1 | RPMVSF_NOMD5 | RPMVSF_NODSA | RPMVSF_NORSA);
+            rpmtsSetVSFlags(ts, RPMVSF_NOHDRCHK | RPMVSF_NOSHA1HEADER | RPMVSF_NODSAHEADER
+                    | RPMVSF_NORSAHEADER | RPMVSF_NOMD5 | RPMVSF_NODSA | RPMVSF_NORSA);
             Pointer ph = new Memory(Pointer.SIZE);
             int rc = rpmReadPackageFile(ts, fd, null, ph);
             if (rc == RPMRC_NOTFOUND)
