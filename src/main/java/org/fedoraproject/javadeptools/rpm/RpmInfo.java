@@ -51,6 +51,7 @@ import static org.fedoraproject.javadeptools.rpm.Rpm.headerGetNumber;
 import static org.fedoraproject.javadeptools.rpm.Rpm.headerGetString;
 import static org.fedoraproject.javadeptools.rpm.Rpm.rpmReadPackageFile;
 import static org.fedoraproject.javadeptools.rpm.Rpm.rpmtdCount;
+import static org.fedoraproject.javadeptools.rpm.Rpm.rpmtdFree;
 import static org.fedoraproject.javadeptools.rpm.Rpm.rpmtdFreeData;
 import static org.fedoraproject.javadeptools.rpm.Rpm.rpmtdGetString;
 import static org.fedoraproject.javadeptools.rpm.Rpm.rpmtdNext;
@@ -64,48 +65,56 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import com.sun.jna.Memory;
-import com.sun.jna.Pointer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.ValueLayout;
 
 /**
  * @author Mikolaj Izdebski
  */
+@SuppressFBWarnings(value = {"EI_EXPOSE_REP"}, justification = "headerGetList returns and unmodifiable list")
 public class RpmInfo {
     private static IOException error(Path path, String message) throws IOException {
         throw new IOException("Unable to open RPM file " + path + ": " + message);
     }
 
-    private static List<String> headerGetList(Pointer h, int tag) {
-        Pointer ptd = new Memory(1024);
-        headerGet(h, tag, ptd, HEADERGET_MINMEM);
+    private static List<String> headerGetList(MemoryAddress h, int tag) {
+        var td = Rpm.rpmtdNew();
         try {
-            int size = rpmtdCount(ptd);
+            headerGet(h, tag, td, HEADERGET_MINMEM);
+            int size = rpmtdCount(td);
             String[] list = new String[size];
             for (int i = 0; i < size; i++) {
-                rpmtdNext(ptd);
-                list[i] = rpmtdGetString(ptd);
+                rpmtdNext(td);
+                list[i] = rpmtdGetString(td);
             }
             return Collections.unmodifiableList(Arrays.asList(list));
         } finally {
-            rpmtdFreeData(ptd);
+            rpmtdFreeData(td);
+            rpmtdFree(td);
         }
     }
 
     public RpmInfo(Path path) throws IOException {
-        Pointer ts = rpmtsCreate();
-        Pointer fd = Fopen(path.toString(), "r");
+        var ts = rpmtsCreate();
+        var fd = Fopen(path.toString(), "r");
         try {
-            if (Ferror(fd))
+            if (Ferror(fd) != 0)
                 throw error(path, Fstrerror(fd));
-            rpmtsSetVSFlags(ts, RPMVSF_NOHDRCHK | RPMVSF_NOSHA1HEADER | RPMVSF_NODSAHEADER
-                    | RPMVSF_NORSAHEADER | RPMVSF_NOMD5 | RPMVSF_NODSA | RPMVSF_NORSA);
-            Pointer ph = new Memory(Pointer.SIZE);
-            int rc = rpmReadPackageFile(ts, fd, null, ph);
+        rpmtsSetVSFlags(ts, RPMVSF_NOHDRCHK | RPMVSF_NOSHA1HEADER | RPMVSF_NODSAHEADER
+                | RPMVSF_NORSAHEADER | RPMVSF_NOMD5 | RPMVSF_NODSA | RPMVSF_NORSA);
+
+        try (ResourceScope headerScope = ResourceScope.newConfinedScope()) {
+            MemorySegment ph = MemorySegment.allocateNative(ValueLayout.ADDRESS, headerScope);
+            int rc = rpmReadPackageFile(ts, fd, MemoryAddress.NULL, ph.address());
             if (rc == RPMRC_NOTFOUND)
                 throw error(path, "Not a RPM file");
             if (rc != RPMRC_OK && rc != RPMRC_NOTTRUSTED && rc != RPMRC_NOKEY)
                 throw error(path, "Failed to parse RPM header");
-            Pointer h = ph.getPointer(0);
+
+            MemoryAddress h = ph.get(ValueLayout.ADDRESS, 0);
             try {
                 nevra = new NEVRA(h);
                 provides = headerGetList(h, RPMTAG_PROVIDENAME);
@@ -125,6 +134,8 @@ public class RpmInfo {
                 headerFree(h);
             }
             headerSize = Ftell(fd);
+        }
+
         } finally {
             Fclose(fd);
             rpmtsFree(ts);

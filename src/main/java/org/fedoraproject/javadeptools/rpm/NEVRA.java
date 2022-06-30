@@ -23,7 +23,7 @@ import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_VERSION;
 import static org.fedoraproject.javadeptools.rpm.Rpm.headerGetNumber;
 import static org.fedoraproject.javadeptools.rpm.Rpm.headerGetString;
 
-import com.sun.jna.Pointer;
+import jdk.incubator.foreign.MemoryAddress;
 
 /**
  * @author Mikolaj Izdebski
@@ -36,7 +36,7 @@ public class NEVRA {
     private final String arch;
     private final String nevra;
 
-    NEVRA(Pointer h) {
+    NEVRA(MemoryAddress h) {
         name = headerGetString(h, RPMTAG_NAME);
         epoch = (int) headerGetNumber(h, RPMTAG_EPOCH);
         version = headerGetString(h, RPMTAG_VERSION);
