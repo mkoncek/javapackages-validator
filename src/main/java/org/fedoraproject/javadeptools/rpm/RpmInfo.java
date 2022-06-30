@@ -66,10 +66,10 @@ import java.util.Collections;
 import java.util.List;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.ValueLayout;
 
 /**
  * @author Mikolaj Izdebski
@@ -107,14 +107,14 @@ public class RpmInfo {
                 | RPMVSF_NORSAHEADER | RPMVSF_NOMD5 | RPMVSF_NODSA | RPMVSF_NORSA);
 
         try (ResourceScope headerScope = ResourceScope.newConfinedScope()) {
-            MemorySegment ph = MemorySegment.allocateNative(ValueLayout.ADDRESS, headerScope);
+            MemorySegment ph = MemorySegment.allocateNative(CLinker.C_POINTER, headerScope);
             int rc = rpmReadPackageFile(ts, fd, MemoryAddress.NULL, ph.address());
             if (rc == RPMRC_NOTFOUND)
                 throw error(path, "Not a RPM file");
             if (rc != RPMRC_OK && rc != RPMRC_NOTTRUSTED && rc != RPMRC_NOKEY)
                 throw error(path, "Failed to parse RPM header");
 
-            MemoryAddress h = ph.get(ValueLayout.ADDRESS, 0);
+            MemoryAddress h = MemoryAddress.ofLong(ph.toLongArray()[0]);
             try {
                 nevra = new NEVRA(h);
                 provides = headerGetList(h, RPMTAG_PROVIDENAME);
