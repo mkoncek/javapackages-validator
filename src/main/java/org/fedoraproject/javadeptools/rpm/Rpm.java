@@ -16,12 +16,13 @@
 package org.fedoraproject.javadeptools.rpm;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
-import java.util.Arrays;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.ValueLayout;
@@ -68,32 +69,22 @@ final class Rpm {
 
     static final int RPMDBI_INSTFILENAMES = 5040;
 
-    private static class Layouts {
-        private static ValueLayout findLayout(int bitSize) {
-            for (ValueLayout layout : Arrays.asList(CLinker.C_CHAR, CLinker.C_SHORT,
-                    CLinker.C_INT, CLinker.C_LONG, CLinker.C_LONG_LONG)) {
-                if (layout.bitSize() == bitSize) {
-                    return layout;
-                }
-            }
-
-            return null;
-        }
-
-        // TODO cleaner solution possible in JDKs > 17
-        // static final ValueLayout int32_t = ValueLayout.JAVA_INT;
-        // static final ValueLayout int64_t = ValueLayout.JAVA_LONG;
-        static final ValueLayout int32_t = findLayout(32);
-        static final ValueLayout int64_t = findLayout(64);
-
-        static final ValueLayout size_t = CLinker.C_LONG_LONG;
-    }
-
     private static final MemoryAddress toCStringAddress(String string, ResourceScope scope) {
         if (string == null) {
             return MemoryAddress.NULL;
         } else {
-            return CLinker.toCString(string, scope).address();
+            ByteBuffer buffer = StandardCharsets.UTF_8.encode(string);
+            var segment = MemorySegment.allocateNative(buffer.capacity() + 1, scope);
+            segment.asByteBuffer().put(buffer);
+            return segment.address();
+        }
+    }
+
+    private static final String toJavaString(MemoryAddress address) {
+        if (address.equals(MemoryAddress.NULL)) {
+            return null;
+        } else {
+            return address.getUtf8String(0);
         }
     }
 
@@ -107,15 +98,15 @@ final class Rpm {
              * constructor before inherited final method handles are initialized
              */
             lookup = SymbolLookup.loaderLookup();
-            clinker = CLinker.getInstance();
+            clinker = CLinker.systemCLinker();
 
             for (String library : libraries) {
                 System.loadLibrary(library);
             }
         }
 
-        final MethodHandle downcallHandle(String symbol, MethodType type, FunctionDescriptor descriptor) {
-            return clinker.downcallHandle(lookup.lookup(symbol).get(), type, descriptor);
+        final MethodHandle downcallHandle(String symbol, FunctionDescriptor descriptor) {
+            return clinker.downcallHandle(lookup.lookup(symbol).get(), descriptor);
         }
     }
 
@@ -125,62 +116,43 @@ final class Rpm {
         }
 
         final MethodHandle rpmtsCreate = downcallHandle("rpmtsCreate",
-                MethodType.methodType(MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.ADDRESS));
         final MethodHandle rpmtsFree = downcallHandle("rpmtsFree",
-                MethodType.methodType(void.class, MemoryAddress.class),
-                FunctionDescriptor.ofVoid(CLinker.C_POINTER));
+                FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
         final MethodHandle rpmtsSetVSFlags = downcallHandle("rpmtsSetVSFlags",
-                MethodType.methodType(int.class, MemoryAddress.class, int.class),
-                FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER, CLinker.C_INT));
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT));
         final MethodHandle rpmtsSetRootDir = downcallHandle("rpmtsSetRootDir",
-                MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
         final MethodHandle rpmtsInitIterator = downcallHandle("rpmtsInitIterator",
-                MethodType.methodType(MemoryAddress.class, MemoryAddress.class, int.class, MemoryAddress.class, long.class),
-                FunctionDescriptor.of(CLinker.C_POINTER, CLinker.C_POINTER, Layouts.int32_t, CLinker.C_POINTER, Layouts.size_t));
+                FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
         final MethodHandle rpmdbFreeIterator = downcallHandle("rpmdbFreeIterator",
-                MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_POINTER, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
         final MethodHandle rpmdbNextIterator = downcallHandle("rpmdbNextIterator",
-                MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_POINTER, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
         final MethodHandle rpmReadPackageFile = downcallHandle("rpmReadPackageFile",
-                MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER, CLinker.C_POINTER, CLinker.C_POINTER, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
         final MethodHandle rpmReadConfigFiles = downcallHandle("rpmReadConfigFiles",
-                MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
         final MethodHandle headerFree = downcallHandle("headerFree",
-                MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_POINTER, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
         final MethodHandle headerGet = downcallHandle("headerGet",
-                MethodType.methodType(int.class, MemoryAddress.class, int.class, MemoryAddress.class, int.class),
-                FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER, CLinker.C_INT, CLinker.C_POINTER, CLinker.C_INT));
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT));
         final MethodHandle headerGetString = downcallHandle("headerGetString",
-                MethodType.methodType(MemoryAddress.class, MemoryAddress.class, int.class),
-                FunctionDescriptor.of(CLinker.C_POINTER, CLinker.C_POINTER, CLinker.C_INT));
+                FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_INT));
         final MethodHandle headerGetNumber = downcallHandle("headerGetNumber",
-                MethodType.methodType(long.class, MemoryAddress.class, int.class),
-                FunctionDescriptor.of(Layouts.int64_t, CLinker.C_POINTER, CLinker.C_INT));
+                FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS, ValueLayout.JAVA_INT));
         final MethodHandle rpmtdNew = downcallHandle("rpmtdNew",
-                MethodType.methodType(MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.ADDRESS));
         final MethodHandle rpmtdFree = downcallHandle("rpmtdFree",
-                MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_POINTER, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
         final MethodHandle rpmtdFreeData = downcallHandle("rpmtdFreeData",
-                MethodType.methodType(void.class, MemoryAddress.class),
-                FunctionDescriptor.ofVoid(CLinker.C_POINTER));
+                FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
         final MethodHandle rpmtdCount = downcallHandle("rpmtdCount",
-                MethodType.methodType(int.class, MemoryAddress.class),
-                FunctionDescriptor.of(Layouts.int32_t, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS));
         final MethodHandle rpmtdNext = downcallHandle("rpmtdNext",
-                MethodType.methodType(int.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS));
         final MethodHandle rpmtdGetString = downcallHandle("rpmtdGetString",
-                MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_POINTER, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
     }
 
     private static class RpmIO extends Library {
@@ -189,20 +161,15 @@ final class Rpm {
         }
 
         final MethodHandle Fopen = downcallHandle("Fopen",
-                MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_POINTER, CLinker.C_POINTER, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
         final MethodHandle Fclose = downcallHandle("Fclose",
-                MethodType.methodType(void.class, MemoryAddress.class),
-                FunctionDescriptor.ofVoid(CLinker.C_POINTER));
+                FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
         final MethodHandle Ftell = downcallHandle("Ftell",
-                MethodType.methodType(long.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_LONG, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS));
         final MethodHandle Ferror = downcallHandle("Ferror",
-                MethodType.methodType(int.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS));
         final MethodHandle Fstrerror = downcallHandle("Fstrerror",
-                MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
-                FunctionDescriptor.of(CLinker.C_POINTER, CLinker.C_POINTER));
+                FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
     }
 
     private static class Lazy {
@@ -215,7 +182,7 @@ final class Rpm {
 
     static final MemoryAddress rpmtsCreate() {
         try {
-            return (MemoryAddress) Lazy.RPM.rpmtsCreate.invokeExact();
+            return (MemoryAddress) Lazy.RPM.rpmtsCreate.invoke();
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -223,7 +190,7 @@ final class Rpm {
 
     static final void rpmtsFree(MemoryAddress ts) {
         try {
-            Lazy.RPM.rpmtsFree.invokeExact(ts);
+            Lazy.RPM.rpmtsFree.invoke(ts);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -231,7 +198,7 @@ final class Rpm {
 
     static final int rpmtsSetVSFlags(MemoryAddress ts, int flags) {
         try {
-            return (int) Lazy.RPM.rpmtsSetVSFlags.invokeExact(ts, flags);
+            return (int) Lazy.RPM.rpmtsSetVSFlags.invoke(ts, flags);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -239,7 +206,7 @@ final class Rpm {
 
     static final int rpmtsSetRootDir(MemoryAddress ts, String rootDir) {
         try (var rootDirScope = ResourceScope.newConfinedScope()) {
-            return (int) Lazy.RPM.rpmtsSetRootDir.invokeExact(
+            return (int) Lazy.RPM.rpmtsSetRootDir.invoke(
                     ts,
                     toCStringAddress(rootDir, rootDirScope));
         } catch (Throwable thr) {
@@ -249,7 +216,7 @@ final class Rpm {
 
     static final MemoryAddress rpmtsInitIterator(MemoryAddress ts, int rpmtag, String keyp, long keylen) {
         try (var keypScope = ResourceScope.newConfinedScope()) {
-            return (MemoryAddress) Lazy.RPM.rpmtsInitIterator.invokeExact(
+            return (MemoryAddress) Lazy.RPM.rpmtsInitIterator.invoke(
                     ts,
                     rpmtag,
                     toCStringAddress(keyp, keypScope),
@@ -261,7 +228,7 @@ final class Rpm {
 
     static final MemoryAddress rpmdbFreeIterator(MemoryAddress mi) {
         try {
-            return (MemoryAddress) Lazy.RPM.rpmdbFreeIterator.invokeExact(mi);
+            return (MemoryAddress) Lazy.RPM.rpmdbFreeIterator.invoke(mi);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -269,7 +236,7 @@ final class Rpm {
 
     static final MemoryAddress rpmdbNextIterator(MemoryAddress mi) {
         try {
-            return (MemoryAddress) Lazy.RPM.rpmdbNextIterator.invokeExact(mi);
+            return (MemoryAddress) Lazy.RPM.rpmdbNextIterator.invoke(mi);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -277,7 +244,7 @@ final class Rpm {
 
     static final int rpmReadPackageFile(MemoryAddress ts, MemoryAddress fd, MemoryAddress fn, MemoryAddress hdr) {
         try {
-            return (int) Lazy.RPM.rpmReadPackageFile.invokeExact(ts, fd, fn, hdr);
+            return (int) Lazy.RPM.rpmReadPackageFile.invoke(ts, fd, fn, hdr);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -286,7 +253,7 @@ final class Rpm {
     static final int rpmReadConfigFiles(String file, String target) {
         try (var fileScope = ResourceScope.newConfinedScope();
              var targetScope = ResourceScope.newConfinedScope()) {
-            return (int) Lazy.RPM.rpmReadConfigFiles.invokeExact(
+            return (int) Lazy.RPM.rpmReadConfigFiles.invoke(
                     toCStringAddress(file, fileScope),
                     toCStringAddress(target, targetScope));
         } catch (Throwable thr) {
@@ -296,7 +263,7 @@ final class Rpm {
 
     static final MemoryAddress headerFree(MemoryAddress hdr) {
         try {
-            return (MemoryAddress) Lazy.RPM.headerFree.invokeExact(hdr);
+            return (MemoryAddress) Lazy.RPM.headerFree.invoke(hdr);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -304,7 +271,7 @@ final class Rpm {
 
     static final int headerGet(MemoryAddress hdr, int tag, MemoryAddress td, int flags) {
         try {
-            return (int) Lazy.RPM.headerGet.invokeExact(hdr, tag, td, flags);
+            return (int) Lazy.RPM.headerGet.invoke(hdr, tag, td, flags);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -312,12 +279,7 @@ final class Rpm {
 
     static final String headerGetString(MemoryAddress hdr, int tag) {
         try {
-            var cstring = (MemoryAddress) Lazy.RPM.headerGetString.invokeExact(hdr, tag);
-            if (cstring.equals(MemoryAddress.NULL)) {
-                return null;
-            } else {
-                return CLinker.toJavaString(cstring);
-            }
+            return toJavaString((MemoryAddress) Lazy.RPM.headerGetString.invoke(hdr, tag));
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -325,7 +287,7 @@ final class Rpm {
 
     static final long headerGetNumber(MemoryAddress hdr, int tag) {
         try {
-            return (long) Lazy.RPM.headerGetNumber.invokeExact(hdr, tag);
+            return (long) Lazy.RPM.headerGetNumber.invoke(hdr, tag);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -333,7 +295,7 @@ final class Rpm {
 
     static final MemoryAddress rpmtdNew() {
         try {
-            return (MemoryAddress) Lazy.RPM.rpmtdNew.invokeExact();
+            return (MemoryAddress) Lazy.RPM.rpmtdNew.invoke();
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -341,7 +303,7 @@ final class Rpm {
 
     static final MemoryAddress rpmtdFree(MemoryAddress td) {
         try {
-            return (MemoryAddress) Lazy.RPM.rpmtdFree.invokeExact(td);
+            return (MemoryAddress) Lazy.RPM.rpmtdFree.invoke(td);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -349,7 +311,7 @@ final class Rpm {
 
     static final void rpmtdFreeData(MemoryAddress td) {
         try {
-            Lazy.RPM.rpmtdFreeData.invokeExact(td);
+            Lazy.RPM.rpmtdFreeData.invoke(td);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -357,7 +319,7 @@ final class Rpm {
 
     static final int rpmtdCount(MemoryAddress td) {
         try {
-            return (int) Lazy.RPM.rpmtdCount.invokeExact(td);
+            return (int) Lazy.RPM.rpmtdCount.invoke(td);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -365,7 +327,7 @@ final class Rpm {
 
     static final int rpmtdNext(MemoryAddress td) {
         try {
-            return (int) Lazy.RPM.rpmtdNext.invokeExact(td);
+            return (int) Lazy.RPM.rpmtdNext.invoke(td);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -373,7 +335,7 @@ final class Rpm {
 
     static final String rpmtdGetString(MemoryAddress td) {
         try {
-            return CLinker.toJavaString((MemoryAddress) Lazy.RPM.rpmtdGetString.invokeExact(td));
+            return toJavaString((MemoryAddress) Lazy.RPM.rpmtdGetString.invoke(td));
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -382,7 +344,7 @@ final class Rpm {
     static final MemoryAddress Fopen(String filepath, String mode) {
         try (var filepathScope = ResourceScope.newConfinedScope();
              var modeScope = ResourceScope.newConfinedScope()) {
-            return (MemoryAddress) LazyIO.RPMIO.Fopen.invokeExact(
+            return (MemoryAddress) LazyIO.RPMIO.Fopen.invoke(
                     toCStringAddress(filepath, filepathScope),
                     toCStringAddress(mode, modeScope));
         } catch (Throwable thr) {
@@ -392,7 +354,7 @@ final class Rpm {
 
     static final void Fclose(MemoryAddress ts) {
         try {
-            LazyIO.RPMIO.Fclose.invokeExact(ts);
+            LazyIO.RPMIO.Fclose.invoke(ts);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -400,7 +362,7 @@ final class Rpm {
 
     static final long Ftell(MemoryAddress fd) {
         try {
-            return (long) LazyIO.RPMIO.Ftell.invokeExact(fd);
+            return (long) LazyIO.RPMIO.Ftell.invoke(fd);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -408,7 +370,7 @@ final class Rpm {
 
     static final int Ferror(MemoryAddress fd) {
         try {
-            return (int) LazyIO.RPMIO.Ferror.invokeExact(fd);
+            return (int) LazyIO.RPMIO.Ferror.invoke(fd);
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
@@ -416,7 +378,7 @@ final class Rpm {
 
     static final String Fstrerror(MemoryAddress fd) {
         try {
-            return CLinker.toJavaString((MemoryAddress) LazyIO.RPMIO.Fstrerror.invokeExact(fd));
+            return toJavaString((MemoryAddress) LazyIO.RPMIO.Fstrerror.invoke(fd));
         } catch (Throwable thr) {
             throw new RuntimeException(thr);
         }
