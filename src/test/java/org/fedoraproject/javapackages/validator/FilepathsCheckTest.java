@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
-import org.fedoraproject.javapackages.validator.util.Common;
 import org.junit.jupiter.api.Test;
 
 public class FilepathsCheckTest {
