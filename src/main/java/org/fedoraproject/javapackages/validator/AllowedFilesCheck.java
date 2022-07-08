@@ -11,7 +11,7 @@ import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javapackages.validator.config.AllowedFiles;
 
-public class FilesCheck {
+public class AllowedFilesCheck {
     static Collection<String> checkFiles(Path path, AllowedFiles config) throws IOException {
         var result = new ArrayList<String>(0);
 
