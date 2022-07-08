@@ -34,7 +34,7 @@ public abstract class Check<Config> {
         try {
             Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(inputFiles);
             if (!compiler.getTask(null, fileManager, null, compilerOptions, null, compilationUnits).call()) {
-                throw new RuntimeException("Failed to compile sources");
+                throw new RuntimeException("Failed to compile configuration sources");
             }
         } finally {
             fileManager.close();
