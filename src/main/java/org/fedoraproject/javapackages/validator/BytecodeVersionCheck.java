@@ -19,7 +19,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,20 +29,22 @@ import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javapackages.validator.config.BytecodeVersion;
+import org.fedoraproject.javapackages.validator.util.Common;
 
-public class BytecodeVersionCheck {
-    static Collection<String> checkClassBytecodeVersion(Path path, BytecodeVersion config) throws IOException {
+public class BytecodeVersionCheck extends Check<BytecodeVersion> {
+    @Override
+    public Collection<String> check(String packageName, Path rpmPath, BytecodeVersion config) throws IOException {
         var result = new ArrayList<String>(0);
 
-        Path rpmFilePath = path.getFileName();
+        Path rpmFilePath = rpmPath.getFileName();
 
         if (rpmFilePath == null) {
-            throw new IllegalArgumentException("Invalid RPM name: " + path.toString());
+            throw new IllegalArgumentException("Invalid RPM name: " + rpmPath.toString());
         }
 
         String rpmName = rpmFilePath.toString();
 
-        try (var is = new RpmArchiveInputStream(path)) {
+        try (var is = new RpmArchiveInputStream(rpmPath)) {
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
                 var content = new byte[(int) rpmEntry.getSize()];
 
@@ -74,12 +75,12 @@ public class BytecodeVersionCheck {
                                 }
 
                                 var version = versionBuffer.getShort();
-                                var range = config.versionRangeOf(Common.getPackageName(path), rpmName, jarName, className);
+                                var range = config.versionRangeOf(packageName, rpmName, jarName, className);
 
                                 if (!range.contains(version)) {
                                     result.add(MessageFormat.format(
                                             "[FAIL] {0}: {1}: {2}: class bytecode version is {3} which is not in range [{4}-{5}]",
-                                            path, jarName, className, version, range.min, range.max));
+                                            rpmPath, jarName, className, version, range.min, range.max));
                                     foundVersions = null;
                                 } else if (foundVersions != null) {
                                     foundVersions.add(version);
@@ -90,7 +91,7 @@ public class BytecodeVersionCheck {
                         if (foundVersions != null) {
                             System.err.println(MessageFormat.format(
                                     "[INFO] {0}: {1}: found bytecode versions: {2}",
-                                    path, jarName, foundVersions));
+                                    rpmPath, jarName, foundVersions));
                         }
                     }
                 }
@@ -101,18 +102,6 @@ public class BytecodeVersionCheck {
     }
 
     public static void main(String[] args) throws Exception {
-        int exitcode = 0;
-
-        var configClass = Class.forName("org.fedoraproject.javapackages.validator.config.BytecodeVersionConfig");
-        var config = (BytecodeVersion) configClass.getConstructor().newInstance();
-
-        for (int i = 0; i != args.length; ++i) {
-            for (var message : checkClassBytecodeVersion(Paths.get(args[i]).resolve(".").toAbsolutePath().normalize(), config)) {
-                exitcode = 1;
-                System.out.println(message);
-            }
-        }
-
-        System.exit(exitcode);
+        System.exit(new BytecodeVersionCheck().executeCheck(BytecodeVersion.class, args));
     }
 }

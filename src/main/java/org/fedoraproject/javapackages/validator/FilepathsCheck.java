@@ -30,9 +30,11 @@ import java.util.stream.Collectors;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javapackages.validator.config.Filepaths;
+import org.fedoraproject.javapackages.validator.util.Common;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+// TODO
 public class FilepathsCheck {
     /**
      * @param path

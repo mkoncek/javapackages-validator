@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator;
+package org.fedoraproject.javapackages.validator.util;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

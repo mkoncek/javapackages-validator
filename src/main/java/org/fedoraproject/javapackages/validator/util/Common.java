@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator;
+package org.fedoraproject.javapackages.validator.util;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -8,7 +8,7 @@ import java.text.MessageFormat;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
 public class Common {
-    static final IOException INCOMPLETE_READ = new IOException("Incomplete read in RPM stream");
+    public static final IOException INCOMPLETE_READ = new IOException("Incomplete read in RPM stream");
 
     public static String getPackageName(Path rpmPath) {
         try {
