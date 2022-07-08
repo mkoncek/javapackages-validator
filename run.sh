@@ -15,18 +15,11 @@ for dependency in target/dependency/*; do
     classpath+=":${dependency}"
 done
 
-if [ ! "$(ls -A '/mnt/packages/')" ]; then
-    echo "No packages found in /mnt/packages/"
+readonly package_dir="$(echo /mnt/package/*)"
+
+if [ ! "$(ls -A ${package_dir})" ]; then
+    echo "No rpms found in ${package_dir}" >&2
 else
-    for package_dir in '/mnt/packages/'*; do
-        package_name="${package_dir##*/}"
-        if [ ! "$(ls -A ${package_dir})" ]; then
-            echo "No rpms found in ${package_dir}"
-        else
-            rpms="${package_dir}/"*
-            echo $package_name
-            echo $rpms
-            ${java_bin}/java -cp "${classpath}" "org.fedoraproject.javapackages.validator.${1}" "${package_name}" ${rpms} || exitcode=1
-        fi
-    done
+    rpms="$(echo ${package_dir}/*)"
+    ${java_bin}/java -cp "${classpath}" "org.fedoraproject.javapackages.validator.${1}" "${package_name}" ${rpms}
 fi
