@@ -9,14 +9,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public abstract class Check<Config> {
     private Map<Class<?>, Object> configurations = null;
@@ -31,34 +33,34 @@ public abstract class Check<Config> {
 
         try {
             Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(inputFiles);
-            compiler.getTask(null, fileManager, null, compilerOptions, null, compilationUnits).call();
+            if (!compiler.getTask(null, fileManager, null, compilerOptions, null, compilationUnits).call()) {
+                throw new RuntimeException("Failed to compile sources");
+            }
         } finally {
             fileManager.close();
         }
     }
 
+    @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
     protected Config getConfig(Class<Config> configClass) throws IOException {
         final Path config_bin_dir = Paths.get("/mnt/config/bin");
 
         if (Files.notExists(config_bin_dir)) {
-            Files.createDirectories(config_bin_dir);
             compileFiles(Paths.get("/mnt/config/src"), Arrays.asList("-d", config_bin_dir.toString()));
         }
 
         if (configurations == null) {
-            var classes = (String[]) Files.find(config_bin_dir, Integer.MAX_VALUE,
-                    (path, attributes) -> attributes.isRegularFile() && path.toString().endsWith(".class")).map(Path::toString).toArray();
-            var urls = new URL[classes.length];
+            var classes = Files.find(config_bin_dir, Integer.MAX_VALUE,
+                    (path, attributes) -> attributes.isRegularFile() && path.toString().endsWith(".class")).map(Path::toString).toArray(String[]::new);
 
             for (int i = 0; i != classes.length; ++i) {
-                urls[i] = Paths.get(classes[i]).toUri().toURL();
                 classes[i] = classes[i].substring(config_bin_dir.toString().length() + 1);
                 classes[i] = classes[i].substring(0, classes[i].length() - 6);
                 classes[i] = classes[i].replace('/', '.');
             }
 
-            try (URLClassLoader cl = new URLClassLoader(urls)) {
-                configurations = new TreeMap<>();
+            try (URLClassLoader cl = new URLClassLoader(new URL[] {config_bin_dir.toUri().toURL()})) {
+                configurations = new HashMap<>();
                 for (var className : classes) {
                     Class<?> cls = cl.loadClass(className);
                     for (var intrfc : cls.getInterfaces()) {
