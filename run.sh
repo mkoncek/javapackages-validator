@@ -17,9 +17,7 @@ done
 
 readonly package_dir="$(echo /mnt/package/*)"
 
-if [ ! "$(ls -A ${package_dir})" ]; then
-    echo "No rpms found in ${package_dir}" >&2
-else
+if [ "$(ls -A ${package_dir})" ]; then
     rpms="$(echo ${package_dir}/*)"
     ${java_bin}/java --enable-preview --add-modules jdk.incubator.foreign --enable-native-access ALL-UNNAMED -cp "${classpath}" "org.fedoraproject.javapackages.validator.${1}" "${package_name}" ${rpms}
 fi
