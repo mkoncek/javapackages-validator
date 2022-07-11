@@ -8,7 +8,7 @@ if [ -z "${1}" ]; then
     exit 1
 fi
 
-java_bin="/usr/lib/jvm/java-18/bin"
+java_bin="/usr/lib/jvm/jre-17/bin"
 
 classpath=$(echo target/*.jar)
 for dependency in target/dependency/*; do

@@ -1,16 +1,23 @@
-FROM fedora:rawhide
+FROM registry.access.redhat.com/ubi9-minimal AS builder
+RUN microdnf -y install maven-openjdk17 rpm-build-libs
 
-RUN dnf -y install java-17-openjdk-headless maven rpm-build-libs
-COPY "pom.xml" "/usr/local/src/javapackages-validator/"
+WORKDIR "/usr/local/src/javapackages-validator"
 
 # First fetch dependencies without having sources
-WORKDIR "/usr/local/src/javapackages-validator"
+COPY "pom.xml" "/usr/local/src/javapackages-validator/"
 RUN JAVA_HOME=/usr/lib/jvm/java-17 mvn clean install
 
 COPY "src/" "/usr/local/src/javapackages-validator/src/"
 RUN JAVA_HOME=/usr/lib/jvm/java-17 mvn clean install
 
-COPY "run.sh" "/usr/local/src/javapackages-validator/"
+################################################################################
+
+FROM registry.access.redhat.com/ubi9-minimal
+RUN microdnf -y install java-17-openjdk-headless
+
+COPY --from=builder "/usr/local/src/javapackages-validator/target/" "/opt/javapackages-validator/target/"
+COPY "run.sh" "/opt/javapackages-validator/"
+WORKDIR "/opt/javapackages-validator"
 
 VOLUME "/mnt/package/"
 VOLUME "/mnt/config/src/"
