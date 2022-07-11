@@ -10,7 +10,7 @@ fi
 
 java_bin="/usr/lib/jvm/jre-17/bin"
 
-classpath=$(echo target/*.jar)
+classpath="$(echo target/*.jar)"
 for dependency in target/dependency/*; do
     classpath+=":${dependency}"
 done
