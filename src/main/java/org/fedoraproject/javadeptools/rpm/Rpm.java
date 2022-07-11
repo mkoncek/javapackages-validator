@@ -15,8 +15,12 @@
  */
 package org.fedoraproject.javadeptools.rpm;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import jdk.incubator.foreign.CLinker;
@@ -97,6 +101,26 @@ final class Rpm {
         }
     }
 
+    private static void loadLibrary(String name) {
+        for (String libdirname : System.getProperty("java.library.path").split(":")) {
+            try {
+                var libpath = Paths.get(libdirname);
+                if (Files.isDirectory(libpath)) {
+                    var optLib = Files.find(libpath, Integer.MAX_VALUE, (path, attributes) ->
+                        attributes.isRegularFile() && path.getFileName().toString().startsWith("lib" + name + ".so")
+                    ).findFirst();
+                    if (optLib.isPresent()) {
+                        System.load(optLib.get().toString());
+                        return;
+                    }
+                }
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        }
+        throw new UnsatisfiedLinkError("Library " + name + " not found in " + System.getProperty("java.library.path"));
+    }
+
     private static class Library {
         private final SymbolLookup lookup;
         private final CLinker clinker;
@@ -110,7 +134,7 @@ final class Rpm {
             clinker = CLinker.getInstance();
 
             for (String library : libraries) {
-                System.loadLibrary(library);
+                loadLibrary(library);
             }
         }
 

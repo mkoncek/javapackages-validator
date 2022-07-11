@@ -1,0 +1,18 @@
+FROM fedora:rawhide
+
+RUN dnf -y install java-17-openjdk-headless maven rpm-build-libs
+COPY "pom.xml" "/usr/local/src/javapackages-validator/"
+
+# First fetch dependencies without having sources
+WORKDIR "/usr/local/src/javapackages-validator"
+RUN JAVA_HOME=/usr/lib/jvm/java-17 mvn clean install
+
+COPY "src/" "/usr/local/src/javapackages-validator/src/"
+RUN JAVA_HOME=/usr/lib/jvm/java-17 mvn clean install
+
+COPY "run.sh" "/usr/local/src/javapackages-validator/"
+
+VOLUME "/mnt/package/"
+VOLUME "/mnt/config/src/"
+
+ENTRYPOINT ["./run.sh"]
