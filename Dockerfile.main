@@ -1,5 +1,5 @@
 FROM registry.access.redhat.com/ubi9-minimal AS builder
-RUN microdnf -y install maven-openjdk17 rpm-build-libs
+RUN microdnf -y install maven-openjdk17
 
 WORKDIR "/usr/local/src/javapackages-validator"
 
