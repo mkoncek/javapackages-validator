@@ -5,10 +5,10 @@ WORKDIR "/usr/local/src/javapackages-validator"
 
 # First fetch dependencies without having sources
 COPY "pom.xml" "/usr/local/src/javapackages-validator/"
-RUN JAVA_HOME=/usr/lib/jvm/java-17 mvn clean install
+RUN mvn clean install
 
 COPY "src/" "/usr/local/src/javapackages-validator/src/"
-RUN JAVA_HOME=/usr/lib/jvm/java-17 mvn clean install
+RUN mvn clean install
 
 ################################################################################
 
