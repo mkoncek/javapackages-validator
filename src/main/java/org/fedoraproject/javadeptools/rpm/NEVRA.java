@@ -23,12 +23,14 @@ import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_VERSION;
 import static org.fedoraproject.javadeptools.rpm.Rpm.headerGetNumber;
 import static org.fedoraproject.javadeptools.rpm.Rpm.headerGetString;
 
+import org.fedoraproject.javapackages.validator.config.Nevra;
+
 import jdk.incubator.foreign.MemoryAddress;
 
 /**
  * @author Mikolaj Izdebski
  */
-public class NEVRA {
+public class NEVRA implements Nevra {
     private final String name;
     private final int epoch;
     private final String version;
@@ -52,22 +54,27 @@ public class NEVRA {
         nevra = sb.toString();
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public int getEpoch() {
         return epoch;
     }
 
+    @Override
     public String getVersion() {
         return version;
     }
 
+    @Override
     public String getRelease() {
         return release;
     }
 
+    @Override
     public String getArch() {
         return arch;
     }
