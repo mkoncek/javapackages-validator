@@ -7,6 +7,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,10 +19,21 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+/**
+ * The base class for checks. Classes that inherit from this must implement
+ * either one of the two "check" methods.
+ * @param <Config> The config class corresponding to the check. Void may be used
+ * if the check is not configurable.
+ */
+@SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
 public abstract class Check<Config> {
     private Map<Class<?>, Object> configurations = null;
+    private Path config_src_dir = Paths.get("/mnt/config/src");
+    private Path config_bin_dir = Paths.get("/mnt/config/bin");
 
     private static void compileFiles(Path sourceDir, Iterable<String> compilerOptions) throws IOException {
         List<File> inputFiles = Files.find(sourceDir, Integer.MAX_VALUE,
@@ -41,12 +53,10 @@ public abstract class Check<Config> {
         }
     }
 
-    @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
+    @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
     protected Config getConfig(Class<Config> configClass) throws IOException {
-        final Path config_bin_dir = Paths.get("/mnt/config/bin");
-
         if (Files.notExists(config_bin_dir)) {
-            compileFiles(Paths.get("/mnt/config/src"), Arrays.asList("-d", config_bin_dir.toString()));
+            compileFiles(config_src_dir, Arrays.asList("-d", config_bin_dir.toString()));
         }
 
         if (configurations == null) {
@@ -76,19 +86,58 @@ public abstract class Check<Config> {
         return configClass.cast(configurations.get(configClass));
     }
 
-    protected abstract Collection<String> check(String packageName, Path rpmPath, Config config) throws IOException;
+    protected Collection<String> check(Path rpmPath, RpmInfo rpmInfo, Config config) throws IOException {
+        throw new UnsupportedOperationException("Check not implemented by subclass");
+    }
+
+    protected Collection<String> check(List<Path> testRpms, Config config) throws IOException {
+        var result = new ArrayList<String>(0);
+
+        for (Path rpmPath : testRpms) {
+            var rpmInfo = new RpmInfo(rpmPath);
+            result.addAll(check(rpmPath, rpmInfo, config));
+        }
+
+        return result;
+    }
 
     protected int executeCheck(Class<Config> configClass, String... args) throws IOException {
-        int result = 0;
+        var testRpms = new ArrayList<Path>();
+
+        for (int i = 0; i != args.length; ++i) {
+            if (args[i].equals("--config-src")) {
+                ++i;
+                config_src_dir = Paths.get(args[i]);
+            } else if (args[i].equals("--config-bin")) {
+                ++i;
+                config_bin_dir = Paths.get(args[i]);
+            } else if (args[i].startsWith("-")) {
+                throw new RuntimeException("Unrecognized option: " + args[i]);
+            } else {
+                Path argPath = Paths.get(args[i]).resolve(".").toAbsolutePath().normalize();
+                if (Files.isSymbolicLink(argPath)) {
+                    argPath = argPath.toRealPath();
+                }
+
+                if (Files.isRegularFile(argPath)) {
+                    testRpms.add(argPath);
+                } else if (Files.isDirectory(argPath)) {
+                    Files.find(argPath, Integer.MAX_VALUE,
+                            (path, attributes) -> attributes.isRegularFile() && path.toString().endsWith(".rpm"))
+                    .forEach((p) -> testRpms.add(p));
+                } else {
+                    throw new IllegalStateException("File " + argPath + " of unknown type");
+                }
+            }
+        }
 
         var config = getConfig(configClass);
-        String packageName = args[0];
 
-        for (int i = 1; i != args.length; ++i) {
-            for (var message : check(packageName, Paths.get(args[i]).resolve(".").toAbsolutePath().normalize(), config)) {
-                result = 1;
-                System.out.println(message);
-            }
+        int result = 0;
+
+        for (var message : check(testRpms, config)) {
+            result = 1;
+            System.out.println(message);
         }
 
         return result;

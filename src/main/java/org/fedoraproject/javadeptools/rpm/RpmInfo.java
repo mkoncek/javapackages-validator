@@ -101,41 +101,43 @@ public class RpmInfo {
         var ts = rpmtsCreate();
         var fd = Fopen(path.toString(), "r");
         try {
-            if (Ferror(fd) != 0)
+            if (Ferror(fd) != 0) {
                 throw error(path, Fstrerror(fd));
-        rpmtsSetVSFlags(ts, RPMVSF_NOHDRCHK | RPMVSF_NOSHA1HEADER | RPMVSF_NODSAHEADER
-                | RPMVSF_NORSAHEADER | RPMVSF_NOMD5 | RPMVSF_NODSA | RPMVSF_NORSA);
-
-        try (ResourceScope headerScope = ResourceScope.newConfinedScope()) {
-            MemorySegment ph = MemorySegment.allocateNative(CLinker.C_POINTER, headerScope);
-            int rc = rpmReadPackageFile(ts, fd, MemoryAddress.NULL, ph.address());
-            if (rc == RPMRC_NOTFOUND)
-                throw error(path, "Not a RPM file");
-            if (rc != RPMRC_OK && rc != RPMRC_NOTTRUSTED && rc != RPMRC_NOKEY)
-                throw error(path, "Failed to parse RPM header");
-
-            MemoryAddress h = MemoryAddress.ofLong(ph.toLongArray()[0]);
-            try {
-                nevra = new NEVRA(h);
-                provides = headerGetList(h, RPMTAG_PROVIDENAME);
-                requires = headerGetList(h, RPMTAG_REQUIRENAME);
-                conflicts = headerGetList(h, RPMTAG_CONFLICTNAME);
-                obsoletes = headerGetList(h, RPMTAG_OBSOLETENAME);
-                recommends = headerGetList(h, RPMTAG_RECOMMENDNAME);
-                suggests = headerGetList(h, RPMTAG_SUGGESTNAME);
-                supplements = headerGetList(h, RPMTAG_SUPPLEMENTNAME);
-                enhances = headerGetList(h, RPMTAG_ENHANCENAME);
-                orderWithRequires = headerGetList(h, RPMTAG_ORDERNAME);
-                archiveFormat = headerGetString(h, RPMTAG_PAYLOADFORMAT);
-                compressionMethod = headerGetString(h, RPMTAG_PAYLOADCOMPRESSOR);
-                sourceRPM = headerGetString(h, RPMTAG_SOURCERPM);
-                sourcePackage = headerGetNumber(h, RPMTAG_SOURCEPACKAGE) != 0;
-            } finally {
-                headerFree(h);
             }
-            headerSize = Ftell(fd);
-        }
+            rpmtsSetVSFlags(ts, RPMVSF_NOHDRCHK | RPMVSF_NOSHA1HEADER | RPMVSF_NODSAHEADER
+                    | RPMVSF_NORSAHEADER | RPMVSF_NOMD5 | RPMVSF_NODSA | RPMVSF_NORSA);
 
+            try (ResourceScope headerScope = ResourceScope.newConfinedScope()) {
+                MemorySegment ph = MemorySegment.allocateNative(CLinker.C_POINTER, headerScope);
+                int rc = rpmReadPackageFile(ts, fd, MemoryAddress.NULL, ph.address());
+                if (rc == RPMRC_NOTFOUND) {
+                    throw error(path, "Not a RPM file");
+                }
+                if (rc != RPMRC_OK && rc != RPMRC_NOTTRUSTED && rc != RPMRC_NOKEY) {
+                    throw error(path, "Failed to parse RPM header");
+                }
+
+                MemoryAddress h = MemoryAddress.ofLong(ph.toLongArray()[0]);
+                try {
+                    nevra = new NEVRA(h);
+                    provides = headerGetList(h, RPMTAG_PROVIDENAME);
+                    requires = headerGetList(h, RPMTAG_REQUIRENAME);
+                    conflicts = headerGetList(h, RPMTAG_CONFLICTNAME);
+                    obsoletes = headerGetList(h, RPMTAG_OBSOLETENAME);
+                    recommends = headerGetList(h, RPMTAG_RECOMMENDNAME);
+                    suggests = headerGetList(h, RPMTAG_SUGGESTNAME);
+                    supplements = headerGetList(h, RPMTAG_SUPPLEMENTNAME);
+                    enhances = headerGetList(h, RPMTAG_ENHANCENAME);
+                    orderWithRequires = headerGetList(h, RPMTAG_ORDERNAME);
+                    archiveFormat = headerGetString(h, RPMTAG_PAYLOADFORMAT);
+                    compressionMethod = headerGetString(h, RPMTAG_PAYLOADCOMPRESSOR);
+                    sourceRPM = headerGetString(h, RPMTAG_SOURCERPM);
+                    sourcePackage = headerGetNumber(h, RPMTAG_SOURCEPACKAGE) != 0;
+                } finally {
+                    headerFree(h);
+                }
+                headerSize = Ftell(fd);
+            }
         } finally {
             Fclose(fd);
             rpmtsFree(ts);

@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator;
+package org.fedoraproject.javapackages.validator.checks;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -8,34 +8,29 @@ import java.util.Collection;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
-import org.fedoraproject.javapackages.validator.config.AllowedFiles;
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
+import org.fedoraproject.javapackages.validator.Check;
+import org.fedoraproject.javapackages.validator.RpmPackageImpl;
+import org.fedoraproject.javapackages.validator.config.FilesConfig;
 
-public class AllowedFilesCheck extends Check<AllowedFiles> {
+public class FilesCheck extends Check<FilesConfig> {
     @Override
-    public Collection<String> check(String packageName, Path rpmPath, AllowedFiles config) throws IOException {
+    public Collection<String> check(Path rpmPath, RpmInfo rpmInfo, FilesConfig config) throws IOException {
         var result = new ArrayList<String>(0);
-
-        Path rpmFilePath = rpmPath.getFileName();
-
-        if (rpmFilePath == null) {
-            throw new IllegalArgumentException("Invalid RPM name: " + rpmPath.toString());
-        }
-
-        String rpmName = rpmFilePath.toString();
 
         try (var is = new RpmArchiveInputStream(rpmPath)) {
             boolean ok = true;
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
                 var entryName = rpmEntry.getName().substring(1);
-                if (!config.allowedFile(packageName, rpmName, entryName)) {
+                if (!config.allowedFile(new RpmPackageImpl(rpmInfo), entryName)) {
                     ok = false;
                     result.add(MessageFormat.format("[FAIL] {0}: Illegal file: {1}",
-                            rpmName, entryName));
+                            rpmPath, entryName));
                 }
             }
 
             if (ok) {
-                System.err.println(MessageFormat.format("[INFO] {0}: ok", rpmName));
+                System.err.println(MessageFormat.format("[INFO] {0}: ok", rpmPath));
             }
         }
 
@@ -43,6 +38,6 @@ public class AllowedFilesCheck extends Check<AllowedFiles> {
     }
 
     public static void main(String[] args) throws Exception {
-        System.exit(new AllowedFilesCheck().executeCheck(AllowedFiles.class, args));
+        System.exit(new FilesCheck().executeCheck(FilesConfig.class, args));
     }
 }

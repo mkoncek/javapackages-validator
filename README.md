@@ -1,13 +1,10 @@
 # javapackages-validator
-Validator runs a single check on a single package consisting of possibly
-multiple `rpm` files.
+Validator runs a single check on a single check on a set of `rpm` files.
 
-## Running from container
-You need to mount two directory paths:
+## Usage
+`run.sh <simple class name of the check> [optional flags] <RPM files or directories to test...>`
 
-* `/mnt/package/${package_name}/` -- directory named after the package and containing the tested `rpm` files
-* `/mnt/config/src/` -- directory containing `.java` configuration files
-
-Running from container is done as follows:
-
-`$ docker run jp-validator <simple class name of the check>`
+### Optional flags
+`--config-src [/mnt/config/src] - directory containing configuration sources`
+`--config-bin [/mnt/config/bin] - directory where compiled class files will be put`
+`--envroot [/] - root directory to resolve symbolic links against`

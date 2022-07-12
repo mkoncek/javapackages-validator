@@ -19,7 +19,4 @@ COPY --from=builder "/usr/local/src/javapackages-validator/target/" "/opt/javapa
 COPY "run.sh" "/opt/javapackages-validator/"
 WORKDIR "/opt/javapackages-validator"
 
-VOLUME "/mnt/package/"
-VOLUME "/mnt/config/src/"
-
 ENTRYPOINT ["./run.sh"]

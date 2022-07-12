@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator.util;
+package org.fedoraproject.javapackages.validator;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,5 +33,14 @@ public class RpmFileName {
         release = matcher.group(4);
         disttag = matcher.group(5);
         arch = matcher.group(6);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(new RpmFileName("ant-1.10.12-4.fc37~bootstrap.src.rpm").name);
+        System.out.println(new RpmFileName("ant-1.10.12-4.fc37~bootstrap.src.rpm").epoch);
+        System.out.println(new RpmFileName("ant-1.10.12-4.fc37~bootstrap.src.rpm").version);
+        System.out.println(new RpmFileName("ant-1.10.12-4.fc37~bootstrap.src.rpm").release);
+        System.out.println(new RpmFileName("ant-1.10.12-4.fc37~bootstrap.src.rpm").disttag);
+        System.out.println(new RpmFileName("ant-1.10.12-4.fc37~bootstrap.src.rpm").arch);
     }
 }

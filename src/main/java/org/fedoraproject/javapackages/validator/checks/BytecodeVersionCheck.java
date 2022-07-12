@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fedoraproject.javapackages.validator;
+package org.fedoraproject.javapackages.validator.checks;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -28,21 +28,16 @@ import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
-import org.fedoraproject.javapackages.validator.config.BytecodeVersion;
-import org.fedoraproject.javapackages.validator.util.Common;
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
+import org.fedoraproject.javapackages.validator.Check;
+import org.fedoraproject.javapackages.validator.Common;
+import org.fedoraproject.javapackages.validator.RpmPackageImpl;
+import org.fedoraproject.javapackages.validator.config.BytecodeVersionConfig;
 
-public class BytecodeVersionCheck extends Check<BytecodeVersion> {
+public class BytecodeVersionCheck extends Check<BytecodeVersionConfig> {
     @Override
-    public Collection<String> check(String packageName, Path rpmPath, BytecodeVersion config) throws IOException {
+    public Collection<String> check(Path rpmPath, RpmInfo rpmInfo, BytecodeVersionConfig config) throws IOException {
         var result = new ArrayList<String>(0);
-
-        Path rpmFilePath = rpmPath.getFileName();
-
-        if (rpmFilePath == null) {
-            throw new IllegalArgumentException("Invalid RPM name: " + rpmPath.toString());
-        }
-
-        String rpmName = rpmFilePath.toString();
 
         try (var is = new RpmArchiveInputStream(rpmPath)) {
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
@@ -66,7 +61,7 @@ public class BytecodeVersionCheck extends Check<BytecodeVersion> {
                                     throw Common.INCOMPLETE_READ;
                                 }
 
-                                // ByteBuffer's initial byte order is big endian
+                                // ByteBuffer's initial byte order is big-endian
                                 // which is the same as is used in java .class files
                                 var versionBuffer = ByteBuffer.allocate(2);
 
@@ -75,7 +70,7 @@ public class BytecodeVersionCheck extends Check<BytecodeVersion> {
                                 }
 
                                 var version = versionBuffer.getShort();
-                                var range = config.versionRangeOf(packageName, rpmName, jarName, className);
+                                var range = config.versionRangeOf(new RpmPackageImpl(rpmInfo), jarName, className);
 
                                 if (!range.contains(version)) {
                                     result.add(MessageFormat.format(
@@ -102,6 +97,6 @@ public class BytecodeVersionCheck extends Check<BytecodeVersion> {
     }
 
     public static void main(String[] args) throws Exception {
-        System.exit(new BytecodeVersionCheck().executeCheck(BytecodeVersion.class, args));
+        System.exit(new BytecodeVersionCheck().executeCheck(BytecodeVersionConfig.class, args));
     }
 }

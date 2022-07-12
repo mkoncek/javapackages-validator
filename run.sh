@@ -4,7 +4,11 @@ set -e
 
 if [ -z "${1}" ]; then
     echo "error: no argument provided"
-    echo "Usage: run.sh <simple class name of the check>"
+    echo "Usage: run.sh <simple class name of the check> [optional flags] <RPM files or directories to test...>"
+    echo "Optional flags:"
+    echo "    --config-src [/mnt/config/src] - directory containing configuration sources"
+    echo "    --config-bin [/mnt/config/bin] - directory where compiled class files will be put"
+    echo "    --envroot [/] - root directory to resolve symbolic links against"
     exit 1
 fi
 
@@ -15,9 +19,7 @@ for dependency in target/dependency/*; do
     classpath+=":${dependency}"
 done
 
-readonly package_dir="$(echo /mnt/package/*)"
+check_name="${1}"
+shift 1
 
-if [ "$(ls -A ${package_dir})" ]; then
-    rpms="$(echo ${package_dir}/*)"
-    ${java_bin}/java --enable-preview --add-modules jdk.incubator.foreign --enable-native-access ALL-UNNAMED -cp "${classpath}" "org.fedoraproject.javapackages.validator.${1}" "${package_dir##*/}" ${rpms}
-fi
+exec ${java_bin}/java --enable-preview --add-modules jdk.incubator.foreign --enable-native-access ALL-UNNAMED -cp "${classpath}" "org.fedoraproject.javapackages.validator.checks.${check_name}" ${@}
