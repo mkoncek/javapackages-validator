@@ -10,11 +10,11 @@ import java.util.Collection;
 import java.util.Locale;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
-import org.fedoraproject.javapackages.validator.Check;
+import org.fedoraproject.javapackages.validator.ElementwiseCheck;
 import org.fedoraproject.javapackages.validator.RpmPackageImpl;
 import org.fedoraproject.javapackages.validator.config.RpmFilesizeConfig;
 
-public class RpmFilesizeCheck extends Check<RpmFilesizeConfig> {
+public class RpmFilesizeCheck extends ElementwiseCheck<RpmFilesizeConfig> {
     @Override
     public Collection<String> check(Path rpmPath, RpmInfo rpmInfo, RpmFilesizeConfig config) throws IOException {
         var result = new ArrayList<String>(0);

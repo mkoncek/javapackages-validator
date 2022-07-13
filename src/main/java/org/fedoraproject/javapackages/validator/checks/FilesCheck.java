@@ -9,11 +9,11 @@ import java.util.Collection;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
-import org.fedoraproject.javapackages.validator.Check;
+import org.fedoraproject.javapackages.validator.ElementwiseCheck;
 import org.fedoraproject.javapackages.validator.RpmPackageImpl;
 import org.fedoraproject.javapackages.validator.config.FilesConfig;
 
-public class FilesCheck extends Check<FilesConfig> {
+public class FilesCheck extends ElementwiseCheck<FilesConfig> {
     @Override
     public Collection<String> check(Path rpmPath, RpmInfo rpmInfo, FilesConfig config) throws IOException {
         var result = new ArrayList<String>(0);

@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
-public class RpmAttributeCheck<Config> extends Check<Config> {
+public class RpmAttributeCheck<Config> extends ElementwiseCheck<Config> {
     @Override
     protected Collection<String> check(Path rpmPath, RpmInfo rpmInfo, Config config) throws IOException {
         var result = new ArrayList<String>(0);

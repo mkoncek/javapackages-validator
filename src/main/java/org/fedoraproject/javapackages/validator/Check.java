@@ -19,8 +19,6 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -86,20 +84,7 @@ public abstract class Check<Config> {
         return configClass.cast(configurations.get(configClass));
     }
 
-    protected Collection<String> check(Path rpmPath, RpmInfo rpmInfo, Config config) throws IOException {
-        throw new UnsupportedOperationException("Check not implemented by subclass");
-    }
-
-    protected Collection<String> check(List<Path> testRpms, Config config) throws IOException {
-        var result = new ArrayList<String>(0);
-
-        for (Path rpmPath : testRpms) {
-            var rpmInfo = new RpmInfo(rpmPath);
-            result.addAll(check(rpmPath, rpmInfo, config));
-        }
-
-        return result;
-    }
+    abstract protected Collection<String> check(List<Path> testRpms, Config config) throws IOException;
 
     protected int executeCheck(Class<Config> configClass, String... args) throws IOException {
         var testRpms = new ArrayList<Path>();

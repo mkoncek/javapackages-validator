@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
-import org.fedoraproject.javapackages.validator.Check;
+import org.fedoraproject.javapackages.validator.ElementwiseCheck;
 import org.fedoraproject.javapackages.validator.RpmFiles;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class SymlinkCheck extends Check<Void> {
+public class SymlinkCheck extends ElementwiseCheck<Void> {
     private final Path envroot;
 
     public SymlinkCheck(Path envroot) {

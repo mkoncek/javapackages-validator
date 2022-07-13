@@ -29,12 +29,12 @@ import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
-import org.fedoraproject.javapackages.validator.Check;
 import org.fedoraproject.javapackages.validator.Common;
+import org.fedoraproject.javapackages.validator.ElementwiseCheck;
 import org.fedoraproject.javapackages.validator.RpmPackageImpl;
 import org.fedoraproject.javapackages.validator.config.BytecodeVersionConfig;
 
-public class BytecodeVersionCheck extends Check<BytecodeVersionConfig> {
+public class BytecodeVersionCheck extends ElementwiseCheck<BytecodeVersionConfig> {
     @Override
     public Collection<String> check(Path rpmPath, RpmInfo rpmInfo, BytecodeVersionConfig config) throws IOException {
         var result = new ArrayList<String>(0);
