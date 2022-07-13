@@ -23,8 +23,10 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
         var files = new TreeMap<String, ArrayList<Path>>();
 
         for (var rpmPath : testRpms) {
-            for (var pair : RpmFiles.filesAndSymlinks(rpmPath).entrySet()) {
-                files.computeIfAbsent(pair.getKey().getName().substring(1), key -> new ArrayList<Path>()).add(rpmPath);
+            if (!new RpmInfo(rpmPath).isSourcePackage()) {
+                for (var pair : RpmFiles.filesAndSymlinks(rpmPath).entrySet()) {
+                    files.computeIfAbsent(pair.getKey().getName().substring(1), key -> new ArrayList<Path>()).add(rpmPath);
+                }
             }
         }
 
