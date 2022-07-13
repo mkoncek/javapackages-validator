@@ -26,5 +26,5 @@ public interface BytecodeVersionConfig {
      * @param className The full relative path to the .class file inside the .jar archive.
      * @return Allowed version range for @param className.
      */
-    VersionRange versionRangeOf(RpmPackage rpmPackage, String jarName, String className);
+    VersionRange versionRangeOf(RpmPackage rpm, String jarName, String className);
 }
