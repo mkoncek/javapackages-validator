@@ -14,7 +14,11 @@ public class RpmPackageImpl implements RpmPackage {
 
     @Override
     public String getPackageName() {
-        return Common.getPackageName(rpmInfo.getSourceRPM());
+        if (isSourceRpm()) {
+            return getNevra().getName();
+        } else {
+            return Common.getPackageName(rpmInfo.getSourceRPM());
+        }
     }
 
     @Override
