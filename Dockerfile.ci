@@ -1,0 +1,4 @@
+FROM quay.io/fedora/fedora:36
+RUN dnf -y install findutils git-core koji
+COPY "prepare_ci.sh" "/usr/local/src/"
+RUN cd "/opt" && "/usr/local/src/prepare_ci.sh"
