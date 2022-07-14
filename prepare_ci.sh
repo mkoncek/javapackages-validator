@@ -1,6 +1,8 @@
 #!/bin/bash
 
-for component in $(curl -S 'https://mbi-artifacts.s3.eu-central-1.amazonaws.com/3406f152-0ceb-4291-8f27-6db7db011c16/subject.xml'\
+set -e
+
+for component in $(curl -S 'https://mbi-artifacts.s3.eu-central-1.amazonaws.com/66023ada-9115-4311-b33e-c453150afd51/subject.xml'\
     | xmllint --xpath '/subject/component/name/text()' -); do (
     nevra="$(koji latest-pkg rawhide "${component}" | tail -n +3)"
     nevra="${nevra%%[[:space:]]*}"
@@ -17,5 +19,3 @@ for component in $(curl -S 'https://mbi-artifacts.s3.eu-central-1.amazonaws.com/
     popd
 ) & done
 wait
-
-git clone 'https://pagure.io/javapackages-validator-tests.git'
