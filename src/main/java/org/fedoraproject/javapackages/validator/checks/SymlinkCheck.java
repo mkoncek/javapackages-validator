@@ -27,12 +27,13 @@ public class SymlinkCheck extends ElementwiseCheck<Void> {
         var result = new ArrayList<String>(0);
 
         for (var entry : RpmFiles.filesAndSymlinks(rpmPath).entrySet()) {
-            String linkPathName = entry.getKey().getName().substring(1);
+            Path linkPath = Paths.get(entry.getKey().getName().substring(1));
             Path target = entry.getValue();
 
             if (target != null) {
-                Path parent = Paths.get(entry.getKey().getName().substring(1)).getParent();
+                Path parent = linkPath.getParent();
 
+                // Silence Spotbugs
                 if (parent == null) {
                     throw new IllegalStateException("Path::getParent of " + entry.getKey().getName() + " returned null");
                 }
@@ -41,14 +42,14 @@ public class SymlinkCheck extends ElementwiseCheck<Void> {
                 target = parent.resolve(target).normalize();
 
                 // Resolve absolute paths of RPM against envroot
-                target = envroot.resolve(Paths.get("." + entry.getValue())).toAbsolutePath().normalize();
+                target = envroot.resolve(Paths.get("." + target)).toAbsolutePath().normalize();
 
                 if (!Files.exists(target)) {
                     result.add(MessageFormat.format("[FAIL] {0}: Link {1} points to {2} which is not present on the filesystem",
-                            rpmPath, linkPathName, target));
+                            rpmPath, linkPath, target));
                 } else {
                     System.err.println(MessageFormat.format("[INFO] {0}: Link {1} points to file {2} which is present on the filesystem",
-                            rpmPath, linkPathName, target));
+                            rpmPath, linkPath, target));
                 }
             }
         }
