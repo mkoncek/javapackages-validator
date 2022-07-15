@@ -20,6 +20,10 @@ public abstract class ElementwiseCheck<Config> extends Check<Config> {
 
     abstract protected Collection<String> check(Path rpmPath, RpmInfo rpmInfo) throws IOException;
 
+    public final Collection<String> check(Path rpmPath) throws IOException {
+        return check(rpmPath, new RpmInfo(rpmPath));
+    }
+
     private Collection<String> checkNonNull(Path rpmPath, RpmInfo rpmInfo) throws IOException {
         if (getConfig() == null) {
             System.err.println("[INFO] Configuration class not found, ignoring the test");
