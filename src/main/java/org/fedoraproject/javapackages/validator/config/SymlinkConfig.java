@@ -18,7 +18,7 @@ public interface SymlinkConfig {
     String targetLocation(Path target);
 
     public static class Envroot implements SymlinkConfig {
-        Path envroot;
+        private Path envroot;
 
         public Envroot(Path envroot) {
             this.envroot = envroot.normalize();
@@ -37,7 +37,7 @@ public interface SymlinkConfig {
     }
 
     public static class RpmSet implements SymlinkConfig {
-        Map<Path, String> files = new TreeMap<Path, String>();
+        private Map<Path, String> files = new TreeMap<Path, String>();
 
         public RpmSet(Path topdir) {
             try {
