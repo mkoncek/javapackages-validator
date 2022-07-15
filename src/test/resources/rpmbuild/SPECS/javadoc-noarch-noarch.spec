@@ -21,6 +21,9 @@ Summary:        Javadocs for %{name}
 %install
 mkdir -p '%{buildroot}/usr/share/javadoc'
 
+%files
+/usr/share/javadoc
+
 %files javadoc
 /usr/share/javadoc
 
