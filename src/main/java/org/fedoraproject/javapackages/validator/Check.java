@@ -19,6 +19,8 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+import org.apache.commons.lang3.ClassUtils;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -84,7 +86,7 @@ public abstract class Check<Config> {
                 configurations = new HashMap<>();
                 for (var className : classes) {
                     Class<?> cls = cl.loadClass(className);
-                    for (var intrfc : cls.getInterfaces()) {
+                    for (var intrfc : ClassUtils.getAllInterfaces(cls)) {
                         Object instance = cls.getConstructor().newInstance();
                         configurations.computeIfAbsent(intrfc, (i) -> instance);
                     }
