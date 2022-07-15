@@ -66,6 +66,10 @@ public abstract class Check<Config> {
         }
     }
 
+    public static interface NoConfig {
+        public static final NoConfig INSTANCE = new NoConfig() {};
+    }
+
     @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
     protected Config getConfig(Class<Config> configClass) throws IOException {
         if (Files.notExists(config_bin_dir)) {
@@ -73,8 +77,11 @@ public abstract class Check<Config> {
         }
 
         if (configurations == null) {
-            var classes = Files.find(config_bin_dir, Integer.MAX_VALUE,
-                    (path, attributes) -> attributes.isRegularFile() && path.toString().endsWith(".class")).map(Path::toString).toArray(String[]::new);
+            configurations = new HashMap<>();
+            configurations.put(NoConfig.class, NoConfig.INSTANCE);
+            var classes = Files.find(config_bin_dir, Integer.MAX_VALUE, (path, attributes) ->
+                    attributes.isRegularFile() && path.toString().endsWith(".class"))
+                    .map(Path::toString).toArray(String[]::new);
 
             for (int i = 0; i != classes.length; ++i) {
                 classes[i] = classes[i].substring(config_bin_dir.toString().length() + 1);
@@ -83,7 +90,6 @@ public abstract class Check<Config> {
             }
 
             try (URLClassLoader cl = new URLClassLoader(new URL[] {config_bin_dir.toUri().toURL()})) {
-                configurations = new HashMap<>();
                 for (var className : classes) {
                     Class<?> cls = cl.loadClass(className);
                     for (var intrfc : ClassUtils.getAllInterfaces(cls)) {

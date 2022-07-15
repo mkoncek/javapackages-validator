@@ -8,7 +8,6 @@ if [ -z "${1}" ]; then
     echo "Optional flags:"
     echo "    --config-src [/mnt/config/src] - directory containing configuration sources"
     echo "    --config-bin [/mnt/config/bin] - directory where compiled class files will be put"
-    echo "    --envroot [/] - root directory to resolve symbolic links against"
     exit 1
 fi
 
