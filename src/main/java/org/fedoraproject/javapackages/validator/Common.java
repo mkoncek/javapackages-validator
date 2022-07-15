@@ -10,6 +10,8 @@ import java.util.TreeMap;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class Common {
     public static final IOException INCOMPLETE_READ = new IOException("Incomplete read in RPM stream");
 
@@ -23,6 +25,11 @@ public class Common {
         }
 
         return result;
+    }
+
+    @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
+    public static Path getEntryPath(CpioArchiveEntry entry) {
+        return Paths.get("/").resolve(Paths.get("/").relativize(Paths.get("/").resolve(Paths.get(entry.getName()))));
     }
 
     /**

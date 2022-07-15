@@ -10,6 +10,8 @@ import java.util.TreeMap;
 
 import org.fedoraproject.javapackages.validator.Common;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public interface SymlinkConfig {
     /**
      * @param target The link target. Is always absolute.
@@ -21,12 +23,13 @@ public interface SymlinkConfig {
         private Path envroot;
 
         public Envroot(Path envroot) {
-            this.envroot = envroot.normalize();
+            this.envroot = envroot;
         }
 
         @Override
+        @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
         public String targetLocation(Path target) {
-            Path result = envroot.resolve(Paths.get("." + target)).toAbsolutePath().normalize();
+            Path result = envroot.resolve(Paths.get("/").relativize(target));
 
             if (Files.exists(result)) {
                 return result.toString();
@@ -43,9 +46,8 @@ public interface SymlinkConfig {
             try {
                 for (Path rmpPath : Files.find(topdir, Integer.MAX_VALUE, ((path, attributes) ->
                         attributes.isRegularFile() && path.toString().endsWith(".rpm"))).toArray(Path[]::new)) {
-                    rmpPath = rmpPath.normalize();
                     for (var entry : Common.rpmFilesAndSymlinks(rmpPath).keySet()) {
-                        files.put(Paths.get(entry.getName().substring(1)), rmpPath.toString());
+                        files.put(Common.getEntryPath(entry), rmpPath.toString());
                     }
                 }
             } catch (IOException ex) {

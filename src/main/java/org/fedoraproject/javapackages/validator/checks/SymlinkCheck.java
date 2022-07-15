@@ -2,7 +2,6 @@ package org.fedoraproject.javapackages.validator.checks;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,8 +11,6 @@ import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.ElementwiseCheck;
 import org.fedoraproject.javapackages.validator.config.SymlinkConfig;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Ignores source rpms.
@@ -36,31 +33,21 @@ public class SymlinkCheck extends ElementwiseCheck<SymlinkConfig> {
         var result = new ArrayList<String>(0);
 
         for (var entry : Common.rpmFilesAndSymlinks(rpmPath).entrySet()) {
-            Path link = Paths.get(entry.getKey().getName().substring(1));
+            Path link = Common.getEntryPath(entry.getKey());
             Path target = entry.getValue();
 
             if (target != null) {
-                Path parent = link.getParent();
-
-                // Silence Spotbugs
-                if (parent == null) {
-                    throw new IllegalStateException("Path::getParent of " + entry.getKey().getName() + " returned null");
-                }
-
-                // Resolve relative links of RPM
-                target = parent.resolve(target).normalize();
-
-                // Resolve absolute paths of RPM against envroot
-                // target = getConfig().getEnvroot().resolve(Paths.get("." + target)).toAbsolutePath().normalize();
+                // Resolve relative links of RPM entries
+                target = link.resolveSibling(target);
 
                 String location = getConfig().targetLocation(target);
 
                 if (location == null) {
-                    result.add(MessageFormat.format("[FAIL] {0}: Link {1} points to {2} which was not found",
-                            rpmPath, link, target));
+                    result.add(MessageFormat.format("[FAIL] {0}: Link {1} points to {2} (normalized as {3}) which was not found",
+                            rpmPath, link, target, target.normalize()));
                 } else {
-                    System.err.println(MessageFormat.format("[INFO] {0}: Link {1} points to file {2} located in " + location,
-                            rpmPath, link, target));
+                    System.err.println(MessageFormat.format("[INFO] {0}: Link {1} points to {2} (normalized as {3}) located in {4}",
+                            rpmPath, link, target, target.normalize(), location));
                 }
             }
         }
@@ -68,7 +55,6 @@ public class SymlinkCheck extends ElementwiseCheck<SymlinkConfig> {
         return result;
     }
 
-    @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
     public static void main(String[] args) throws Exception {
         System.exit(new SymlinkCheck().executeCheck(SymlinkConfig.class, args));
     }

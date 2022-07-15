@@ -9,6 +9,7 @@ import java.util.Collection;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
+import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.ElementwiseCheck;
 import org.fedoraproject.javapackages.validator.RpmPackageImpl;
 import org.fedoraproject.javapackages.validator.config.FilesConfig;
@@ -21,7 +22,7 @@ public class FilesCheck extends ElementwiseCheck<FilesConfig> {
         try (var is = new RpmArchiveInputStream(rpmPath)) {
             boolean ok = true;
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
-                var entryName = rpmEntry.getName().substring(1);
+                Path entryName = Common.getEntryPath(rpmEntry);
                 if (!getConfig().allowedFile(new RpmPackageImpl(rpmInfo), entryName)) {
                     ok = false;
                     result.add(MessageFormat.format("[FAIL] {0}: Illegal file: {1}",
