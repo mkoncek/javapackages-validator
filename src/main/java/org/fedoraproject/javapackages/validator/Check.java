@@ -32,6 +32,19 @@ public abstract class Check<Config> {
     private Map<Class<?>, Object> configurations = null;
     private Path config_src_dir = Paths.get("/mnt/config/src");
     private Path config_bin_dir = Paths.get("/mnt/config/bin");
+    private Config config;
+
+    protected Config getConfig() {
+        return config;
+    }
+
+    protected Check() {
+        this(null);
+    }
+
+    protected Check(Config config) {
+        this.config = config;
+    }
 
     private static void compileFiles(Path sourceDir, Iterable<String> compilerOptions) throws IOException {
         List<File> inputFiles = Files.find(sourceDir, Integer.MAX_VALUE,
@@ -84,7 +97,7 @@ public abstract class Check<Config> {
         return configClass.cast(configurations.get(configClass));
     }
 
-    abstract protected Collection<String> check(List<Path> testRpms, Config config) throws IOException;
+    abstract protected Collection<String> check(List<Path> testRpms) throws IOException;
 
     protected int executeCheck(Class<Config> configClass, String... args) throws IOException {
         var testRpms = new ArrayList<Path>();
@@ -107,20 +120,20 @@ public abstract class Check<Config> {
                 if (Files.isRegularFile(argPath)) {
                     testRpms.add(argPath);
                 } else if (Files.isDirectory(argPath)) {
-                    Files.find(argPath, Integer.MAX_VALUE,
-                            (path, attributes) -> attributes.isRegularFile() && path.toString().endsWith(".rpm"))
-                    .forEach((p) -> testRpms.add(p));
+                    Files.find(argPath, Integer.MAX_VALUE, (path, attributes) ->
+                        attributes.isRegularFile() && path.toString().endsWith(".rpm"))
+                        .forEach((p) -> testRpms.add(p));
                 } else {
                     throw new IllegalStateException("File " + argPath + " of unknown type");
                 }
             }
         }
 
-        var config = getConfig(configClass);
+        config = getConfig(configClass);
 
         int result = 0;
 
-        for (var message : check(testRpms, config)) {
+        for (var message : check(testRpms)) {
             result = 1;
             System.out.println(message);
         }

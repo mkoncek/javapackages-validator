@@ -16,13 +16,13 @@ import org.fedoraproject.javapackages.validator.config.RpmFilesizeConfig;
 
 public class RpmFilesizeCheck extends ElementwiseCheck<RpmFilesizeConfig> {
     @Override
-    public Collection<String> check(Path rpmPath, RpmInfo rpmInfo, RpmFilesizeConfig config) throws IOException {
+    public Collection<String> check(Path rpmPath, RpmInfo rpmInfo) throws IOException {
         var result = new ArrayList<String>(0);
 
         long filesize = Files.size(rpmPath);
         String formattedFilesize = NumberFormat.getInstance(Locale.ENGLISH).format(filesize);
 
-        if (!config.allowedFilesize(new RpmPackageImpl(rpmInfo), filesize)) {
+        if (!getConfig().allowedFilesize(new RpmPackageImpl(rpmInfo), filesize)) {
             result.add(MessageFormat.format("[FAIL] {0}: file size is: {1} bytes", rpmPath, formattedFilesize));
         } else {
             System.err.println(MessageFormat.format("[INFO] {0}: file size is: {1} bytes", rpmPath, formattedFilesize));

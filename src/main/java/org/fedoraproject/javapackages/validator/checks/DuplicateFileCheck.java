@@ -10,13 +10,24 @@ import java.util.TreeMap;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Check;
-import org.fedoraproject.javapackages.validator.RpmFiles;
+import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.RpmPackageImpl;
 import org.fedoraproject.javapackages.validator.config.DuplicateFileConfig;
 
+/**
+ * Ignores source rpms.
+ */
 public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
+    public DuplicateFileCheck() {
+        super();
+    }
+
+    DuplicateFileCheck(DuplicateFileConfig config) {
+        super(config);
+    }
+
     @Override
-    protected Collection<String> check(List<Path> testRpms, DuplicateFileConfig config) throws IOException {
+    protected Collection<String> check(List<Path> testRpms) throws IOException {
         var result = new ArrayList<String>(0);
 
         // The union of file paths present in all RPM files mapped to the RPM file names they are present in
@@ -24,7 +35,7 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
 
         for (var rpmPath : testRpms) {
             if (!new RpmInfo(rpmPath).isSourcePackage()) {
-                for (var pair : RpmFiles.filesAndSymlinks(rpmPath).entrySet()) {
+                for (var pair : Common.rpmFilesAndSymlinks(rpmPath).entrySet()) {
                     files.computeIfAbsent(pair.getKey().getName().substring(1), key -> new ArrayList<Path>()).add(rpmPath);
                 }
             }
@@ -36,7 +47,7 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
                 for (var providerRpmPath : entry.getValue()) {
                     providers.add(new RpmPackageImpl(new RpmInfo(providerRpmPath)));
                 }
-                if (config != null && config.allowedDuplicateFile(entry.getKey(), providers)) {
+                if (getConfig() != null && getConfig().allowedDuplicateFile(entry.getKey(), providers)) {
                     System.err.println(MessageFormat.format("[INFO] Allowed duplicate file {0} provided by multiple RPMs: {1}",
                             entry.getKey(), entry.getValue()));
                 } else {

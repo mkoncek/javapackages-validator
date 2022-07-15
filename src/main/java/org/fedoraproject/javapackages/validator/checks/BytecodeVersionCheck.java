@@ -36,7 +36,7 @@ import org.fedoraproject.javapackages.validator.config.BytecodeVersionConfig;
 
 public class BytecodeVersionCheck extends ElementwiseCheck<BytecodeVersionConfig> {
     @Override
-    public Collection<String> check(Path rpmPath, RpmInfo rpmInfo, BytecodeVersionConfig config) throws IOException {
+    public Collection<String> check(Path rpmPath, RpmInfo rpmInfo) throws IOException {
         var result = new ArrayList<String>(0);
 
         try (var is = new RpmArchiveInputStream(rpmPath)) {
@@ -70,7 +70,7 @@ public class BytecodeVersionCheck extends ElementwiseCheck<BytecodeVersionConfig
                                 }
 
                                 var version = versionBuffer.getShort();
-                                var range = config.versionRangeOf(new RpmPackageImpl(rpmInfo), jarName, className);
+                                var range = getConfig().versionRangeOf(new RpmPackageImpl(rpmInfo), jarName, className);
 
                                 if (!range.contains(version)) {
                                     result.add(MessageFormat.format(

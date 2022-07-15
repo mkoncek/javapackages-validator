@@ -9,6 +9,5 @@ In case of directories, the tool recursively searches for `.rpm` files found
 inside.
 
 ### Optional flags
-`--config-src [/mnt/config/src] - directory containing configuration sources`
-`--config-bin [/mnt/config/bin] - directory where compiled class files will be put`
-`--envroot [/] - root directory to resolve symbolic links against`
+* `--config-src [/mnt/config/src] - directory containing configuration sources`
+* `--config-bin [/mnt/config/bin] - directory where compiled class files will be put`

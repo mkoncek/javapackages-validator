@@ -10,24 +10,32 @@ import java.util.List;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
 public abstract class ElementwiseCheck<Config> extends Check<Config> {
-    abstract protected Collection<String> check(Path rpmPath, RpmInfo rpmInfo, Config config) throws IOException;
+    public ElementwiseCheck() {
+        super();
+    }
 
-    private Collection<String> checkNonNull(Path rpmPath, RpmInfo rpmInfo, Config config) throws IOException {
-        if (config == null) {
+    public ElementwiseCheck(Config config) {
+        super(config);
+    }
+
+    abstract protected Collection<String> check(Path rpmPath, RpmInfo rpmInfo) throws IOException;
+
+    private Collection<String> checkNonNull(Path rpmPath, RpmInfo rpmInfo) throws IOException {
+        if (getConfig() == null) {
             System.err.println("[INFO] Configuration class not found, ignoring the test");
             return Collections.emptyList();
         }
 
-        return check(rpmPath, rpmInfo, config);
+        return check(rpmPath, rpmInfo);
     }
 
     @Override
-    protected Collection<String> check(List<Path> testRpms, Config config) throws IOException {
+    protected Collection<String> check(List<Path> testRpms) throws IOException {
         var result = new ArrayList<String>(0);
 
         for (Path rpmPath : testRpms) {
             var rpmInfo = new RpmInfo(rpmPath);
-            result.addAll(checkNonNull(rpmPath, rpmInfo, config));
+            result.addAll(checkNonNull(rpmPath, rpmInfo));
         }
 
         return result;
