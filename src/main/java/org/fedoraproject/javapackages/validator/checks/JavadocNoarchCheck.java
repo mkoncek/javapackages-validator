@@ -30,8 +30,6 @@ public class JavadocNoarchCheck extends ElementwiseCheck<Check.NoConfig> {
                 System.err.println(MessageFormat.format(
                         "[INFO] {0} is a javadoc package and its architecture is noarch", rpmPath));
             }
-        } else {
-            System.err.println(MessageFormat.format("[INFO] Ignoring non-javadoc rpm: {0}", rpmPath));
         }
 
         return result;
