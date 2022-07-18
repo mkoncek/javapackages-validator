@@ -34,7 +34,12 @@ public abstract class Check<Config> {
     private Map<Class<?>, Object> configurations = null;
     private Path config_src_dir = Paths.get("/mnt/config/src");
     private Path config_bin_dir = Paths.get("/mnt/config/bin");
+    private Class<Config> declaredConfigClass;
     private Config config;
+
+    protected Class<Config> getDeclaredConfigClass() {
+        return declaredConfigClass;
+    }
 
     protected Config getConfig() {
         return config;
@@ -77,6 +82,7 @@ public abstract class Check<Config> {
         }
 
         if (configurations == null) {
+            declaredConfigClass = configClass;
             configurations = new HashMap<>();
             configurations.put(NoConfig.class, NoConfig.INSTANCE);
             var classes = Files.find(config_bin_dir, Integer.MAX_VALUE, (path, attributes) ->

@@ -8,19 +8,20 @@ import java.util.Collection;
 import java.util.List;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
+import org.fedoraproject.javapackages.validator.config.RpmPackage;
 
 public class RpmAttributeCheck<Config> extends ElementwiseCheck<Config> {
     @Override
     protected Collection<String> check(Path rpmPath, RpmInfo rpmInfo) throws IOException {
         var result = new ArrayList<String>(0);
 
-        String attributeName = getConfig().getClass().getSimpleName();
+        String attributeName = getDeclaredConfigClass().getSimpleName();
         // Remove "Config" suffix
         attributeName = attributeName.substring(0, attributeName.length() - 6);
 
         try {
             Method getter = RpmInfo.class.getMethod("get" + attributeName);
-            Method filter = getConfig().getClass().getMethod("allowed" + attributeName, String.class, String.class, String.class);
+            Method filter = getConfig().getClass().getMethod("allowed" + attributeName, RpmPackage.class, String.class);
 
             for (Object attributeObject : List.class.cast(getter.invoke(rpmInfo))) {
                 var attributeValue = String.class.cast(attributeObject);
