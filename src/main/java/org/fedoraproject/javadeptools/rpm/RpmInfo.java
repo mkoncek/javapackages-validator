@@ -65,6 +65,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.fedoraproject.javapackages.validator.config.Nevra;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAddress;
@@ -75,7 +77,7 @@ import jdk.incubator.foreign.ResourceScope;
  * @author Mikolaj Izdebski
  */
 @SuppressFBWarnings(value = {"EI_EXPOSE_REP"}, justification = "headerGetList returns an unmodifiable list")
-public class RpmInfo {
+public class RpmInfo implements Nevra {
     private static IOException error(Path path, String message) throws IOException {
         throw new IOException("Unable to open RPM file " + path + ": " + message);
     }
@@ -164,22 +166,27 @@ public class RpmInfo {
         return nevra;
     }
 
+    @Override
     public String getName() {
         return nevra.getName();
     }
 
+    @Override
     public int getEpoch() {
         return nevra.getEpoch();
     }
 
+    @Override
     public String getVersion() {
         return nevra.getVersion();
     }
 
+    @Override
     public String getRelease() {
         return nevra.getRelease();
     }
 
+    @Override
     public String getArch() {
         return nevra.getArch();
     }

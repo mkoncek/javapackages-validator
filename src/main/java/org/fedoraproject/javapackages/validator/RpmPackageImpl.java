@@ -1,7 +1,6 @@
 package org.fedoraproject.javapackages.validator;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
-import org.fedoraproject.javapackages.validator.config.Nevra;
 import org.fedoraproject.javapackages.validator.config.RpmPackage;
 
 public class RpmPackageImpl implements RpmPackage {
@@ -13,17 +12,37 @@ public class RpmPackageImpl implements RpmPackage {
     }
 
     @Override
-    public String getPackageName() {
-        if (isSourceRpm()) {
-            return getNevra().getName();
-        } else {
-            return Common.getPackageName(rpmInfo.getSourceRPM());
-        }
+    public String getArch() {
+        return rpmInfo.getArch();
     }
 
     @Override
-    public Nevra getNevra() {
-        return rpmInfo.getNEVRA();
+    public int getEpoch() {
+        return rpmInfo.getEpoch();
+    }
+
+    @Override
+    public String getName() {
+        return rpmInfo.getName();
+    }
+
+    @Override
+    public String getRelease() {
+        return rpmInfo.getRelease();
+    }
+
+    @Override
+    public String getVersion() {
+        return rpmInfo.getVersion();
+    }
+
+    @Override
+    public String getPackageName() {
+        if (isSourceRpm()) {
+            return getName();
+        } else {
+            return Common.getPackageName(rpmInfo.getSourceRPM());
+        }
     }
 
     @Override

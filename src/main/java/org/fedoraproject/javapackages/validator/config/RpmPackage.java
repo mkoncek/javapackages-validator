@@ -1,7 +1,6 @@
 package org.fedoraproject.javapackages.validator.config;
 
-public interface RpmPackage {
+public interface RpmPackage extends Nevra {
     String getPackageName();
-    Nevra getNevra();
     boolean isSourceRpm();
 }
