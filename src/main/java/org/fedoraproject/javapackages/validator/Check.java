@@ -77,7 +77,8 @@ public abstract class Check<Config> {
 
     @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
     protected Config getConfig(Class<Config> configClass) throws IOException {
-        if (Files.notExists(config_bin_dir)) {
+        if (Files.notExists(config_bin_dir) || Files.find(config_bin_dir, Integer.MAX_VALUE,
+                (path, attributes) -> attributes.isRegularFile()).count() == 0) {
             compileFiles(config_src_dir, Arrays.asList("-d", config_bin_dir.toString()));
         }
 
