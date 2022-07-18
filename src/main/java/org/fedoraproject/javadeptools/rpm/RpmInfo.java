@@ -74,7 +74,7 @@ import jdk.incubator.foreign.ResourceScope;
 /**
  * @author Mikolaj Izdebski
  */
-@SuppressFBWarnings(value = {"EI_EXPOSE_REP"}, justification = "headerGetList returns and unmodifiable list")
+@SuppressFBWarnings(value = {"EI_EXPOSE_REP"}, justification = "headerGetList returns an unmodifiable list")
 public class RpmInfo {
     private static IOException error(Path path, String message) throws IOException {
         throw new IOException("Unable to open RPM file " + path + ": " + message);
