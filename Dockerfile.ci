@@ -1,5 +1,9 @@
 FROM quay.io/fedora/fedora:36
 RUN dnf -y install findutils git-core koji
+
+# Force rebuild
+RUN echo 1
+
 RUN cd "/opt" && git clone "https://pagure.io/javapackages-validator-tests.git"
 COPY "prepare_ci.sh" "/usr/local/src/"
 RUN mkdir "/opt/test_artifacts" && cd "/opt/test_artifacts" && "/usr/local/src/prepare_ci.sh"
