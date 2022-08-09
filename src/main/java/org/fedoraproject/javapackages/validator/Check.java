@@ -152,7 +152,6 @@ public abstract class Check<Config> {
                         logger.debug("Compiled configuration was last modified: {0}", lastModifiedBin);
                     }
                     Files.createDirectories(config_bin_dir);
-                    logger.debug("Created directories up to: {0}", config_bin_dir);
                     compileFiles(config_src_dir, Arrays.asList("-d", config_bin_dir.toString()));
                 }
             }
