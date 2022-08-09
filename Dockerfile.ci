@@ -2,7 +2,7 @@ FROM quay.io/fedora/fedora:36
 RUN dnf -y install findutils git-core koji
 
 # Force rebuild
-RUN echo 2
+RUN echo 3
 
 COPY "prepare_ci.sh" "/usr/local/bin/"
 RUN mkdir "/usr/local/src/rpms" && cd "/usr/local/src/rpms" && "/usr/local/bin/prepare_ci.sh"
