@@ -226,9 +226,16 @@ public abstract class Check<Config> {
             Main.TEST_RPMS.add(rpmIt.next());
         }
 
-        for (var message : check(Main.getTestRpms().iterator())) {
-            result = 1;
+        var messages = check(Main.getTestRpms().iterator());
+        for (var message : messages) {
             System.out.println(message);
+        }
+
+        if (messages.isEmpty()) {
+            logger.info("Summary: all tests passed", messages.size());
+        } else {
+            result = 1;
+            logger.info("Summary: {0} tests failed", messages.size());
         }
 
         return result;
