@@ -142,7 +142,6 @@ public abstract class Check<Config> {
 
                 if (!Files.exists(config_bin_dir) || FileUtils.isEmptyDirectory(config_bin_dir.toFile()) ||
                         lastModifiedSrc.compareTo(lastModifiedBin = lastModifiedRecursive(config_bin_dir)) > 0) {
-                    System.out.println("inside");
                     if (Files.isDirectory(config_bin_dir)) {
                         FileUtils.cleanDirectory(config_bin_dir.toFile());
                     } else {
