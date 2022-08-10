@@ -1,5 +1,7 @@
 package org.fedoraproject.javapackages.validator.config;
 
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
+
 public interface BytecodeVersionConfig {
     public static final class VersionRange {
         public final int min;
@@ -30,5 +32,5 @@ public interface BytecodeVersionConfig {
      * @param className The full relative path to the .class file inside the .jar archive.
      * @return Allowed version range for @param className.
      */
-    VersionRange versionRangeOf(RpmPackage rpm, String jarName, String className);
+    VersionRange versionRangeOf(RpmInfo rpm, String jarName, String className);
 }

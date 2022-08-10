@@ -15,82 +15,8 @@
  */
 package org.fedoraproject.javadeptools.rpm;
 
-import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_ARCH;
-import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_EPOCH;
-import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_NAME;
-import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_RELEASE;
-import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_VERSION;
-import static org.fedoraproject.javadeptools.rpm.Rpm.headerGetNumber;
-import static org.fedoraproject.javadeptools.rpm.Rpm.headerGetString;
-
-import org.fedoraproject.javapackages.validator.config.Nevra;
-
-import jdk.incubator.foreign.MemoryAddress;
-
 /**
  * @author Mikolaj Izdebski
  */
-public class NEVRA implements Nevra {
-    private final String name;
-    private final int epoch;
-    private final String version;
-    private final String release;
-    private final String arch;
-    private final String nevra;
-
-    NEVRA(MemoryAddress h) {
-        name = headerGetString(h, RPMTAG_NAME);
-        epoch = (int) headerGetNumber(h, RPMTAG_EPOCH);
-        version = headerGetString(h, RPMTAG_VERSION);
-        release = headerGetString(h, RPMTAG_RELEASE);
-        arch = headerGetString(h, RPMTAG_ARCH);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(name).append('-');
-        if (epoch > 0)
-            sb.append(epoch + ":");
-        sb.append(version).append('-').append(release);
-        sb.append('.').append(arch);
-        nevra = sb.toString();
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public int getEpoch() {
-        return epoch;
-    }
-
-    @Override
-    public String getVersion() {
-        return version;
-    }
-
-    @Override
-    public String getRelease() {
-        return release;
-    }
-
-    @Override
-    public String getArch() {
-        return arch;
-    }
-
-    @Override
-    public String toString() {
-        return nevra;
-    }
-
-    @Override
-    public int hashCode() {
-        return nevra.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof NEVRA && ((NEVRA) obj).nevra.equals(nevra);
-    }
+public record NEVRA(String name, int epoch, String version, String release, String arch, String nevra) {
 }

@@ -8,9 +8,9 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.TestCommon;
 import org.fedoraproject.javapackages.validator.config.ExclusiveArchConfig;
-import org.fedoraproject.javapackages.validator.config.RpmPackage;
 import org.junit.jupiter.api.Test;
 
 public class ExclusiveArchCheckTest {
@@ -21,7 +21,7 @@ public class ExclusiveArchCheckTest {
 
     private static class Config implements ExclusiveArchConfig {
         @Override
-        public boolean allowedExclusiveArch(RpmPackage rpm, List<String> values) {
+        public boolean allowedExclusiveArch(RpmInfo rpm, List<String> values) {
             boolean buildNoarch = rpm.getBuildArchs().contains("noarch");
             boolean exclusiveNoarch = values.contains("noarch");
 

@@ -15,17 +15,17 @@ public class JavadocNoarchCheck extends ElementwiseCheck<Check.NoConfig> {
     public JavadocNoarchCheck() {
         super(Check.NoConfig.class);
         setFilter((rpm) -> {
-            if (rpm.getInfo().isSourcePackage()) {
+            if (rpm.isSourcePackage()) {
                 return false;
             }
 
-            String rpmName = rpm.getInfo().getName();
+            String rpmName = rpm.getNEVRA().name();
 
             if (rpmName.endsWith("-javadocs")) {
                 rpmName = rpmName.substring(0, rpmName.length() - 1);
             }
 
-            return rpmName.equals(Common.getPackageName(rpm.getInfo().getSourceRPM()) + "-javadoc");
+            return rpmName.equals(Common.getPackageName(rpm) + "-javadoc");
         });
     }
 
@@ -33,7 +33,7 @@ public class JavadocNoarchCheck extends ElementwiseCheck<Check.NoConfig> {
     public Collection<String> check(RpmPathInfo rpm) throws IOException {
         var result = new ArrayList<String>(0);
 
-        if (!"noarch".equals(rpm.getInfo().getArch())) {
+        if (!"noarch".equals(rpm.getNEVRA().arch())) {
             result.add(failMessage("{0} is a javadoc package but its architecture is not noarch",
                     Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red)));
         } else {

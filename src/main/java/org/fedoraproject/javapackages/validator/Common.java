@@ -19,7 +19,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class Common {
     public static final IOException INCOMPLETE_READ = new IOException("Incomplete read in RPM stream");
 
-    public static String getPackageName(String sourceRpmFileName) {
+    private static String getPackageName(String sourceRpmFileName) {
         String result = sourceRpmFileName;
         result = result.substring(0, result.lastIndexOf('-'));
         result = result.substring(0, result.lastIndexOf('-'));
@@ -29,6 +29,14 @@ public class Common {
         }
 
         return result;
+    }
+
+    public static String getPackageName(RpmInfo rpm) {
+        if (rpm.isSourcePackage()) {
+            return rpm.getNEVRA().name();
+        } else {
+            return Common.getPackageName(rpm.getSourceRPM());
+        }
     }
 
     @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})

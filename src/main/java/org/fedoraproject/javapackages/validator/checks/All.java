@@ -63,7 +63,7 @@ public class All extends Check<Check.NoConfig> {
     }
 
     @Override
-    public Collection<String> check(Iterator<? extends RpmPathInfo> testRpms) throws IOException {
+    public Collection<String> check(Iterator<RpmPathInfo> testRpms) throws IOException {
         var rpmList = new ArrayList<RpmPathInfo>();
         Iterators.addAll(rpmList, testRpms);
 

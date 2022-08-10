@@ -29,7 +29,7 @@ public class RpmFilesizeCheck extends ElementwiseCheck<RpmFilesizeConfig> {
         long filesize = Files.size(rpm.getPath());
         String formattedFilesize = NumberFormat.getInstance(Locale.ENGLISH).format(filesize);
 
-        if (!getConfig().allowedFilesize(rpm.getRpmPackage(), filesize)) {
+        if (!getConfig().allowedFilesize(rpm, filesize)) {
             result.add(failMessage("{0}: file size is: {1} bytes",
                     Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
                     Main.getDecorator().decorate(formattedFilesize, Decoration.bright_cyan)));

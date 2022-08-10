@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
+
 public interface FilesConfig {
     public static final class ExpectedProperties {
         private Long uid = null;
@@ -71,7 +73,7 @@ public interface FilesConfig {
      * @deprecated Use fileProperties
      */
     @Deprecated
-    boolean allowedFile(RpmPackage rpm, Path path);
+    boolean allowedFile(RpmInfo rpm, Path path);
 
     /**
      * @param rpm RpmPackage.
@@ -80,7 +82,7 @@ public interface FilesConfig {
      * the file. Each field may be null, which means that that property is not
      * checked.
      */
-    default ExpectedProperties fileProperties(RpmPackage rpm, Path path) {
+    default ExpectedProperties fileProperties(RpmInfo rpm, Path path) {
         return allowedFile(rpm, path) ? new ExpectedProperties() : null;
     }
 
@@ -90,7 +92,7 @@ public interface FilesConfig {
      * @param paths The set of paths present in the RPM.
      * @return A collection of files that were expected to be present but were not found.
      */
-    default Collection<Path> missingFiles(RpmPackage rpm, Set<Path> paths) {
+    default Collection<Path> missingFiles(RpmInfo rpm, Set<Path> paths) {
         return Collections.emptyList();
     }
 }

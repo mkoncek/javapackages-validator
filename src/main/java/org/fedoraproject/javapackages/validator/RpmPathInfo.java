@@ -1,12 +1,29 @@
 package org.fedoraproject.javapackages.validator;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
-import org.fedoraproject.javapackages.validator.config.RpmPackage;
 
-public interface RpmPathInfo {
-    Path getPath();
-    RpmInfo getInfo();
-    RpmPackage getRpmPackage();
+public class RpmPathInfo extends RpmInfo {
+    private final Path path;
+
+    public RpmPathInfo(Path path) throws IOException {
+        super(path);
+        this.path = path;
+    }
+
+    public Path getPath() {
+        return path;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 }

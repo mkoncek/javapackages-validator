@@ -26,11 +26,11 @@ public abstract class ElementwiseCheck<Config> extends Check<Config> {
     abstract protected Collection<String> check(RpmPathInfo rpm) throws IOException;
 
     public final Collection<String> check(Path rpmPath) throws IOException {
-        return check(new RpmPackageInfo(rpmPath));
+        return check(new RpmPathInfo(rpmPath));
     }
 
     @Override
-    public final Collection<String> check(Iterator<? extends RpmPathInfo> testRpms) throws IOException {
+    public final Collection<String> check(Iterator<RpmPathInfo> testRpms) throws IOException {
         var result = new ArrayList<String>(0);
 
         while (testRpms.hasNext()) {

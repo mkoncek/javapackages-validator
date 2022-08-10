@@ -25,21 +25,26 @@ import static org.fedoraproject.javadeptools.rpm.Rpm.RPMRC_NOKEY;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMRC_NOTFOUND;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMRC_NOTTRUSTED;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMRC_OK;
+import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_ARCH;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_BUILDARCHS;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_CONFLICTNAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_ENHANCENAME;
+import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_EPOCH;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_EXCLUSIVEARCH;
+import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_NAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_OBSOLETENAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_ORDERNAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_PAYLOADCOMPRESSOR;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_PAYLOADFORMAT;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_PROVIDENAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_RECOMMENDNAME;
+import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_RELEASE;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_REQUIRENAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_SOURCEPACKAGE;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_SOURCERPM;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_SUGGESTNAME;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_SUPPLEMENTNAME;
+import static org.fedoraproject.javadeptools.rpm.Rpm.RPMTAG_VERSION;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NODSA;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NODSAHEADER;
 import static org.fedoraproject.javadeptools.rpm.Rpm.RPMVSF_NOHDRCHK;
@@ -67,8 +72,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.fedoraproject.javapackages.validator.config.Nevra;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAddress;
@@ -79,7 +82,7 @@ import jdk.incubator.foreign.ResourceScope;
  * @author Mikolaj Izdebski
  */
 @SuppressFBWarnings(value = {"EI_EXPOSE_REP"}, justification = "headerGetList returns an unmodifiable list")
-public class RpmInfo implements Nevra {
+public class RpmInfo {
     private static IOException error(Path path, String message) throws IOException {
         throw new IOException("Unable to open RPM file " + path + ": " + message);
     }
@@ -99,6 +102,23 @@ public class RpmInfo implements Nevra {
             rpmtdFreeData(td);
             rpmtdFree(td);
         }
+    }
+
+    private static final NEVRA getNEVRAFrom(MemoryAddress h) {
+        String name = headerGetString(h, RPMTAG_NAME);
+        int epoch = (int) headerGetNumber(h, RPMTAG_EPOCH);
+        String version = headerGetString(h, RPMTAG_VERSION);
+        String release = headerGetString(h, RPMTAG_RELEASE);
+        String arch = headerGetString(h, RPMTAG_ARCH);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append('-');
+        if (epoch > 0)
+            sb.append(epoch + ":");
+        sb.append(version).append('-').append(release);
+        sb.append('.').append(arch);
+        String nevra = sb.toString();
+        return new NEVRA(name, epoch, version, release, arch, nevra);
     }
 
     public RpmInfo(Path path) throws IOException {
@@ -123,7 +143,7 @@ public class RpmInfo implements Nevra {
 
                 MemoryAddress h = MemoryAddress.ofLong(ph.toLongArray()[0]);
                 try {
-                    nevra = new NEVRA(h);
+                    nevra = getNEVRAFrom(h);
                     buildArchs = headerGetList(h, RPMTAG_BUILDARCHS);
                     exclusiveArch = headerGetList(h, RPMTAG_EXCLUSIVEARCH);
                     provides = headerGetList(h, RPMTAG_PROVIDENAME);
@@ -170,31 +190,6 @@ public class RpmInfo implements Nevra {
 
     public NEVRA getNEVRA() {
         return nevra;
-    }
-
-    @Override
-    public String getName() {
-        return nevra.getName();
-    }
-
-    @Override
-    public int getEpoch() {
-        return nevra.getEpoch();
-    }
-
-    @Override
-    public String getVersion() {
-        return nevra.getVersion();
-    }
-
-    @Override
-    public String getRelease() {
-        return nevra.getRelease();
-    }
-
-    @Override
-    public String getArch() {
-        return nevra.getArch();
     }
 
     public String getSourceRPM() {

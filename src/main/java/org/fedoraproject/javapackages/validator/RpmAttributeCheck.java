@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
-import org.fedoraproject.javapackages.validator.config.RpmPackage;
 
 public class RpmAttributeCheck<Config> extends ElementwiseCheck<Config> {
     protected RpmAttributeCheck(Class<Config> configClass, Config config) {
@@ -24,13 +23,13 @@ public class RpmAttributeCheck<Config> extends ElementwiseCheck<Config> {
 
         try {
             Method getter = RpmInfo.class.getMethod("get" + attributeName);
-            Method filter = getConfig().getClass().getMethod("allowed" + attributeName, RpmPackage.class, String.class);
+            Method filter = getConfig().getClass().getMethod("allowed" + attributeName, RpmInfo.class, String.class);
 
             for (Object attributeObject : List.class.cast(getter.invoke(rpm))) {
                 var attributeValue = String.class.cast(attributeObject);
                 boolean ok = true;
 
-                if (!Boolean.class.cast(filter.invoke(getConfig(), rpm.getRpmPackage(), attributeValue))) {
+                if (!Boolean.class.cast(filter.invoke(getConfig(), rpm, attributeValue))) {
                     ok = false;
                     result.add(failMessage("{0}: Attribute {1} with invalid value: {2}",
                             Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),

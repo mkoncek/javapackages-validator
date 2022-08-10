@@ -2,6 +2,8 @@ package org.fedoraproject.javapackages.validator.config;
 
 import java.util.Collection;
 
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
+
 public interface DuplicateFileConfig {
     /**
      * @param filename The absolute path of the file.
@@ -9,5 +11,5 @@ public interface DuplicateFileConfig {
      * Will always contain more than one entry.
      * @return Error messages.
      */
-    boolean allowedDuplicateFile(String filename, Collection<? extends RpmPackage> providerRpms);
+    boolean allowedDuplicateFile(String filename, Collection<? extends RpmInfo> providerRpms);
 }

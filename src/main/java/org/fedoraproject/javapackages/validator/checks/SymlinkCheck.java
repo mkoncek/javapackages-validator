@@ -22,7 +22,7 @@ public class SymlinkCheck extends ElementwiseCheck<SymlinkConfig> {
 
     public SymlinkCheck(SymlinkConfig config) {
         super(SymlinkConfig.class, config);
-        setFilter((rpm) -> !rpm.getInfo().isSourcePackage());
+        setFilter((rpm) -> !rpm.isSourcePackage());
     }
 
     @Override

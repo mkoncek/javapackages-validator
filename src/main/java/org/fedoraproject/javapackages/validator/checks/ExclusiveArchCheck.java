@@ -17,21 +17,21 @@ public class ExclusiveArchCheck extends ElementwiseCheck<ExclusiveArchConfig> {
 
     public ExclusiveArchCheck(ExclusiveArchConfig config) {
         super(ExclusiveArchConfig.class, config);
-        setFilter((rpm) -> rpm.getInfo().isSourcePackage());
+        setFilter((rpm) -> rpm.isSourcePackage());
     }
 
     @Override
     protected Collection<String> check(RpmPathInfo rpm) throws IOException {
         var result = new ArrayList<String>(0);
 
-        if (!getConfig().allowedExclusiveArch(rpm.getRpmPackage(), rpm.getInfo().getExclusiveArch())) {
+        if (!getConfig().allowedExclusiveArch(rpm, rpm.getExclusiveArch())) {
             result.add(failMessage("{0}: ExclusiveArch with values {1} failed",
                     Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
-                    Main.getDecorator().decorate(rpm.getInfo().getExclusiveArch(), Decoration.bright_cyan)));
+                    Main.getDecorator().decorate(rpm.getExclusiveArch(), Decoration.bright_cyan)));
         } else {
             getLogger().pass("{0}: ExclusiveArch with values {1} passed",
                     Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
-                    Main.getDecorator().decorate(rpm.getInfo().getExclusiveArch(), Decoration.bright_cyan));
+                    Main.getDecorator().decorate(rpm.getExclusiveArch(), Decoration.bright_cyan));
         }
 
         return result;

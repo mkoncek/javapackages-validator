@@ -15,7 +15,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class Main {
     private static TextDecorator DECORATOR = TextDecorator.NO_DECORATOR;
     private static PrintStream debugOutputStream = new PrintStream(OutputStream.nullOutputStream(), false, StandardCharsets.UTF_8);
-    static Collection<RpmPackageInfo> TEST_RPMS;
+    static Collection<RpmPathInfo> TEST_RPMS;
 
     public static TextDecorator getDecorator() {
         return DECORATOR;
@@ -26,7 +26,7 @@ public class Main {
         return debugOutputStream;
     }
 
-    public static Collection<? extends RpmPathInfo> getTestRpms() {
+    public static Collection<RpmPathInfo> getTestRpms() {
         return Collections.unmodifiableCollection(TEST_RPMS);
     }
 

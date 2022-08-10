@@ -187,7 +187,7 @@ public abstract class Check<Config> {
         return configClass.cast(configurations.get(configClass));
     }
 
-    abstract public Collection<String> check(Iterator<? extends RpmPathInfo> testRpms) throws IOException;
+    abstract public Collection<String> check(Iterator<RpmPathInfo> testRpms) throws IOException;
 
     @SuppressFBWarnings(value = {"ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"}, justification = "Needs rework")
     public int executeCheck(String... args) throws IOException {

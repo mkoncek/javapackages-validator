@@ -57,7 +57,7 @@ public class FilesCheck extends ElementwiseCheck<FilesConfig> {
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
                 Path entryName = Common.getEntryPath(rpmEntry);
                 entrySet.add(entryName);
-                ExpectedProperties fileProperties = getConfig().fileProperties(rpm.getRpmPackage(), entryName);
+                ExpectedProperties fileProperties = getConfig().fileProperties(rpm, entryName);
                 if (fileProperties == null) {
                     result.add(failMessage("{0}: Illegal file: {1}",
                             Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
@@ -132,7 +132,7 @@ public class FilesCheck extends ElementwiseCheck<FilesConfig> {
             }
         }
 
-        for (Path missingFile : getConfig().missingFiles(rpm.getRpmPackage(), entrySet)) {
+        for (Path missingFile : getConfig().missingFiles(rpm, entrySet)) {
             result.add(failMessage("{0}: Missing file: {1}",
                     Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
                     Main.getDecorator().decorate(missingFile, Decoration.bright_blue)));

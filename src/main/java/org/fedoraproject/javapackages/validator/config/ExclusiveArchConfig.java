@@ -2,6 +2,8 @@ package org.fedoraproject.javapackages.validator.config;
 
 import java.util.List;
 
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
+
 public interface ExclusiveArchConfig {
-    boolean allowedExclusiveArch(RpmPackage rpm, List<String> values);
+    boolean allowedExclusiveArch(RpmInfo rpm, List<String> values);
 }

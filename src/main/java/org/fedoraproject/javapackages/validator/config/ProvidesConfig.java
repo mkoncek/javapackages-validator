@@ -1,5 +1,7 @@
 package org.fedoraproject.javapackages.validator.config;
 
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
+
 public interface ProvidesConfig {
-    boolean allowedProvides(RpmPackage rpm, String value);
+    boolean allowedProvides(RpmInfo rpm, String value);
 }

@@ -13,7 +13,6 @@ import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Check;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Main;
-import org.fedoraproject.javapackages.validator.RpmPackageInfo;
 import org.fedoraproject.javapackages.validator.RpmPathInfo;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 import org.fedoraproject.javapackages.validator.config.DuplicateFileConfig;
@@ -31,7 +30,7 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
     }
 
     @Override
-    public Collection<String> check(Iterator<? extends RpmPathInfo> testRpms) throws IOException {
+    public Collection<String> check(Iterator<RpmPathInfo> testRpms) throws IOException {
         var result = new ArrayList<String>(0);
 
         // The union of file paths present in all RPM files mapped to the RPM file names they are present in
@@ -39,7 +38,7 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
 
         while (testRpms.hasNext()) {
             RpmPathInfo rpm = testRpms.next();
-            if (!new RpmInfo(rpm.getPath()).isSourcePackage()) {
+            if (!new RpmPathInfo(rpm.getPath()).isSourcePackage()) {
                 for (var pair : Common.rpmFilesAndSymlinks(rpm.getPath()).entrySet()) {
                     files.computeIfAbsent(Common.getEntryPath(pair.getKey()).toString(), key -> new ArrayList<>())
                         .add(Pair.of(pair.getKey(), rpm.getPath()));
@@ -49,16 +48,16 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
 
         for (var entry : files.entrySet()) {
             if (entry.getValue().size() > 1) {
-                var providers = new ArrayList<RpmPackageInfo>(entry.getValue().size());
+                var providers = new ArrayList<RpmInfo>(entry.getValue().size());
                 for (var providerPair : entry.getValue()) {
-                    providers.add(new RpmPackageInfo(providerPair.getValue()));
+                    providers.add(new RpmInfo(providerPair.getValue()));
                 }
                 var okDifferentArchs = new Boolean[] {true};
                 // If all providers are of different architecture (with the
                 // exception of noarch), then it is ok
                 providers.sort((lhs, rhs) -> {
-                    int cmp = lhs.getArch().compareTo(rhs.getArch());
-                    if (cmp == 0 || lhs.getArch().equals("noarch") || rhs.getArch().equals("noarch")) {
+                    int cmp = lhs.getNEVRA().arch().compareTo(rhs.getNEVRA().arch());
+                    if (cmp == 0 || lhs.getNEVRA().arch().equals("noarch") || rhs.getNEVRA().arch().equals("noarch")) {
                         okDifferentArchs[0] = false;
                     }
                     return cmp;

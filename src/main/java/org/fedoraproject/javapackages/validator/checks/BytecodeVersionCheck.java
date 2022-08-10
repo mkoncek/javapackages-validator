@@ -77,7 +77,7 @@ public class BytecodeVersionCheck extends ElementwiseCheck<BytecodeVersionConfig
                                 }
 
                                 var version = versionBuffer.getShort();
-                                var range = getConfig().versionRangeOf(rpm.getRpmPackage(), jarName, className);
+                                var range = getConfig().versionRangeOf(rpm, jarName, className);
 
                                 if (!range.contains(version)) {
                                     result.add(failMessage("{0}: {1}: {2}: class bytecode version is {3} which is not in range {4}",
