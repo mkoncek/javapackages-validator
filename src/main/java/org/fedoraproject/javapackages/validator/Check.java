@@ -224,10 +224,10 @@ public abstract class Check<Config> {
         }
 
         if (messages.isEmpty()) {
-            logger.info("Summary: all tests {0}", Main.getDecorator().decorate("passed", Decoration.green, Decoration.bold));
+            logger.info("Summary: all checks {0}", Main.getDecorator().decorate("passed", Decoration.green, Decoration.bold));
         } else {
             result = 1;
-            logger.info("Summary: {0} tests {1}", messages.size(), Main.getDecorator().decorate("failed", Decoration.red, Decoration.bold));
+            logger.info("Summary: {0} checks {1}", messages.size(), Main.getDecorator().decorate("failed", Decoration.red, Decoration.bold));
         }
 
         return result;
