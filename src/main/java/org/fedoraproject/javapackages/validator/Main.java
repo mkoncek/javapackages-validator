@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.fedoraproject.javapackages.validator.Logger.LogEvent;
 
@@ -15,6 +17,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class Main {
     private static TextDecorator DECORATOR = TextDecorator.NO_DECORATOR;
     private static PrintStream debugOutputStream = new PrintStream(OutputStream.nullOutputStream(), false, StandardCharsets.UTF_8);
+    private static boolean alwaysRecompileConfig = false;
     static Collection<RpmPathInfo> TEST_RPMS;
 
     public static TextDecorator getDecorator() {
@@ -26,8 +29,30 @@ public class Main {
         return debugOutputStream;
     }
 
+    public static boolean alwaysRecompileConfig() {
+        return alwaysRecompileConfig;
+    }
+
     public static Collection<RpmPathInfo> getTestRpms() {
         return Collections.unmodifiableCollection(TEST_RPMS);
+    }
+
+    static record Flag(String... options) {
+        static final Flag CONFIG_FILE = new Flag("-c", "--config-file");
+        static final Flag CONFIG_URI = new Flag("-u", "--config-uri");
+        static final Flag CONFIG_DIRECTORY = new Flag("-d", "--directory");
+        static final Flag COLOR = new Flag("-r", "--color");
+        static final Flag DEBUG = new Flag("-x", "--debug");
+        static final Flag RECOMPILE_CONFIG = new Flag("-p", "--recompile");
+
+        public boolean equals(String arg) {
+            return Stream.of(options()).anyMatch(arg::equals);
+        }
+
+        @Override
+        public String toString() {
+            return Stream.of(options()).collect(Collectors.joining(", "));
+        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -35,21 +60,26 @@ public class Main {
             System.out.println("error: no arguments provided");
             System.out.println("Usage: Main <simple class name of the check> [optional flags] <RPM files or directories to test...>");
             System.out.println("Optional flags:");
-            System.out.println("    --config-src [/mnt/config/src] - directory containing configuration sources");
-            System.out.println("    --config-bin [/mnt/config/bin] - directory where compiled class files will be put");
-            System.out.println("    -x, --debug - Display debugging output");
-            System.out.println("    -r, --color - Display colored output");
+            System.out.println("    " + Flag.CONFIG_FILE.toString() + " - File path of a configuration source, can be specified multiple times");
+            System.out.println("    " + Flag.CONFIG_URI.toString() + " - URI of a configuration source, can be specified multiple times");
+            System.out.println("    " + Flag.CONFIG_DIRECTORY.toString() + " - Directory where compiled configuration class files will be put");
+            System.out.println("    " + Flag.RECOMPILE_CONFIG.toString() + " - Force recompilation of configuration files");
+            System.out.println("    " + Flag.DEBUG.toString() + " - Display debugging output");
+            System.out.println("    " + Flag.COLOR.toString() + " - Display colored output");
             System.exit(1);
         }
 
         var argList = new ArrayList<>(args.length);
+
         for (String arg : args) {
-            if (arg.equals("-r") || arg.equals("--color")) {
+            if (Flag.COLOR.equals(arg)) {
                 DECORATOR = AnsiDecorator.INSTANCE;
                 continue;
-            } else if (arg.equals("-x") || arg.equals("--debug")) {
+            } else if (Flag.DEBUG.equals(arg)) {
                 debugOutputStream = System.err;
                 continue;
+            } else if (Flag.RECOMPILE_CONFIG.equals(arg)) {
+                alwaysRecompileConfig = true;
             }
 
             argList.add(arg);
