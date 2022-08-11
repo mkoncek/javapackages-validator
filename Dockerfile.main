@@ -1,5 +1,14 @@
 FROM registry.access.redhat.com/ubi9-minimal AS builder
-RUN microdnf -y install maven-openjdk17 rpm-libs
+RUN microdnf -y install git-core maven-openjdk17 rpm-libs
+
+WORKDIR "/usr/local/src"
+
+RUN git clone "https://github.com/mkoncek/java-deptools-native.git"
+
+WORKDIR "/usr/local/src/java-deptools-native"
+
+RUN git checkout '6ca0ed70de90da98ca4a16931f2e1e0c09e5b119'
+RUN mvn -B clean install
 
 WORKDIR "/usr/local/src/javapackages-validator"
 
@@ -17,6 +26,7 @@ RUN microdnf -y install java-17-openjdk-headless rpm-libs
 
 COPY --from=builder "/usr/local/src/javapackages-validator/target/" "/opt/javapackages-validator/target/"
 COPY "run.sh" "/opt/javapackages-validator/"
+
 WORKDIR "/opt/javapackages-validator"
 
 ENTRYPOINT ["./run.sh"]
