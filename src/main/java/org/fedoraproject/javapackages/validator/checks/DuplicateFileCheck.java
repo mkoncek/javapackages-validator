@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.TreeMap;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
@@ -30,14 +29,13 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
     }
 
     @Override
-    public Collection<String> check(Iterator<RpmPathInfo> testRpms) throws IOException {
+    public Collection<String> check(Collection<RpmPathInfo> testRpms) throws IOException {
         var result = new ArrayList<String>(0);
 
         // The union of file paths present in all RPM files mapped to the RPM file names they are present in
         var files = new TreeMap<String, ArrayList<Pair<CpioArchiveEntry, Path>>>();
 
-        while (testRpms.hasNext()) {
-            RpmPathInfo rpm = testRpms.next();
+        for (RpmPathInfo rpm : testRpms) {
             if (!new RpmPathInfo(rpm.getPath()).isSourcePackage()) {
                 for (var pair : Common.rpmFilesAndSymlinks(rpm.getPath()).entrySet()) {
                     files.computeIfAbsent(Common.getEntryPath(pair.getKey()).toString(), key -> new ArrayList<>())

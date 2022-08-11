@@ -6,13 +6,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
-import org.apache.commons.compress.utils.Iterators;
 import org.fedoraproject.javapackages.validator.Check;
 import org.fedoraproject.javapackages.validator.RpmPathInfo;
 
@@ -63,10 +61,7 @@ public class All extends Check<Check.NoConfig> {
     }
 
     @Override
-    public Collection<String> check(Iterator<RpmPathInfo> testRpms) throws IOException {
-        var rpmList = new ArrayList<RpmPathInfo>();
-        Iterators.addAll(rpmList, testRpms);
-
+    public Collection<String> check(Collection<RpmPathInfo> testRpms) throws IOException {
         try {
             var result = new ArrayList<String>();
 
@@ -85,7 +80,7 @@ public class All extends Check<Check.NoConfig> {
                             check.getClass().getSimpleName());
                 } else {
                     getLogger().info("Executing {0}", check.getClass().getSimpleName());
-                    result.addAll(check.check(rpmList.iterator()));
+                    result.addAll(check.check(testRpms));
                 }
             }
 

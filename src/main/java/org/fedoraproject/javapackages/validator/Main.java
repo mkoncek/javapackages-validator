@@ -18,7 +18,7 @@ public class Main {
     private static TextDecorator DECORATOR = TextDecorator.NO_DECORATOR;
     private static PrintStream debugOutputStream = new PrintStream(OutputStream.nullOutputStream(), false, StandardCharsets.UTF_8);
     private static boolean alwaysRecompileConfig = false;
-    static Collection<RpmPathInfo> TEST_RPMS;
+    private static Collection<RpmPathInfo> TEST_RPMS = Collections.emptyList();
 
     public static TextDecorator getDecorator() {
         return DECORATOR;
@@ -31,6 +31,13 @@ public class Main {
 
     public static boolean alwaysRecompileConfig() {
         return alwaysRecompileConfig;
+    }
+
+    public static void readTestRpmArgs(Iterable<String> args) {
+        Main.TEST_RPMS = new ArrayList<>();
+        for (var rpmIt = new ArgFileIterator(args); rpmIt.hasNext();) {
+            Main.TEST_RPMS.add(rpmIt.next());
+        }
     }
 
     public static Collection<RpmPathInfo> getTestRpms() {

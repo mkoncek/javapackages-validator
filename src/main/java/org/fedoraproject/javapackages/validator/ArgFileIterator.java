@@ -7,14 +7,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 
 public class ArgFileIterator implements Iterator<RpmPathInfo> {
     private Iterator<String> argIterator;
     private Iterator<Path> pathIterator = null;
 
-    public ArgFileIterator(List<String> argList) {
-        this.argIterator = argList.iterator();
+    public ArgFileIterator(Iterable<String> args) {
+        this.argIterator = args.iterator();
         pathIterator = advance();
 
         if (pathIterator == null) {

@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -172,9 +171,8 @@ public abstract class Check<Config> {
         return configClass.cast(configurations.get(configClass));
     }
 
-    abstract public Collection<String> check(Iterator<RpmPathInfo> testRpms) throws IOException;
+    abstract public Collection<String> check(Collection<RpmPathInfo> testRpms) throws IOException;
 
-    @SuppressFBWarnings(value = {"ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"}, justification = "Needs rework")
     public int executeCheck(String... args) throws IOException {
         List<String> argList = new ArrayList<>();
 
@@ -212,13 +210,9 @@ public abstract class Check<Config> {
 
         int result = 0;
 
-        // TODO
-        Main.TEST_RPMS = new ArrayList<>();
-        for (var rpmIt = new ArgFileIterator(argList); rpmIt.hasNext();) {
-            Main.TEST_RPMS.add(rpmIt.next());
-        }
+        Main.readTestRpmArgs(argList);
 
-        var messages = check(Main.getTestRpms().iterator());
+        var messages = check(Main.getTestRpms());
         for (var message : messages) {
             System.out.println(message);
         }
