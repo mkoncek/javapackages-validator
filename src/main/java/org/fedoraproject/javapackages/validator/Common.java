@@ -33,7 +33,7 @@ public class Common {
 
     public static String getPackageName(RpmInfo rpm) {
         if (rpm.isSourcePackage()) {
-            return rpm.getNEVRA().name();
+            return rpm.getName();
         } else {
             return Common.getPackageName(rpm.getSourceRPM());
         }

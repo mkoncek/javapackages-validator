@@ -19,7 +19,7 @@ public class JavadocNoarchCheck extends ElementwiseCheck<Check.NoConfig> {
                 return false;
             }
 
-            String rpmName = rpm.getNEVRA().name();
+            String rpmName = rpm.getName();
 
             if (rpmName.endsWith("-javadocs")) {
                 rpmName = rpmName.substring(0, rpmName.length() - 1);
