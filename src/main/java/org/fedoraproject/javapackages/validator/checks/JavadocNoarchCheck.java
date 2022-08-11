@@ -33,12 +33,14 @@ public class JavadocNoarchCheck extends ElementwiseCheck<Check.NoConfig> {
     public Collection<String> check(RpmPathInfo rpm) throws IOException {
         var result = new ArrayList<String>(0);
 
-        if (!"noarch".equals(rpm.getNEVRA().arch())) {
-            result.add(failMessage("{0} is a javadoc package but its architecture is not noarch",
-                    Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red)));
+        if (!"noarch".equals(rpm.getArch())) {
+            result.add(failMessage("{0} is a javadoc package but its architecture is {1}",
+                    Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
+                    Main.getDecorator().decorate(rpm.getArch(), Decoration.bright_magenta)));
         } else {
-            getLogger().pass("{0} is a javadoc package and its architecture is noarch",
-                    Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red));
+            getLogger().pass("{0} is a javadoc package and its architecture is {1}",
+                    Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
+                    Main.getDecorator().decorate("noarch", Decoration.bright_cyan));
         }
 
         return result;

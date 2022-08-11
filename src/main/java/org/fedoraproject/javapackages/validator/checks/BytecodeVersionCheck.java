@@ -84,9 +84,9 @@ public class BytecodeVersionCheck extends ElementwiseCheck<BytecodeVersionConfig
                                             Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
                                             Main.getDecorator().decorate(jarName, Decoration.bright_blue),
                                             Main.getDecorator().decorate(className, Decoration.bright_yellow),
-                                            Main.getDecorator().decorate(version, Decoration.bright_cyan, Decoration.bold),
+                                            Main.getDecorator().decorate(version, Decoration.bright_cyan),
                                             Main.getDecorator().decorate("[" + String.valueOf(range.min) + "-" + String.valueOf(range.max) + "]",
-                                                    Decoration.bright_magenta, Decoration.bold)));
+                                                    Decoration.bright_magenta)));
                                     foundVersions = null;
                                 } else if (foundVersions != null) {
                                     foundVersions.add(version);
@@ -98,7 +98,7 @@ public class BytecodeVersionCheck extends ElementwiseCheck<BytecodeVersionConfig
                             getLogger().pass("{0}: {1}: found bytecode versions: {2}",
                                     Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
                                     Main.getDecorator().decorate(jarName, Decoration.bright_blue),
-                                    Main.getDecorator().decorate(foundVersions, Decoration.bright_cyan, Decoration.bold));
+                                    Main.getDecorator().decorate(foundVersions, Decoration.bright_cyan));
                         }
                     }
                 }

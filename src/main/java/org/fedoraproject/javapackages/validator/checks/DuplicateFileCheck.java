@@ -56,8 +56,8 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
                 // If all providers are of different architecture (with the
                 // exception of noarch), then it is ok
                 providers.sort((lhs, rhs) -> {
-                    int cmp = lhs.getNEVRA().arch().compareTo(rhs.getNEVRA().arch());
-                    if (cmp == 0 || lhs.getNEVRA().arch().equals("noarch") || rhs.getNEVRA().arch().equals("noarch")) {
+                    int cmp = lhs.getArch().compareTo(rhs.getArch());
+                    if (cmp == 0 || lhs.getArch().equals("noarch") || rhs.getArch().equals("noarch")) {
                         okDifferentArchs[0] = false;
                     }
                     return cmp;
@@ -72,7 +72,7 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
                     getLogger().pass("File {0} provided by RPMs of unique architectures: {1}",
                             decoratedFile, decoratedProviders);
                 } else if (okDirectory) {
-                    getLogger().pass("File {0} is a directory provided by multiple RPMs: {1}",
+                    getLogger().pass("Directory {0} provided by multiple RPMs: {1}",
                             decoratedFile, decoratedProviders);
                 } else if (getConfig() != null && getConfig().allowedDuplicateFile(entry.getKey(), providers)) {
                     getLogger().pass("Allowed duplicate file {0} provided by multiple RPMs: {1}",

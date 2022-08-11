@@ -232,10 +232,10 @@ public abstract class Check<Config> {
         }
 
         if (messages.isEmpty()) {
-            logger.info("Summary: all tests passed", messages.size());
+            logger.info("Summary: all tests {0}", Main.getDecorator().decorate("passed", Decoration.green, Decoration.bold));
         } else {
             result = 1;
-            logger.info("Summary: {0} tests failed", messages.size());
+            logger.info("Summary: {0} tests {1}", messages.size(), Main.getDecorator().decorate("failed", Decoration.red, Decoration.bold));
         }
 
         return result;
