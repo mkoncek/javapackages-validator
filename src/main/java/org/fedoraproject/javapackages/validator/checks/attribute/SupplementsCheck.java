@@ -1,7 +1,7 @@
-package org.fedoraproject.javapackages.validator.checks;
+package org.fedoraproject.javapackages.validator.checks.attribute;
 
 import org.fedoraproject.javapackages.validator.RpmAttributeCheck;
-import org.fedoraproject.javapackages.validator.config.SupplementsConfig;
+import org.fedoraproject.javapackages.validator.config.attribute.SupplementsConfig;
 
 public class SupplementsCheck extends RpmAttributeCheck<SupplementsConfig> {
     public SupplementsCheck() {

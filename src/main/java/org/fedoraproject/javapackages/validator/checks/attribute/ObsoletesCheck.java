@@ -1,7 +1,7 @@
-package org.fedoraproject.javapackages.validator.checks;
+package org.fedoraproject.javapackages.validator.checks.attribute;
 
 import org.fedoraproject.javapackages.validator.RpmAttributeCheck;
-import org.fedoraproject.javapackages.validator.config.ObsoletesConfig;
+import org.fedoraproject.javapackages.validator.config.attribute.ObsoletesConfig;
 
 public class ObsoletesCheck extends RpmAttributeCheck<ObsoletesConfig> {
     public ObsoletesCheck() {

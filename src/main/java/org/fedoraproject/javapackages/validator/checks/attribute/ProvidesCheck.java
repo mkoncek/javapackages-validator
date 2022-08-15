@@ -1,7 +1,7 @@
-package org.fedoraproject.javapackages.validator.checks;
+package org.fedoraproject.javapackages.validator.checks.attribute;
 
 import org.fedoraproject.javapackages.validator.RpmAttributeCheck;
-import org.fedoraproject.javapackages.validator.config.ProvidesConfig;
+import org.fedoraproject.javapackages.validator.config.attribute.ProvidesConfig;
 
 public class ProvidesCheck extends RpmAttributeCheck<ProvidesConfig> {
     public ProvidesCheck() {

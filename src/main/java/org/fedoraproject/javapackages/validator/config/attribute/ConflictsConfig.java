@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator.config;
+package org.fedoraproject.javapackages.validator.config.attribute;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 

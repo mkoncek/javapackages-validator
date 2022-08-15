@@ -1,7 +1,7 @@
-package org.fedoraproject.javapackages.validator.checks;
+package org.fedoraproject.javapackages.validator.checks.attribute;
 
 import org.fedoraproject.javapackages.validator.RpmAttributeCheck;
-import org.fedoraproject.javapackages.validator.config.ConflictsConfig;
+import org.fedoraproject.javapackages.validator.config.attribute.ConflictsConfig;
 
 public class ConflictsCheck extends RpmAttributeCheck<ConflictsConfig> {
     public ConflictsCheck() {
