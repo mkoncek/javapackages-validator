@@ -3,10 +3,7 @@ package org.fedoraproject.javapackages.validator;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -17,18 +14,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
-import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.fedoraproject.javapackages.validator.Main.Flag;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
+import org.fedoraproject.javapackages.validator.compiler.InMemoryClassLoader;
+import org.fedoraproject.javapackages.validator.compiler.InMemoryFileManager;
+import org.fedoraproject.javapackages.validator.compiler.URIJavaFileObject;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -42,7 +39,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public abstract class Check<Config> {
     private Map<Class<?>, Object> configurations = null;
     private List<URI> config_uris = new ArrayList<>();
-    private Path config_bin_dir = Paths.get("/mnt/config/bin");
     private Class<Config> configClass;
     private Config config;
     private Logger logger = new Logger();
@@ -80,24 +76,25 @@ public abstract class Check<Config> {
     public final Check<Config> inherit(Check<?> parent) throws IOException {
         this.configurations = Collections.unmodifiableMap(parent.configurations);
         this.config_uris = Collections.unmodifiableList(parent.config_uris);
-        this.config_bin_dir = parent.config_bin_dir;
         this.logger = parent.logger;
         this.config = getConfigInstance();
         return this;
     }
 
-    private void compileFiles(Iterable<URI> sourceURIs, Iterable<String> compilerOptions) throws IOException {
+    private Map<String, ? extends JavaFileObject> compileFiles(Iterable<URI> sourceURIs, Iterable<String> compilerOptions) throws IOException {
         var compilationUnits = new ArrayList<JavaFileObject>();
         for (URI sourceURI : sourceURIs) {
             if (sourceURI.getScheme().equalsIgnoreCase("file")) {
                 Files.find(Paths.get(sourceURI), Integer.MAX_VALUE,
                         (path, attributes) -> !attributes.isDirectory() && path.toString().endsWith(".java"))
                         .map((path) -> new URIJavaFileObject(path.toUri(), Kind.SOURCE)).forEach(compilationUnits::add);
+            } else {
+                compilationUnits.add(new URIJavaFileObject(sourceURI, Kind.SOURCE));
             }
         }
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
+        var fileManager = new InMemoryFileManager(compiler.getStandardFileManager(null, null, null));
 
         logger.debug("Compiling source configuration files: {0}", compilationUnits);
 
@@ -108,6 +105,8 @@ public abstract class Check<Config> {
         } finally {
             fileManager.close();
         }
+
+        return fileManager.getOutputs();
     }
 
     public static interface NoConfig {
@@ -120,40 +119,14 @@ public abstract class Check<Config> {
             configurations = new HashMap<>();
             configurations.put(NoConfig.class, NoConfig.INSTANCE);
 
-            if (!config_uris.isEmpty()) {
-                boolean recompile = false;
-                if (!Files.exists(config_bin_dir)) {
-                    Files.createDirectories(config_bin_dir);
-                    recompile = true;
-                } else if (!Files.isDirectory(config_bin_dir)) {
-                    throw new RuntimeException("Configuration output file " + config_bin_dir + " exists but is not a directory");
-                } else if (FileUtils.isEmptyDirectory(config_bin_dir.toFile())) {
-                    recompile = true;
-                } else if (Main.alwaysRecompileConfig()) {
-                    FileUtils.cleanDirectory(config_bin_dir.toFile());
-                    recompile = true;
-                }
+            Map<String, ? extends JavaFileObject> configClasses = compileFiles(config_uris, Arrays.asList());
 
-                if (recompile) {
-                    compileFiles(config_uris, Arrays.asList("-d", config_bin_dir.toString()));
-                }
-            }
-
-            var classes = Files.find(config_bin_dir, Integer.MAX_VALUE, (path, attributes) ->
-                    attributes.isRegularFile() && path.toString().endsWith(".class"))
-                    .map(Path::toString).toArray(String[]::new);
-
-            logger.debug("Compiled configuration files: [{0}]", Stream.of(classes)
+            logger.debug("Compiled configuration files: [{0}]", configClasses.keySet().stream()
                     .collect(Collectors.joining(", ")));
 
-            for (int i = 0; i != classes.length; ++i) {
-                classes[i] = classes[i].substring(config_bin_dir.toString().length() + 1);
-                classes[i] = classes[i].substring(0, classes[i].length() - 6);
-                classes[i] = classes[i].replace('/', '.');
-            }
-
-            try (URLClassLoader cl = new URLClassLoader(new URL[] {config_bin_dir.toUri().toURL()})) {
-                for (var className : classes) {
+            try {
+                ClassLoader cl = new InMemoryClassLoader(configClasses);
+                for (var className : configClasses.keySet()) {
                     Class<?> cls = cl.loadClass(className);
                     for (var intrfc : ClassUtils.getAllInterfaces(cls)) {
                         Object instance = cls.getConstructor().newInstance();
@@ -187,9 +160,6 @@ public abstract class Check<Config> {
             } else if (Flag.CONFIG_FILE.equals(args[i])) {
                 ++i;
                 config_uris.add(Paths.get(args[i]).toUri());
-            } else if (Flag.CONFIG_DIRECTORY.equals(args[i])) {
-                ++i;
-                config_bin_dir = Paths.get(args[i]);
             } else if (args[i].startsWith("-")) {
                 throw new RuntimeException("Unrecognized option: " + args[i]);
             } else {
@@ -198,7 +168,6 @@ public abstract class Check<Config> {
         }
 
         logger.debug("Compile source URIs: {0}", config_uris);
-        logger.debug("Compile target directory: {0}", config_bin_dir);
         logger.debug("Arguments: {0}", argList);
 
         config = getConfigInstance();

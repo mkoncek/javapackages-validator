@@ -17,7 +17,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class Main {
     private static TextDecorator DECORATOR = TextDecorator.NO_DECORATOR;
     private static PrintStream debugOutputStream = new PrintStream(OutputStream.nullOutputStream(), false, StandardCharsets.UTF_8);
-    private static boolean alwaysRecompileConfig = false;
     private static Collection<RpmPathInfo> TEST_RPMS = Collections.emptyList();
 
     public static TextDecorator getDecorator() {
@@ -27,10 +26,6 @@ public class Main {
     @SuppressFBWarnings({"MS_EXPOSE_REP"})
     public static PrintStream getDebugOutputStream() {
         return debugOutputStream;
-    }
-
-    public static boolean alwaysRecompileConfig() {
-        return alwaysRecompileConfig;
     }
 
     public static void readTestRpmArgs(Iterable<String> args) {
@@ -45,12 +40,11 @@ public class Main {
     }
 
     static record Flag(String... options) {
+        static final Flag HELP = new Flag("-h", "--help");
         static final Flag CONFIG_FILE = new Flag("-c", "--config-file");
         static final Flag CONFIG_URI = new Flag("-u", "--config-uri");
-        static final Flag CONFIG_DIRECTORY = new Flag("-d", "--directory");
         static final Flag COLOR = new Flag("-r", "--color");
         static final Flag DEBUG = new Flag("-x", "--debug");
-        static final Flag RECOMPILE_CONFIG = new Flag("-p", "--recompile");
 
         public boolean equals(String arg) {
             return Stream.of(options()).anyMatch(arg::equals);
@@ -62,18 +56,24 @@ public class Main {
         }
     }
 
+    static void printHelp() {
+        System.out.println("Usage: Main <simple class name of the check> [optional flags] <RPM files or directories to test...>");
+        System.out.println("Optional flags:");
+        System.out.println("    " + Flag.HELP.toString() + " - Print help message");
+        System.out.println("    " + Flag.CONFIG_FILE.toString() + " - File path of a configuration source, can be specified multiple times");
+        System.out.println("    " + Flag.CONFIG_URI.toString() + " - URI of a configuration source, can be specified multiple times");
+        System.out.println("    " + Flag.DEBUG.toString() + " - Display debugging output");
+        System.out.println("    " + Flag.COLOR.toString() + " - Display colored output");
+    }
+
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             System.out.println("error: no arguments provided");
-            System.out.println("Usage: Main <simple class name of the check> [optional flags] <RPM files or directories to test...>");
-            System.out.println("Optional flags:");
-            System.out.println("    " + Flag.CONFIG_FILE.toString() + " - File path of a configuration source, can be specified multiple times");
-            System.out.println("    " + Flag.CONFIG_URI.toString() + " - URI of a configuration source, can be specified multiple times");
-            System.out.println("    " + Flag.CONFIG_DIRECTORY.toString() + " - Directory where compiled configuration class files will be put");
-            System.out.println("    " + Flag.RECOMPILE_CONFIG.toString() + " - Force recompilation of configuration files");
-            System.out.println("    " + Flag.DEBUG.toString() + " - Display debugging output");
-            System.out.println("    " + Flag.COLOR.toString() + " - Display colored output");
+            printHelp();
             System.exit(1);
+        } else if (Flag.HELP.equals(args[0])) {
+            printHelp();
+            System.exit(0);
         }
 
         var argList = new ArrayList<>(args.length);
@@ -85,8 +85,6 @@ public class Main {
             } else if (Flag.DEBUG.equals(arg)) {
                 debugOutputStream = System.err;
                 continue;
-            } else if (Flag.RECOMPILE_CONFIG.equals(arg)) {
-                alwaysRecompileConfig = true;
             }
 
             argList.add(arg);
