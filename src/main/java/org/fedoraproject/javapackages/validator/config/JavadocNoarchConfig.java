@@ -1,7 +1,6 @@
 package org.fedoraproject.javapackages.validator.config;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
-import org.fedoraproject.javapackages.validator.Common;
 
 public interface JavadocNoarchConfig {
     /**
@@ -13,7 +12,7 @@ public interface JavadocNoarchConfig {
     public static class Default implements JavadocNoarchConfig {
         @Override
         public boolean isJavadocRpm(RpmInfo rpm) {
-            return rpm.getName().equals(Common.getPackageName(rpm) + "-javadoc");
+            return rpm.getName().equals(rpm.getPackageName() + "-javadoc");
         }
     }
 }

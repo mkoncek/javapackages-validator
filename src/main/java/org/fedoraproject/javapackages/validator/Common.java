@@ -19,26 +19,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class Common {
     public static final IOException INCOMPLETE_READ = new IOException("Incomplete read in RPM stream");
 
-    private static String getPackageName(String sourceRpmFileName) {
-        String result = sourceRpmFileName;
-        result = result.substring(0, result.lastIndexOf('-'));
-        result = result.substring(0, result.lastIndexOf('-'));
-
-        if (result.isEmpty()) {
-            throw new RuntimeException("Could not read package name for source RPM: " + sourceRpmFileName);
-        }
-
-        return result;
-    }
-
-    public static String getPackageName(RpmInfo rpm) {
-        if (rpm.isSourcePackage()) {
-            return rpm.getName();
-        } else {
-            return Common.getPackageName(rpm.getSourceRPM());
-        }
-    }
-
     @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
     public static Path getEntryPath(CpioArchiveEntry entry) {
         return Paths.get("/").resolve(Paths.get("/").relativize(Paths.get("/").resolve(Paths.get(entry.getName()))));
