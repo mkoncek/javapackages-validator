@@ -4,7 +4,7 @@ set -ex
 
 jp_validator_image='javapackages-validator'
 test_artifacts_dir='/opt/test_artifacts'
-jpv_tests_dir='/opt/javapackages-validator-tests'
+jpv_tests_dir='/opt/javapackages'
 
 build_local_image() {
     podman build -f Dockerfile.main -t "${jp_validator_image}"
@@ -17,8 +17,8 @@ download_ci_env() {
 
 prepare_test_env() {
     download_ci_env
-    git -C "${jpv_tests_dir%/*}" clone 'https://pagure.io/javapackages-validator-tests.git'
-    git -C "${jpv_tests_dir}" checkout '23cdbd4beff755f6a11ac7753d23c83b1dc9c20c'
+    git -C "${jpv_tests_dir%/*}" clone 'https://src.fedoraproject.org/tests/javapackages.git'
+    git -C "${jpv_tests_dir}" checkout '8df63c0d82316139507a70fdf93430c63bbff8bf'
     echo "
 package org.fedoraproject.javapackages.validator.config;
 
@@ -32,13 +32,13 @@ public class SymlinkConfigF37 extends SymlinkConfig.RpmSet {
                 (path, attributes) -> !attributes.isDirectory() && path.toString().endsWith(\".rpm\")).iterator());
     }
 }
-" > "${jpv_tests_dir}/config/src/org/fedoraproject/javapackages/validator/config/SymlinkConfigF37.java"
+" > "${jpv_tests_dir}/src/config/SymlinkConfigJP.java"
 }
 
 execute() {
-    ls -l "${jpv_tests_dir}"
-    cd "${jpv_tests_dir}/test_scripts"
-    JP_VALIDATOR_IMAGE="${jp_validator_image}" TEST_ARTIFACTS="${test_artifacts_dir}" bash -x ./jp_validator.sh -r -x 'All'
+    find "${jpv_tests_dir}"
+    cd ${jpv_tests_dir}/tmt
+    JAVAPACKAGES_VALIDATOR_IMAGE="${jp_validator_image}" TEST_ARTIFACTS="${test_artifacts_dir}" bash -x ./jp_validator.sh -r -x 'All' -c "${jpv_tests_dir}/src/config"
 }
 
 if [ "${1}" = 'build_local_image' ]; then
