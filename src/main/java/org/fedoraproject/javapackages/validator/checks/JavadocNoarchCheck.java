@@ -4,28 +4,25 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.fedoraproject.javapackages.validator.Check;
-import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.ElementwiseCheck;
 import org.fedoraproject.javapackages.validator.Main;
 import org.fedoraproject.javapackages.validator.RpmPathInfo;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
+import org.fedoraproject.javapackages.validator.config.JavadocNoarchConfig;
 
-public class JavadocNoarchCheck extends ElementwiseCheck<Check.NoConfig> {
+public class JavadocNoarchCheck extends ElementwiseCheck<JavadocNoarchConfig> {
     public JavadocNoarchCheck() {
-        super(Check.NoConfig.class);
+        this(null);
+    }
+
+    public JavadocNoarchCheck(JavadocNoarchConfig config) {
+        super(JavadocNoarchConfig.class, config);
         setFilter((rpm) -> {
             if (rpm.isSourcePackage()) {
                 return false;
             }
 
-            String rpmName = rpm.getName();
-
-            if (rpmName.endsWith("-javadocs")) {
-                rpmName = rpmName.substring(0, rpmName.length() - 1);
-            }
-
-            return rpmName.equals(Common.getPackageName(rpm) + "-javadoc");
+            return getConfig().isJavadocRpm(rpm);
         });
     }
 
