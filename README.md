@@ -1,5 +1,5 @@
 # javapackages-validator
-Validator runs a single check on a single check on a set of `rpm` files.
+Validator runs a single check on a set of `rpm` files.
 
 ## Usage
 `run.sh <simple class name of the check> [optional flags] <RPM files or directories to test...>`
