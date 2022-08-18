@@ -2,6 +2,7 @@ package org.fedoraproject.javapackages.validator.checks;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeMap;
@@ -11,7 +12,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Check;
 import org.fedoraproject.javapackages.validator.Common;
-import org.fedoraproject.javapackages.validator.Main;
 import org.fedoraproject.javapackages.validator.RpmPathInfo;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 import org.fedoraproject.javapackages.validator.config.DuplicateFileConfig;
@@ -64,15 +64,15 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
                 // If the file entry is a directory in all providers, then it is ok
                 boolean okDirectory = entry.getValue().stream().map(Pair::getKey).allMatch(CpioArchiveEntry::isDirectory);
 
-                String decoratedFile = Main.getDecorator().decorate(entry.getKey(), Decoration.bright_cyan);
-                String decoratedProviders = entry.getValue().stream().map(pair -> Main.getDecorator().decorate(pair.getValue(), Decoration.bright_red)).toList().toString();
+                String decoratedFile = textDecorate(entry.getKey(), Decoration.bright_cyan);
+                String decoratedProviders = entry.getValue().stream().map(pair -> textDecorate(pair.getValue(), Decoration.bright_red)).toList().toString();
                 if (okDifferentArchs[0]) {
                     getLogger().pass("File {0} provided by RPMs of unique architectures: {1}",
                             decoratedFile, decoratedProviders);
                 } else if (okDirectory) {
                     getLogger().pass("Directory {0} provided by multiple RPMs: {1}",
                             decoratedFile, decoratedProviders);
-                } else if (getConfig() != null && getConfig().allowedDuplicateFile(entry.getKey(), providers)) {
+                } else if (getConfig() != null && getConfig().allowedDuplicateFile(Paths.get(entry.getKey()), providers)) {
                     getLogger().pass("Allowed duplicate file {0} provided by multiple RPMs: {1}",
                             decoratedFile, decoratedProviders);
                 } else {
