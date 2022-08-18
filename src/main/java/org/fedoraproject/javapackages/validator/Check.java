@@ -47,10 +47,18 @@ public abstract class Check<Config> {
         return logger;
     }
 
+    protected static String textDecorate(Object object, Decoration... decorations) {
+        return Main.getDecorator().decorate(object, decorations);
+    }
+
+    protected static String listDecorate(Collection<?> list, Decoration... decorations) {
+        return "[" + list.stream().map(arch -> textDecorate(arch, decorations)).collect(Collectors.joining(", ")) + "]";
+    }
+
     protected static String failMessage(String pattern, Object... arguments) {
         String result = "";
         result += "[";
-        result += Main.getDecorator().decorate("FAIL", Decoration.red, Decoration.bold);
+        result += textDecorate("FAIL", Decoration.red, Decoration.bold);
         result += "] ";
         result += MessageFormat.format(pattern, arguments);
         return result;
@@ -187,10 +195,10 @@ public abstract class Check<Config> {
         }
 
         if (messages.isEmpty()) {
-            logger.info("Summary: all checks {0}", Main.getDecorator().decorate("passed", Decoration.green, Decoration.bold));
+            logger.info("Summary: all checks {0}", textDecorate("passed", Decoration.green, Decoration.bold));
         } else {
             result = 1;
-            logger.info("Summary: {0} checks {1}", messages.size(), Main.getDecorator().decorate("failed", Decoration.red, Decoration.bold));
+            logger.info("Summary: {0} checks {1}", messages.size(), textDecorate("failed", Decoration.red, Decoration.bold));
         }
 
         return result;
