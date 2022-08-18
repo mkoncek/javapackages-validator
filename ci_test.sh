@@ -18,7 +18,7 @@ download_ci_env() {
 prepare_test_env() {
     download_ci_env
     git -C "${jpv_tests_dir%/*}" clone 'https://pagure.io/javapackages-validator-tests.git'
-    git -C "${jpv_tests_dir}" checkout '23cdbd4beff755f6a11ac7753d23c83b1dc9c20c'
+    git -C "${jpv_tests_dir}" checkout '00f05f6c24352838b80a0f860aa5472bc5928e23'
     echo "
 package org.fedoraproject.javapackages.validator.config;
 

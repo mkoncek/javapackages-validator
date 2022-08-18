@@ -5,8 +5,6 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 
 import org.fedoraproject.javapackages.validator.Logger.LogEvent;
 
@@ -15,7 +13,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class Main {
     private static TextDecorator DECORATOR = TextDecorator.NO_DECORATOR;
     private static PrintStream debugOutputStream = new PrintStream(OutputStream.nullOutputStream(), false, StandardCharsets.UTF_8);
-    static Collection<RpmPathInfo> TEST_RPMS;
 
     public static TextDecorator getDecorator() {
         return DECORATOR;
@@ -24,10 +21,6 @@ public class Main {
     @SuppressFBWarnings({"MS_EXPOSE_REP"})
     public static PrintStream getDebugOutputStream() {
         return debugOutputStream;
-    }
-
-    public static Collection<RpmPathInfo> getTestRpms() {
-        return Collections.unmodifiableCollection(TEST_RPMS);
     }
 
     public static void main(String[] args) throws Exception {

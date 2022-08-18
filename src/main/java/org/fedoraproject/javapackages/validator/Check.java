@@ -220,13 +220,7 @@ public abstract class Check<Config> {
 
         int result = 0;
 
-        // TODO
-        Main.TEST_RPMS = new ArrayList<>();
-        for (var rpmIt = new ArgFileIterator(argList); rpmIt.hasNext();) {
-            Main.TEST_RPMS.add(rpmIt.next());
-        }
-
-        var messages = check(Main.getTestRpms().iterator());
+        var messages = check(new ArgFileIterator(argList));
         for (var message : messages) {
             System.out.println(message);
         }
