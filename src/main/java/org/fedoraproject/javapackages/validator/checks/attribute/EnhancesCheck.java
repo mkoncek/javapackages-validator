@@ -5,11 +5,7 @@ import org.fedoraproject.javapackages.validator.config.attribute.EnhancesConfig;
 
 public class EnhancesCheck extends RpmAttributeCheck<EnhancesConfig> {
     public EnhancesCheck() {
-        this(null);
-    }
-
-    public EnhancesCheck(EnhancesConfig config) {
-        super(EnhancesConfig.class, config);
+        super(EnhancesConfig.class);
     }
 
     public static void main(String[] args) throws Exception {

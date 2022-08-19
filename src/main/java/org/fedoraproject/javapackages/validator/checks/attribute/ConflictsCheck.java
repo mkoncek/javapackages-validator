@@ -5,11 +5,7 @@ import org.fedoraproject.javapackages.validator.config.attribute.ConflictsConfig
 
 public class ConflictsCheck extends RpmAttributeCheck<ConflictsConfig> {
     public ConflictsCheck() {
-        this(null);
-    }
-
-    public ConflictsCheck(ConflictsConfig config) {
-        super(ConflictsConfig.class, config);
+        super(ConflictsConfig.class);
     }
 
     public static void main(String[] args) throws Exception {

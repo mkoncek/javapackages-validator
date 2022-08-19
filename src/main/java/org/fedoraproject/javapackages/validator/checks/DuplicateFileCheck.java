@@ -21,15 +21,11 @@ import org.fedoraproject.javapackages.validator.config.DuplicateFileConfig;
  */
 public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
     public DuplicateFileCheck() {
-        this(null);
-    }
-
-    public DuplicateFileCheck(DuplicateFileConfig config) {
-        super(DuplicateFileConfig.class, config);
+        super(DuplicateFileConfig.class);
     }
 
     @Override
-    public Collection<String> check(Collection<RpmPathInfo> testRpms) throws IOException {
+    public Collection<String> check(DuplicateFileConfig config, Collection<RpmPathInfo> testRpms) throws IOException {
         var result = new ArrayList<String>(0);
 
         // The union of file paths present in all RPM files mapped to the RPM file names they are present in
@@ -72,7 +68,7 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
                 } else if (okDirectory) {
                     getLogger().pass("Directory {0} provided by multiple RPMs: {1}",
                             decoratedFile, decoratedProviders);
-                } else if (getConfig() != null && getConfig().allowedDuplicateFile(Paths.get(entry.getKey()), providers)) {
+                } else if (config != null && config.allowedDuplicateFile(Paths.get(entry.getKey()), providers)) {
                     getLogger().pass("Allowed duplicate file {0} provided by multiple RPMs: {1}",
                             decoratedFile, decoratedProviders);
                 } else {

@@ -22,11 +22,7 @@ import org.fedoraproject.javapackages.validator.config.FilesConfig.ExpectedPrope
 
 public class FilesCheck extends ElementwiseCheck<FilesConfig> {
     public FilesCheck() {
-        this(null);
-    }
-
-    public FilesCheck(FilesConfig config) {
-        super(FilesConfig.class, config);
+        super(FilesConfig.class);
     }
 
     private static Set<PosixFilePermission> permissions(CpioArchiveEntry entry) {
@@ -48,7 +44,7 @@ public class FilesCheck extends ElementwiseCheck<FilesConfig> {
     }
 
     @Override
-    public Collection<String> check(RpmPathInfo rpm) throws IOException {
+    public Collection<String> check(FilesConfig config, RpmPathInfo rpm) throws IOException {
         var result = new ArrayList<String>(0);
         var entrySet = new HashSet<Path>();
 
@@ -57,7 +53,7 @@ public class FilesCheck extends ElementwiseCheck<FilesConfig> {
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
                 Path entryName = Common.getEntryPath(rpmEntry);
                 entrySet.add(entryName);
-                ExpectedProperties fileProperties = getConfig().fileProperties(rpm, entryName);
+                ExpectedProperties fileProperties = config.fileProperties(rpm, entryName);
                 if (fileProperties == null) {
                     result.add(failMessage("{0}: Illegal file: {1}",
                             Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
@@ -132,7 +128,7 @@ public class FilesCheck extends ElementwiseCheck<FilesConfig> {
             }
         }
 
-        for (Path missingFile : getConfig().missingFiles(rpm, entrySet)) {
+        for (Path missingFile : config.missingFiles(rpm, entrySet)) {
             result.add(failMessage("{0}: Missing file: {1}",
                     Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
                     Main.getDecorator().decorate(missingFile, Decoration.bright_blue)));

@@ -9,12 +9,12 @@ import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public class RpmAttributeCheck<Config> extends ElementwiseCheck<Config> {
-    protected RpmAttributeCheck(Class<Config> configClass, Config config) {
-        super(configClass, config);
+    protected RpmAttributeCheck(Class<Config> configClass) {
+        super(configClass);
     }
 
     @Override
-    protected Collection<String> check(RpmPathInfo rpm) throws IOException {
+    protected Collection<String> check(Config config, RpmPathInfo rpm) throws IOException {
         var result = new ArrayList<String>(0);
 
         String attributeName = getConfigClass().getSimpleName();
@@ -23,13 +23,13 @@ public class RpmAttributeCheck<Config> extends ElementwiseCheck<Config> {
 
         try {
             Method getter = RpmInfo.class.getMethod("get" + attributeName);
-            Method filter = getConfig().getClass().getMethod("allowed" + attributeName, RpmInfo.class, String.class);
+            Method filter = config.getClass().getMethod("allowed" + attributeName, RpmInfo.class, String.class);
 
             for (Object attributeObject : List.class.cast(getter.invoke(rpm))) {
                 var attributeValue = String.class.cast(attributeObject);
                 boolean ok = true;
 
-                if (!Boolean.class.cast(filter.invoke(getConfig(), rpm, attributeValue))) {
+                if (!Boolean.class.cast(filter.invoke(config, rpm, attributeValue))) {
                     ok = false;
                     result.add(failMessage("{0}: Attribute {1} with invalid value: {2}",
                             Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),

@@ -5,11 +5,7 @@ import org.fedoraproject.javapackages.validator.config.attribute.OrderWithRequir
 
 public class OrderWithRequiresCheck extends RpmAttributeCheck<OrderWithRequiresConfig> {
     public OrderWithRequiresCheck() {
-        this(null);
-    }
-
-    public OrderWithRequiresCheck(OrderWithRequiresConfig config) {
-        super(OrderWithRequiresConfig.class, config);
+        super(OrderWithRequiresConfig.class);
     }
 
     public static void main(String[] args) throws Exception {

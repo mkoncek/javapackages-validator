@@ -5,11 +5,7 @@ import org.fedoraproject.javapackages.validator.config.attribute.SupplementsConf
 
 public class SupplementsCheck extends RpmAttributeCheck<SupplementsConfig> {
     public SupplementsCheck() {
-        this(null);
-    }
-
-    public SupplementsCheck(SupplementsConfig config) {
-        super(SupplementsConfig.class, config);
+        super(SupplementsConfig.class);
     }
 
     public static void main(String[] args) throws Exception {

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Check;
 import org.fedoraproject.javapackages.validator.ElementwiseCheck;
 import org.fedoraproject.javapackages.validator.RpmPathInfo;
@@ -24,11 +25,11 @@ public class JavaExclusiveArchCheck extends ElementwiseCheck<Check.NoConfig> {
 
     public JavaExclusiveArchCheck() {
         super(Check.NoConfig.class);
-        setFilter((rpm) -> rpm.isSourcePackage());
+        setFilter(RpmInfo::isSourcePackage);
     }
 
     @Override
-    protected Collection<String> check(RpmPathInfo rpm) throws IOException {
+    protected Collection<String> check(Check.NoConfig config, RpmPathInfo rpm) throws IOException {
         String decoratedJavaArches = listDecorate(JAVA_ARCHES, Decoration.bright_yellow);
         getLogger().debug("%java_arches: {0}", decoratedJavaArches);
 

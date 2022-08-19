@@ -5,11 +5,7 @@ import org.fedoraproject.javapackages.validator.config.attribute.RequiresConfig;
 
 public class RequiresCheck extends RpmAttributeCheck<RequiresConfig> {
     public RequiresCheck() {
-        this(null);
-    }
-
-    public RequiresCheck(RequiresConfig config) {
-        super(RequiresConfig.class, config);
+        super(RequiresConfig.class);
     }
 
     public static void main(String[] args) throws Exception {

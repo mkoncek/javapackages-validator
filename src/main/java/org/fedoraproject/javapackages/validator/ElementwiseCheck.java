@@ -13,28 +13,24 @@ public abstract class ElementwiseCheck<Config> extends Check<Config> {
         super(configClass);
     }
 
-    protected ElementwiseCheck(Class<Config> configClass, Config config) {
-        super(configClass, config);
-    }
-
     protected ElementwiseCheck<?> setFilter(Predicate<RpmPathInfo> filter) {
         this.filter = filter;
         return this;
     }
 
-    abstract protected Collection<String> check(RpmPathInfo rpm) throws IOException;
+    abstract protected Collection<String> check(Config config, RpmPathInfo rpm) throws IOException;
 
-    public final Collection<String> check(Path rpmPath) throws IOException {
-        return check(new RpmPathInfo(rpmPath));
+    public final Collection<String> check(Config config, Path rpmPath) throws IOException {
+        return check(config, new RpmPathInfo(rpmPath));
     }
 
     @Override
-    public final Collection<String> check(Collection<RpmPathInfo> testRpms) throws IOException {
+    public final Collection<String> check(Config config, Collection<RpmPathInfo> testRpms) throws IOException {
         var result = new ArrayList<String>(0);
 
         for (RpmPathInfo rpm : testRpms) {
             if (filter.test(rpm)) {
-                result.addAll(check(rpm));
+                result.addAll(check(config, rpm));
             }
         }
 

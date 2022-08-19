@@ -16,14 +16,14 @@ public class DuplicateFileCheckTest {
 
     @Test
     void testIllegalDuplicateFile() throws IOException {
-        var result = new DuplicateFileCheck().check(TestCommon.collectionFrom(Stream.of(
+        var result = new DuplicateFileCheck().check(null, TestCommon.collectionFrom(Stream.of(
                 DUPLICATE_FILE1_RPM, DUPLICATE_FILE2_RPM)));
         assertEquals(1, result.size());
     }
 
     @Test
     void testAllowedDuplicateFile() throws IOException {
-        var result = new DuplicateFileCheck((filename, providerRpms) -> true).check(
+        var result = new DuplicateFileCheck().check((filename, providerRpms) -> true,
                 TestCommon.collectionFrom(Stream.of(DUPLICATE_FILE1_RPM, DUPLICATE_FILE2_RPM)));
         assertEquals(0, result.size());
     }

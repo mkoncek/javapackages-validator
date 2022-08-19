@@ -37,10 +37,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
 public abstract class Check<Config> {
-    private Map<Class<?>, Object> configurations = null;
+    private Map<Class<?>, Collection<Object>> configurations = null;
     private List<URI> config_uris = new ArrayList<>();
     private Class<Config> configClass;
-    private Config config;
     private Logger logger = new Logger();
 
     protected Logger getLogger() {
@@ -68,24 +67,14 @@ public abstract class Check<Config> {
         return configClass;
     }
 
-    public Config getConfig() {
-        return config;
-    }
-
     protected Check(Class<Config> configClass) {
         this.configClass = configClass;
-    }
-
-    protected Check(Class<Config> configClass, Config config) {
-        this(configClass);
-        this.config = config;
     }
 
     public final Check<Config> inherit(Check<?> parent) throws IOException {
         this.configurations = Collections.unmodifiableMap(parent.configurations);
         this.config_uris = Collections.unmodifiableList(parent.config_uris);
         this.logger = parent.logger;
-        this.config = getConfigInstance();
         return this;
     }
 
@@ -118,14 +107,12 @@ public abstract class Check<Config> {
     }
 
     public static interface NoConfig {
-        public static final NoConfig INSTANCE = new NoConfig() {};
     }
 
     @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
-    protected Config getConfigInstance() throws IOException {
+    protected Collection<Config> getConfigInstances() throws IOException {
         if (configurations == null) {
             configurations = new HashMap<>();
-            configurations.put(NoConfig.class, NoConfig.INSTANCE);
 
             Map<String, ? extends JavaFileObject> configClasses = compileFiles(config_uris, Arrays.asList());
 
@@ -138,7 +125,7 @@ public abstract class Check<Config> {
                     Class<?> cls = cl.loadClass(className);
                     for (var intrfc : ClassUtils.getAllInterfaces(cls)) {
                         Object instance = cls.getConstructor().newInstance();
-                        configurations.computeIfAbsent(intrfc, (i) -> instance);
+                        configurations.computeIfAbsent(intrfc, (i) -> new ArrayList<>(1)).add(instance);
                     }
                 }
             } catch (ReflectiveOperationException ex) {
@@ -149,10 +136,10 @@ public abstract class Check<Config> {
                     .map(Class::getSimpleName).collect(Collectors.joining(", ")));
         }
 
-        return configClass.cast(configurations.get(configClass));
+        return configurations.get(configClass).stream().map(configClass::cast).toList();
     }
 
-    abstract public Collection<String> check(Collection<RpmPathInfo> testRpms) throws IOException;
+    abstract public Collection<String> check(Config config, Collection<RpmPathInfo> testRpms) throws IOException;
 
     public int executeCheck(String... args) throws IOException {
         List<String> argList = new ArrayList<>();
@@ -178,29 +165,36 @@ public abstract class Check<Config> {
         logger.debug("Compile source URIs: {0}", config_uris);
         logger.debug("Arguments: {0}", argList);
 
-        config = getConfigInstance();
+        Collection<Config> configInstances;
 
-        if (config == null && !NoConfig.class.equals(configClass)) {
-            getLogger().info("{0}: Configuration class not found, ignoring the test", getClass().getSimpleName());
-            return 0;
+        if (NoConfig.class.equals(configClass)) {
+            Config none = null;
+            configInstances = Arrays.asList(none);
+        } else {
+            configInstances = getConfigInstances();
+            if (configInstances.isEmpty()) {
+                getLogger().info("{0}: Configuration class not found, ignoring the test", getClass().getSimpleName());
+                return 0;
+            }
         }
-
-        int result = 0;
 
         Main.readTestRpmArgs(argList);
 
-        var messages = check(Main.getTestRpms());
+        var messages = new ArrayList<String>();
+        for (Config configInstance : configInstances) {
+            messages.addAll(check(configInstance, Main.getTestRpms()));
+        }
+
         for (var message : messages) {
             System.out.println(message);
         }
 
         if (messages.isEmpty()) {
             logger.info("Summary: all checks {0}", textDecorate("passed", Decoration.green, Decoration.bold));
+            return 0;
         } else {
-            result = 1;
             logger.info("Summary: {0} checks {1}", messages.size(), textDecorate("failed", Decoration.red, Decoration.bold));
+            return 1;
         }
-
-        return result;
     }
 }

@@ -5,11 +5,7 @@ import org.fedoraproject.javapackages.validator.config.attribute.RecommendsConfi
 
 public class RecommendsCheck extends RpmAttributeCheck<RecommendsConfig> {
     public RecommendsCheck() {
-        this(null);
-    }
-
-    public RecommendsCheck(RecommendsConfig config) {
-        super(RecommendsConfig.class, config);
+        super(RecommendsConfig.class);
     }
 
     public static void main(String[] args) throws Exception {

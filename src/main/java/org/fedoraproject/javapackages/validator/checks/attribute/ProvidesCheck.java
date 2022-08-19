@@ -5,11 +5,7 @@ import org.fedoraproject.javapackages.validator.config.attribute.ProvidesConfig;
 
 public class ProvidesCheck extends RpmAttributeCheck<ProvidesConfig> {
     public ProvidesCheck() {
-        this(null);
-    }
-
-    public ProvidesCheck(ProvidesConfig config) {
-        super(ProvidesConfig.class, config);
+        super(ProvidesConfig.class);
     }
 
     public static void main(String[] args) throws Exception {
