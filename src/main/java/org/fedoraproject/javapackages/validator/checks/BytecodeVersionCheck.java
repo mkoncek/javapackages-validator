@@ -28,7 +28,6 @@ import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.ElementwiseCheck;
-import org.fedoraproject.javapackages.validator.Main;
 import org.fedoraproject.javapackages.validator.RpmPathInfo;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 import org.fedoraproject.javapackages.validator.config.BytecodeVersionConfig;
@@ -73,16 +72,13 @@ public class BytecodeVersionCheck extends ElementwiseCheck<BytecodeVersionConfig
                                 }
 
                                 var version = versionBuffer.getShort();
-                                var range = config.versionRangeOf(rpm, jarName, className);
 
-                                if (!range.contains(version)) {
-                                    result.add(failMessage("{0}: {1}: {2}: class bytecode version is {3} which is not in range {4}",
-                                            Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
-                                            Main.getDecorator().decorate(jarName, Decoration.bright_blue),
-                                            Main.getDecorator().decorate(className, Decoration.bright_yellow),
-                                            Main.getDecorator().decorate(version, Decoration.bright_cyan),
-                                            Main.getDecorator().decorate("[" + String.valueOf(range.min) + "-" + String.valueOf(range.max) + "]",
-                                                    Decoration.bright_magenta)));
+                                if (!config.allowedVersion(rpm, jarName, className, version)) {
+                                    result.add(failMessage("{0}: {1}: {2}: illegal class bytecode version {3}",
+                                            textDecorate(rpm.getPath(), Decoration.bright_red),
+                                            textDecorate(jarName, Decoration.bright_blue),
+                                            textDecorate(className, Decoration.bright_yellow),
+                                            textDecorate(version, Decoration.bright_cyan)));
                                     foundVersions = null;
                                 } else if (foundVersions != null) {
                                     foundVersions.add(version);
@@ -92,9 +88,9 @@ public class BytecodeVersionCheck extends ElementwiseCheck<BytecodeVersionConfig
 
                         if (foundVersions != null) {
                             getLogger().pass("{0}: {1}: found bytecode versions: {2}",
-                                    Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
-                                    Main.getDecorator().decorate(jarName, Decoration.bright_blue),
-                                    Main.getDecorator().decorate(foundVersions, Decoration.bright_cyan));
+                                    textDecorate(rpm.getPath(), Decoration.bright_red),
+                                    textDecorate(jarName, Decoration.bright_blue),
+                                    textDecorate(foundVersions, Decoration.bright_cyan));
                         }
                     }
                 }
