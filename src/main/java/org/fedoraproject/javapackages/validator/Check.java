@@ -90,6 +90,11 @@ public abstract class Check<Config> {
             }
         }
 
+        if (compilationUnits.isEmpty()) {
+            logger.debug("No source files found");
+            return Collections.emptyMap();
+        }
+
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         var fileManager = new InMemoryFileManager(compiler.getStandardFileManager(null, null, null));
 
@@ -116,7 +121,7 @@ public abstract class Check<Config> {
 
             Map<String, ? extends JavaFileObject> configClasses = compileFiles(config_uris, Arrays.asList());
 
-            logger.debug("Compiled configuration files: [{0}]", configClasses.keySet().stream()
+            logger.debug("Compiled configuration class files: [{0}]", configClasses.keySet().stream()
                     .collect(Collectors.joining(", ")));
 
             try {
@@ -136,7 +141,7 @@ public abstract class Check<Config> {
                     .map(Class::getSimpleName).collect(Collectors.joining(", ")));
         }
 
-        return configurations.get(configClass).stream().map(configClass::cast).toList();
+        return configurations.getOrDefault(configClass, Collections.emptyList()).stream().map(configClass::cast).toList();
     }
 
     abstract public Collection<String> check(Config config, Collection<RpmPathInfo> testRpms) throws IOException;
