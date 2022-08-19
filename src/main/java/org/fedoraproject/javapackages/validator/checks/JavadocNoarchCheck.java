@@ -3,22 +3,20 @@ package org.fedoraproject.javapackages.validator.checks;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.Predicate;
 
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
+import org.fedoraproject.javapackages.validator.Check;
 import org.fedoraproject.javapackages.validator.ElementwiseCheck;
 import org.fedoraproject.javapackages.validator.RpmPathInfo;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
-import org.fedoraproject.javapackages.validator.config.JavadocNoarchConfig;
 
-public class JavadocNoarchCheck extends ElementwiseCheck<JavadocNoarchConfig> {
+public class JavadocNoarchCheck extends ElementwiseCheck<Check.NoConfig> {
     public JavadocNoarchCheck() {
-        super(JavadocNoarchConfig.class);
-        setFilter(Predicate.not(RpmInfo::isSourcePackage));
+        super(Check.NoConfig.class);
+        setFilter(rpm -> !rpm.isSourcePackage() && rpm.getName().equals(rpm.getPackageName() + "-javadoc"));
     }
 
     @Override
-    public Collection<String> check(JavadocNoarchConfig config, RpmPathInfo rpm) throws IOException {
+    public Collection<String> check(Check.NoConfig config, RpmPathInfo rpm) throws IOException {
         var result = new ArrayList<String>(0);
 
         if (!"noarch".equals(rpm.getArch())) {

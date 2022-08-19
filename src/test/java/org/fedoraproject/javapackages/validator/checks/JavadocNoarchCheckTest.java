@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import org.fedoraproject.javapackages.validator.TestCommon;
-import org.fedoraproject.javapackages.validator.config.JavadocNoarchConfig;
 import org.junit.jupiter.api.Test;
 
 public class JavadocNoarchCheckTest {
@@ -17,32 +16,30 @@ public class JavadocNoarchCheckTest {
     private static final Path NOARCH_NOARCH_RPM = TestCommon.RPM_PATH_PREFIX.resolve(Paths.get("noarch/javadoc-noarch-noarch-javadoc-1-1.noarch.rpm"));
     private static final Path NON_JAVADOC_RPM = TestCommon.RPM_PATH_PREFIX.resolve(Paths.get("noarch/javadoc-noarch-noarch-1-1.noarch.rpm"));
 
-    private static JavadocNoarchConfig config = new JavadocNoarchConfig.Default();
-
     @Test
     void testIllegalArchfulJavadoc() throws IOException {
-        var result = new JavadocNoarchCheck().check(config,
+        var result = new JavadocNoarchCheck().check(null,
                 TestCommon.collectionFrom(Stream.of(ARCH_ARCH_RPM)));
         assertEquals(1, result.size());
     }
 
     @Test
     void testAllowedNoarchJavadocArchfulPackage() throws IOException {
-        var result = new JavadocNoarchCheck().check(config,
+        var result = new JavadocNoarchCheck().check(null,
                 TestCommon.collectionFrom(Stream.of(ARCH_NOARCH_RPM)));
         assertEquals(0, result.size());
     }
 
     @Test
     void testAllowedNoarchJavadocNoarchPackage() throws IOException {
-        var result = new JavadocNoarchCheck().check(config,
+        var result = new JavadocNoarchCheck().check(null,
                 TestCommon.collectionFrom(Stream.of(NOARCH_NOARCH_RPM)));
         assertEquals(0, result.size());
     }
 
     @Test
     void testIgnoreNonJavadoc() throws IOException {
-        var result = new JavadocNoarchCheck().check(config,
+        var result = new JavadocNoarchCheck().check(null,
                 TestCommon.collectionFrom(Stream.of(NON_JAVADOC_RPM)));
         assertEquals(0, result.size());
     }
