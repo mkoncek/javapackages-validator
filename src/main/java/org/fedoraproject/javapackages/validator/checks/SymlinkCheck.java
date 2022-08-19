@@ -9,7 +9,6 @@ import java.util.function.Predicate;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.ElementwiseCheck;
-import org.fedoraproject.javapackages.validator.Main;
 import org.fedoraproject.javapackages.validator.RpmPathInfo;
 import org.fedoraproject.javapackages.validator.TextDecorator;
 import org.fedoraproject.javapackages.validator.config.SymlinkConfig;
@@ -39,17 +38,17 @@ public class SymlinkCheck extends ElementwiseCheck<SymlinkConfig> {
 
                 if (location == null) {
                     result.add(failMessage("{0}: Link {1} points to {2} (normalized as {3}) which was not found",
-                            Main.getDecorator().decorate(rpm.getPath(), TextDecorator.Decoration.bright_red),
-                            Main.getDecorator().decorate(link, TextDecorator.Decoration.bright_cyan),
-                            Main.getDecorator().decorate(target, TextDecorator.Decoration.bright_magenta),
-                            Main.getDecorator().decorate(target.normalize(), TextDecorator.Decoration.magenta)));
+                            textDecorate(rpm.getPath(), TextDecorator.Decoration.bright_red),
+                            textDecorate(link, TextDecorator.Decoration.bright_cyan),
+                            textDecorate(target, TextDecorator.Decoration.bright_magenta),
+                            textDecorate(target.normalize(), TextDecorator.Decoration.magenta)));
                 } else {
                     getLogger().pass("{0}: Link {1} points to {2} (normalized as {3}) located in {4}",
-                            Main.getDecorator().decorate(rpm.getPath(), TextDecorator.Decoration.bright_red),
-                            Main.getDecorator().decorate(link, TextDecorator.Decoration.bright_cyan),
-                            Main.getDecorator().decorate(target, TextDecorator.Decoration.bright_magenta),
-                            Main.getDecorator().decorate(target.normalize(), TextDecorator.Decoration.magenta),
-                            Main.getDecorator().decorate(location, TextDecorator.Decoration.bright_blue));
+                            textDecorate(rpm.getPath(), TextDecorator.Decoration.bright_red),
+                            textDecorate(link, TextDecorator.Decoration.bright_cyan),
+                            textDecorate(target, TextDecorator.Decoration.bright_magenta),
+                            textDecorate(target.normalize(), TextDecorator.Decoration.magenta),
+                            textDecorate(location, TextDecorator.Decoration.bright_blue));
                 }
             }
         }

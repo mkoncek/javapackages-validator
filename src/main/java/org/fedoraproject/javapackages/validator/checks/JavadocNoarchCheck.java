@@ -7,7 +7,6 @@ import java.util.function.Predicate;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.ElementwiseCheck;
-import org.fedoraproject.javapackages.validator.Main;
 import org.fedoraproject.javapackages.validator.RpmPathInfo;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 import org.fedoraproject.javapackages.validator.config.JavadocNoarchConfig;
@@ -24,12 +23,12 @@ public class JavadocNoarchCheck extends ElementwiseCheck<JavadocNoarchConfig> {
 
         if (!"noarch".equals(rpm.getArch())) {
             result.add(failMessage("{0} is a javadoc package but its architecture is {1}",
-                    Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
-                    Main.getDecorator().decorate(rpm.getArch(), Decoration.bright_magenta)));
+                    textDecorate(rpm.getPath(), Decoration.bright_red),
+                    textDecorate(rpm.getArch(), Decoration.bright_magenta)));
         } else {
             getLogger().pass("{0} is a javadoc package and its architecture is {1}",
-                    Main.getDecorator().decorate(rpm.getPath(), Decoration.bright_red),
-                    Main.getDecorator().decorate("noarch", Decoration.bright_cyan));
+                    textDecorate(rpm.getPath(), Decoration.bright_red),
+                    textDecorate("noarch", Decoration.bright_cyan));
         }
 
         return result;
