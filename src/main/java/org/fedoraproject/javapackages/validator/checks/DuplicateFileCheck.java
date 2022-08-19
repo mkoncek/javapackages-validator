@@ -63,10 +63,10 @@ public class DuplicateFileCheck extends Check<DuplicateFileConfig> {
                 String decoratedFile = textDecorate(entry.getKey(), Decoration.bright_cyan);
                 String decoratedProviders = entry.getValue().stream().map(pair -> textDecorate(pair.getValue(), Decoration.bright_red)).toList().toString();
                 if (okDifferentArchs[0]) {
-                    getLogger().pass("File {0} provided by RPMs of unique architectures: {1}",
+                    getLogger().info("File {0} provided by RPMs of unique architectures: {1}",
                             decoratedFile, decoratedProviders);
                 } else if (okDirectory) {
-                    getLogger().pass("Directory {0} provided by multiple RPMs: {1}",
+                    getLogger().info("Directory {0} provided by multiple RPMs: {1}",
                             decoratedFile, decoratedProviders);
                 } else if (config != null && config.allowedDuplicateFile(Paths.get(entry.getKey()), providers)) {
                     getLogger().pass("Allowed duplicate file {0} provided by multiple RPMs: {1}",
