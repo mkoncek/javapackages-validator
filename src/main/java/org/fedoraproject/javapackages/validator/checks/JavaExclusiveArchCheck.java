@@ -30,9 +30,6 @@ public class JavaExclusiveArchCheck extends ElementwiseCheck<Check.NoConfig> {
 
     @Override
     protected Collection<String> check(Check.NoConfig config, RpmPathInfo rpm) throws IOException {
-        String decoratedJavaArches = listDecorate(JAVA_ARCHES, Decoration.bright_yellow);
-        getLogger().debug("%java_arches: {0}", decoratedJavaArches);
-
         var result = new ArrayList<String>(0);
 
         boolean buildNoarch = rpm.getBuildArchs().contains("noarch");
@@ -40,13 +37,16 @@ public class JavaExclusiveArchCheck extends ElementwiseCheck<Check.NoConfig> {
         boolean exclusiveNoarch = exclusiveArches.remove("noarch");
 
         String decoratedRpm = textDecorate(rpm.getPath(), Decoration.bright_red);
+        String decoratedExclusiveArch = listDecorate(rpm.getExclusiveArch(), Decoration.bright_magenta);
 
         if (buildNoarch && !exclusiveNoarch) {
-            result.add(failMessage("{0}: has BuildArch noarch but noarch is not present in its ExclusiveArch field"));
+            result.add(failMessage("{0}: has BuildArch noarch but noarch is not present in its ExclusiveArch field: {1}",
+                    decoratedRpm, decoratedExclusiveArch));
         }
 
         if (!buildNoarch && exclusiveNoarch) {
-            result.add(failMessage("{0}: does not have BuildArch noarch but noarch is present in its ExclusiveArch field"));
+            result.add(failMessage("{0}: does not have BuildArch noarch but noarch is present in its ExclusiveArch field: {1}",
+                    decoratedRpm, decoratedExclusiveArch));
         }
 
         Set<String> tempSet;
@@ -57,8 +57,7 @@ public class JavaExclusiveArchCheck extends ElementwiseCheck<Check.NoConfig> {
             result.add(failMessage("{0}: ExclusiveArch field does not contain "
                     + "all the expected values; missing values are: {1}; "
                     + "the values of ExclusiveArch are: {2}",
-                    decoratedRpm, listDecorate(tempSet, Decoration.cyan),
-                    listDecorate(rpm.getExclusiveArch(), Decoration.bright_magenta)));
+                    decoratedRpm, listDecorate(tempSet, Decoration.cyan), decoratedExclusiveArch));
         }
 
         tempSet = new TreeSet<>(exclusiveArches);
@@ -67,8 +66,7 @@ public class JavaExclusiveArchCheck extends ElementwiseCheck<Check.NoConfig> {
             result.add(failMessage("{0}: ExclusiveArch contains more entries than "
                     + "expected; superfluous values are: {0}; "
                     + "the values of ExclusiveArch are: {1}",
-                    decoratedRpm, listDecorate(tempSet, Decoration.cyan),
-                    listDecorate(rpm.getExclusiveArch(), Decoration.bright_magenta)));
+                    decoratedRpm, listDecorate(tempSet, Decoration.cyan), decoratedExclusiveArch));
         }
 
         if (result.isEmpty()) {
