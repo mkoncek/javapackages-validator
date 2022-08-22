@@ -15,7 +15,7 @@ for component in $(curl -S 'https://mbi-artifacts.s3.eu-central-1.amazonaws.com/
     
     mkdir rpms
     pushd rpms
-    koji download-build --debuginfo "${nevra}"
+    koji download-build --arch noarch --arch x86_64 --arch src --debuginfo "${nevra}"
     popd
 ) & done
 wait
