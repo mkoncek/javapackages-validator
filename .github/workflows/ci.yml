@@ -12,7 +12,10 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get -y install git-core podman
+          sudo apt-get -y install bash git-core podman python3-pip
+      - name: Install tmt
+        run: |
+          sudo pip install tmt
       - name: Checkout sources
         uses: actions/checkout@v3
       - name: Build local image

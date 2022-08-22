@@ -3,11 +3,13 @@ RUN microdnf -y install git-core maven-openjdk17 rpm-libs
 
 WORKDIR "/usr/local/src"
 
+ENV javadeptools_hash='280cbd0b706f6f4bab14b283cad39fb9955f08fe'
+RUN echo "${javadeptools_hash}"
 RUN git clone "https://github.com/mkoncek/java-deptools-native.git"
 
 WORKDIR "/usr/local/src/java-deptools-native"
 
-RUN git checkout '280cbd0b706f6f4bab14b283cad39fb9955f08fe'
+RUN git reset --hard "${javadeptools_hash}"
 RUN mvn -B clean install
 
 WORKDIR "/usr/local/src/javapackages-validator"
