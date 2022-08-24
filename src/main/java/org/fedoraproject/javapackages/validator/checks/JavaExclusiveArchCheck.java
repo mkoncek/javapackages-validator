@@ -17,8 +17,7 @@ public class JavaExclusiveArchCheck extends ElementwiseCheck<Check.NoConfig> {
     private static final String JAVA_ARCHES = "aarch64 ppc64le s390x x86_64";
 
     public JavaExclusiveArchCheck() {
-        super(Check.NoConfig.class);
-        setFilter(RpmInfo::isSourcePackage);
+        super(Check.NoConfig.class, RpmInfo::isSourcePackage);
     }
 
     @Override

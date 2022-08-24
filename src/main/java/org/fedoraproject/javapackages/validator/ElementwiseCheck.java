@@ -9,15 +9,15 @@ import java.util.function.Predicate;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public abstract class ElementwiseCheck<Config> extends Check<Config> {
-    private Predicate<RpmPathInfo> filter = rpm -> true;
+    private final Predicate<RpmPathInfo> filter;
 
     protected ElementwiseCheck(Class<Config> configClass) {
-        super(configClass);
+        this(configClass, rpm -> true);
     }
 
-    protected ElementwiseCheck<?> setFilter(Predicate<RpmPathInfo> filter) {
+    protected ElementwiseCheck(Class<Config> configClass, Predicate<RpmPathInfo> filter) {
+        super(configClass);
         this.filter = filter;
-        return this;
     }
 
     abstract protected Collection<String> check(Config config, RpmPathInfo rpm) throws IOException;

@@ -18,8 +18,7 @@ import org.fedoraproject.javapackages.validator.config.SymlinkConfig;
  */
 public class SymlinkCheck extends ElementwiseCheck<SymlinkConfig> {
     public SymlinkCheck() {
-        super(SymlinkConfig.class);
-        setFilter(Predicate.not(RpmInfo::isSourcePackage));
+        super(SymlinkConfig.class, Predicate.not(RpmInfo::isSourcePackage));
     }
 
     @Override
