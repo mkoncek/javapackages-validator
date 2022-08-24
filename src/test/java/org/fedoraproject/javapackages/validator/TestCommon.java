@@ -11,6 +11,8 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
+import org.fedoraproject.javapackages.validator.validators.Validator;
+
 public class TestCommon {
     public static final Path RPMBUILD_PATH_PREFIX = Paths.get("src/test/resources/rpmbuild");
     public static final Path RPM_PATH_PREFIX = RPMBUILD_PATH_PREFIX.resolve(Paths.get("RPMS"));
@@ -26,12 +28,12 @@ public class TestCommon {
         }).iterator();
     }
 
-    public static void assertPass(CheckResult result) {
-        assertTrue(result.isPass(), "expected passed result, but it actually failed");
+    public static void assertPass(Validator validator) {
+        assertFalse(validator.failed(), "expected passed result, but it actually failed");
     }
 
-    public static void assertFailOne(CheckResult result) {
-        assertFalse(result.isPass(), "expected failed result, but it actually passed");
-        assertEquals(1, result.getFailureCount());
+    public static void assertFailOne(Validator validator) {
+        assertTrue(validator.failed(), "expected failed result, but it actually passed");
+        assertEquals(1, validator.getFailMessages().size());
     }
 }
