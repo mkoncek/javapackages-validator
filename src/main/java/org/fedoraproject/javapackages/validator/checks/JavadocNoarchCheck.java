@@ -9,8 +9,7 @@ import org.fedoraproject.javapackages.validator.RpmPathInfo;
 
 public class JavadocNoarchCheck extends ElementwiseCheck<Check.NoConfig> {
     public JavadocNoarchCheck() {
-        super(Check.NoConfig.class);
-        setFilter(rpm -> !rpm.isSourcePackage() && rpm.getName().equals(rpm.getPackageName() + "-javadoc"));
+        super(Check.NoConfig.class, rpm -> !rpm.isSourcePackage() && rpm.getName().equals(rpm.getPackageName() + "-javadoc"));
     }
 
     @Override
