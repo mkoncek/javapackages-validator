@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.fedoraproject.javadeptools.rpm.RpmAttribute;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 
 public class RpmAttributeCheck<Config> extends ElementwiseCheck<Config> {
@@ -22,10 +23,10 @@ public class RpmAttributeCheck<Config> extends ElementwiseCheck<Config> {
 
         try {
             Method getter = RpmInfo.class.getMethod("get" + attributeName);
-            Method filter = config.getClass().getMethod("allowed" + attributeName, RpmInfo.class, String.class);
+            Method filter = config.getClass().getMethod("allowed" + attributeName, RpmInfo.class, RpmAttribute.class);
 
             for (Object attributeObject : List.class.cast(getter.invoke(rpm))) {
-                var attributeValue = String.class.cast(attributeObject);
+                var attributeValue = RpmAttribute.class.cast(attributeObject);
                 boolean ok = true;
 
                 if (!Boolean.class.cast(filter.invoke(config, rpm, attributeValue))) {

@@ -3,7 +3,7 @@ RUN microdnf -y install git-core maven-openjdk17 rpm-libs
 
 WORKDIR "/usr/local/src"
 
-ENV javadeptools_hash='280cbd0b706f6f4bab14b283cad39fb9955f08fe'
+ENV javadeptools_hash='fc7c3a86e99a66e5c7d6eec30e20d1455fea0e48'
 RUN echo "${javadeptools_hash}"
 RUN git clone "https://github.com/mkoncek/java-deptools-native.git"
 
