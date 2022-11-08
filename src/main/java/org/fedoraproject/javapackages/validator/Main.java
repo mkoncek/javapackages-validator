@@ -71,14 +71,14 @@ public class Main {
     static void printHelp() {
         System.out.println("Usage: Main [optional flags] <validator flags> <RPM files or directories to test...>");
         System.out.println("Options for specifying validators, can be specified multiple times");
-        System.out.println("    " + Flag.SOURCE_FILE.toString() + " - File path of a source file");
-        System.out.println("    " + Flag.SOURCE_URI.toString() + " - URI of a source file");
-        System.out.println("    " + Flag.CLASS_FILE.toString() + " - File path of a class file");
-        System.out.println("    " + Flag.CLASS_URI.toString() + " - URI of a class file");
+        System.out.println("    " + Flag.SOURCE_FILE + " - File path of a source file");
+        System.out.println("    " + Flag.SOURCE_URI + " - URI of a source file");
+        System.out.println("    " + Flag.CLASS_FILE + " - File path of a class file");
+        System.out.println("    " + Flag.CLASS_URI + " - URI of a class file");
         System.out.println("Optional flags:");
-        System.out.println("    " + Flag.HELP.toString() + " - Print help message");
-        System.out.println("    " + Flag.DEBUG.toString() + " - Display debugging output");
-        System.out.println("    " + Flag.COLOR.toString() + " - Display colored output");
+        System.out.println("    " + Flag.HELP + " - Print help message");
+        System.out.println("    " + Flag.DEBUG + " - Display debugging output");
+        System.out.println("    " + Flag.COLOR + " - Display colored output");
     }
 
     public static Map<String, ? extends JavaFileObject> compileFiles(Iterable<URI> sourceURIs, Iterable<String> compilerOptions, Logger logger) throws IOException {
