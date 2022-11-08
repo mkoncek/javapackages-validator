@@ -101,11 +101,11 @@ public class Main {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         var fileManager = new InMemoryFileManager(compiler.getStandardFileManager(null, null, null));
 
-        logger.debug("Compiling source configuration files: {0}", Decorated.list(compilationUnits));
+        logger.debug("Compiling source files: {0}", Decorated.list(compilationUnits));
 
         try {
             if (!compiler.getTask(null, fileManager, null, compilerOptions, null, compilationUnits).call()) {
-                throw new RuntimeException("Failed to compile configuration sources");
+                throw new RuntimeException("Failed to compile sources");
             }
         } finally {
             fileManager.close();
