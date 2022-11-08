@@ -3,6 +3,7 @@ package org.fedoraproject.javapackages.validator;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -124,7 +125,7 @@ public class Main {
             ClassLoader cl = new InMemoryClassLoader(classes);
             for (var className : classes.keySet()) {
                 Class<?> cls = cl.loadClass(className);
-                if (Validator.class.isAssignableFrom(cls)) {
+                if (Validator.class.isAssignableFrom(cls) && !Modifier.isAbstract(cls.getModifiers())) {
                     var validator = Validator.class.cast(cls.getConstructor().newInstance());
                     validator.setLogger(logger);
                     result.add(validator);
