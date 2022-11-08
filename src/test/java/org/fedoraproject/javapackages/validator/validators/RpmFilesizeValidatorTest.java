@@ -1,7 +1,18 @@
 package org.fedoraproject.javapackages.validator.validators;
 
+import static org.fedoraproject.javapackages.validator.TestCommon.assertFailOne;
+import static org.fedoraproject.javapackages.validator.TestCommon.assertPass;
+
+import java.nio.file.Paths;
+
+import org.easymock.EasyMock;
+import org.fedoraproject.javapackages.validator.RpmPathInfo;
+import org.fedoraproject.javapackages.validator.TestCommon;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 public class RpmFilesizeValidatorTest {
-    /*
     private RpmPathInfo rpmPathInfo;
     private RpmFilesizeValidator validator;
 
@@ -9,27 +20,28 @@ public class RpmFilesizeValidatorTest {
     public void setUp() throws Exception {
         rpmPathInfo = new RpmPathInfo(
                 TestCommon.RPM_PATH_PREFIX.resolve(Paths.get("noarch/duplicate-file1-1-1.noarch.rpm")));
-        validator = createStrictMock(RpmFilesizeValidator.class);
+        validator = EasyMock.createStrictMock(RpmFilesizeValidator.class);
     }
 
     private void runTest() throws Exception {
-        replay(validator);
+        EasyMock.replay(validator);
         validator.validate(rpmPathInfo);
-        verify(validator);
+        EasyMock.verify(validator);
     }
 
     @Test
+    @Disabled
     public void testAllowedFileSize() throws Exception {
-        expect(validator.allowedFilesize(rpmPathInfo, 6488L)).andReturn(true);
+        EasyMock.expect(validator.allowedFilesize(rpmPathInfo, 6488L)).andReturn(true);
         runTest();
         assertPass(validator);
     }
 
     @Test
+    @Disabled
     public void testDisallowedFileSize() throws Exception {
-        expect(validator.allowedFilesize(rpmPathInfo, 6488L)).andReturn(false);
+        EasyMock.expect(validator.allowedFilesize(rpmPathInfo, 6488L)).andReturn(false);
         runTest();
         assertFailOne(validator);
     }
-    */
 }
