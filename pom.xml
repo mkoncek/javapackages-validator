@@ -92,7 +92,7 @@
     </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
-      <artifactId>asm-tree</artifactId>
+      <artifactId>asm</artifactId>
       <version>9.4</version>
     </dependency>
     <dependency>
