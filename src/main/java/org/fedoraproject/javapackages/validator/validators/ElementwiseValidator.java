@@ -21,7 +21,7 @@ public abstract class ElementwiseValidator extends Validator {
     }
 
     @Override
-    public void validate(Iterator<RpmPathInfo> rpmIt) throws IOException {
+    public final void validate(Iterator<RpmPathInfo> rpmIt) throws IOException {
         while (rpmIt.hasNext()) {
             RpmPathInfo rpm = rpmIt.next();
             if (filter.test(rpm)) {
