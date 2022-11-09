@@ -65,7 +65,7 @@ public abstract class BytecodeVersionJarValidator extends ElementwiseValidator {
                         pass("{0}: {1}: found bytecode versions: {2}",
                                 Decorated.rpm(rpm),
                                 Decorated.custom(jarName, DECORATION_JAR),
-                                Decorated.list(classVersions.values().stream().distinct().toList()));
+                                Decorated.list(classVersions.values().stream().sorted().distinct().toList()));
                     }
                 }
             }
