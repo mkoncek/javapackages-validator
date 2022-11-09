@@ -234,11 +234,16 @@ public class Main {
         }
 
         int exitCode = 0;
-        if (failMessages.isEmpty()) {
+        for (String failMessage : failMessages) {
+            exitCode = 1;
+            System.out.println(failMessage);
+        }
+
+        if (exitCode == 0) {
             logger.info("Summary: all checks {0}", Decorated.custom("passed", Decoration.green, Decoration.bold));
-            exitCode = 0;
         } else {
-            logger.info("Summary: {0} checks {1}", Decorated.plain(failMessages.size()), Decorated.custom("failed", Decoration.red, Decoration.bold));
+            logger.info("Summary: {0} {2} {1}", Decorated.plain(failMessages.size()), Decorated.custom("failed", Decoration.red, Decoration.bold),
+                    Decorated.plain(failMessages.size() == 1 ? "check" : "checks"));
             exitCode = 1;
         }
 
