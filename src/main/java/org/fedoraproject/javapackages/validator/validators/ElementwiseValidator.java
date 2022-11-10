@@ -5,25 +5,25 @@ import java.util.Iterator;
 import java.util.function.Predicate;
 
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmPathInfo;
+import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public abstract class ElementwiseValidator extends Validator {
-    private Predicate<RpmPathInfo> filter;
+    private Predicate<RpmInfoURI> filter;
 
     protected ElementwiseValidator() {
         this(rpm -> true);
     }
 
-    protected ElementwiseValidator(Predicate<RpmPathInfo> filter) {
+    protected ElementwiseValidator(Predicate<RpmInfoURI> filter) {
         super();
         this.filter = filter;
     }
 
     @Override
-    public final void validate(Iterator<RpmPathInfo> rpmIt) throws IOException {
+    public final void validate(Iterator<RpmInfoURI> rpmIt) throws IOException {
         while (rpmIt.hasNext()) {
-            RpmPathInfo rpm = rpmIt.next();
+            RpmInfoURI rpm = rpmIt.next();
             if (filter.test(rpm)) {
                 validate(rpm);
             } else {
@@ -34,5 +34,5 @@ public abstract class ElementwiseValidator extends Validator {
         }
     }
 
-    public abstract void validate(RpmPathInfo rpm) throws IOException;
+    public abstract void validate(RpmInfoURI rpm) throws IOException;
 }

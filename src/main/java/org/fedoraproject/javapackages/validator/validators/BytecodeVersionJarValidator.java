@@ -13,15 +13,15 @@ import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmPathInfo;
+import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public abstract class BytecodeVersionJarValidator extends ElementwiseValidator {
     protected static final Decoration DECORATION_JAR = Decoration.bright_blue;
 
     @Override
-    public void validate(RpmPathInfo rpm) throws IOException {
-        try (var is = new RpmArchiveInputStream(rpm.getPath())) {
+    public void validate(RpmInfoURI rpm) throws IOException {
+        try (var is = new RpmArchiveInputStream(rpm.getURI().toURL())) {
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
                 var content = new byte[(int) rpmEntry.getSize()];
 
@@ -72,18 +72,18 @@ public abstract class BytecodeVersionJarValidator extends ElementwiseValidator {
         }
     }
 
-    public abstract void validate(RpmPathInfo rpm, String jarName, Map<String, Integer> classVersions);
+    public abstract void validate(RpmInfoURI rpm, String jarName, Map<String, Integer> classVersions);
 
     public static abstract class BytecodeVersionClassValidator extends BytecodeVersionJarValidator {
         protected static final Decoration DECORATION_CLASS = Decoration.bright_yellow;
 
         @Override
-        public void validate(RpmPathInfo rpm, String jarName, Map<String, Integer> classVersions) {
+        public void validate(RpmInfoURI rpm, String jarName, Map<String, Integer> classVersions) {
             for (var entry : classVersions.entrySet()) {
                 validate(rpm, jarName, entry.getKey(), entry.getValue());
             }
         }
 
-        public abstract void validate(RpmPathInfo rpm, String jarName, String className, int version);
+        public abstract void validate(RpmInfoURI rpm, String jarName, String className, int version);
     }
 }

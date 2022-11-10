@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
-public class ArgFileIterator implements Iterator<RpmPathInfo> {
+public class ArgFileIterator implements Iterator<RpmInfoURI> {
     private Iterator<String> argIterator;
     private Iterator<Path> pathIterator = null;
 
@@ -67,9 +67,9 @@ public class ArgFileIterator implements Iterator<RpmPathInfo> {
     }
 
     @Override
-    public RpmPathInfo next() {
+    public RpmInfoURI next() {
         try {
-            return new RpmPathInfo(pathIterator.next());
+            return new RpmInfoURI(pathIterator.next().toUri());
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }

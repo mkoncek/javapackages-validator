@@ -3,7 +3,7 @@ package org.fedoraproject.javapackages.validator.validators;
 import java.io.IOException;
 
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmPathInfo;
+import org.fedoraproject.javapackages.validator.RpmInfoURI;
 
 public class JavadocNoarchValidator extends ElementwiseValidator {
     public JavadocNoarchValidator() {
@@ -11,7 +11,7 @@ public class JavadocNoarchValidator extends ElementwiseValidator {
     }
 
     @Override
-    public void validate(RpmPathInfo rpm) throws IOException {
+    public void validate(RpmInfoURI rpm) throws IOException {
         if (!"noarch".equals(rpm.getArch())) {
             fail("{0} is a javadoc package but its architecture is {1}",
                     Decorated.rpm(rpm),

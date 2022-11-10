@@ -16,22 +16,22 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmPathInfo;
+import org.fedoraproject.javapackages.validator.RpmInfoURI;
 
 public abstract class DuplicateFileValidator extends Validator {
     @Override
-    public void validate(Iterator<RpmPathInfo> rpmIt) throws IOException {
-        var rpms = new ArrayList<RpmPathInfo>();
+    public void validate(Iterator<RpmInfoURI> rpmIt) throws IOException {
+        var rpms = new ArrayList<RpmInfoURI>();
         Iterators.addAll(rpms, rpmIt);
 
         // The union of file paths present in all RPM files mapped to the RPM file names they are present in
         var files = new TreeMap<String, ArrayList<Pair<CpioArchiveEntry, Path>>>();
 
-        for (RpmPathInfo rpm : rpms) {
-            if (!new RpmPathInfo(rpm.getPath()).isSourcePackage()) {
-                for (var pair : Common.rpmFilesAndSymlinks(rpm.getPath()).entrySet()) {
+        for (RpmInfoURI rpm : rpms) {
+            if (!rpm.isSourcePackage()) {
+                for (var pair : Common.rpmFilesAndSymlinks(rpm.getURI()).entrySet()) {
                     files.computeIfAbsent(Common.getEntryPath(pair.getKey()).toString(), key -> new ArrayList<>())
-                        .add(Pair.of(pair.getKey(), rpm.getPath()));
+                        .add(Pair.of(pair.getKey(), Paths.get(rpm.getURI().getPath())));
                 }
             }
         }

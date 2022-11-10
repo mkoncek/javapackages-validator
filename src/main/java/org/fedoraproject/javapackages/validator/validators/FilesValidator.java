@@ -8,14 +8,14 @@ import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmPathInfo;
+import org.fedoraproject.javapackages.validator.RpmInfoURI;
 
 public abstract class FilesValidator extends ElementwiseValidator {
     public abstract boolean allowedFile(RpmInfo rpm, Path path);
 
     @Override
-    public void validate(RpmPathInfo rpm) throws IOException {
-        try (var is = new RpmArchiveInputStream(rpm.getPath())) {
+    public void validate(RpmInfoURI rpm) throws IOException {
+        try (var is = new RpmArchiveInputStream(rpm.getURI().toURL())) {
             boolean pass = true;
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
                 Path entryName = Common.getEntryPath(rpmEntry);

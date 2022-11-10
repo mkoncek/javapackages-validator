@@ -1,6 +1,7 @@
 package org.fedoraproject.javapackages.validator;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,10 +27,10 @@ public class Common {
      * or null, if the file path is not a symlink.
      * @throws IOException
      */
-    public static SortedMap<CpioArchiveEntry, Path> rpmFilesAndSymlinks(Path rpmPath) throws IOException {
+    public static SortedMap<CpioArchiveEntry, Path> rpmFilesAndSymlinks(URI rpmUri) throws IOException {
         var result = new TreeMap<CpioArchiveEntry, Path>((lhs, rhs) -> lhs.getName().compareTo(rhs.getName()));
 
-        try (var is = new RpmArchiveInputStream(rpmPath)) {
+        try (var is = new RpmArchiveInputStream(rpmUri.toURL())) {
             for (CpioArchiveEntry rpmEntry; (rpmEntry = is.getNextEntry()) != null;) {
                 Path target = null;
 
