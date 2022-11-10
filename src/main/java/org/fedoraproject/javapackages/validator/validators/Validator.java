@@ -9,14 +9,14 @@ import java.util.Iterator;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.LogEvent;
 import org.fedoraproject.javapackages.validator.Logger;
-import org.fedoraproject.javapackages.validator.RpmPathInfo;
+import org.fedoraproject.javapackages.validator.RpmInfoURI;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public abstract class Validator {
     protected Collection<String> failMessages = new ArrayList<>(0);
     protected Collection<String> passMessages = new ArrayList<>(0);
-    private Logger logger;
+    private Logger logger = new Logger();
 
     @SuppressFBWarnings("EI_EXPOSE_REP")
     public Logger getLogger() {
@@ -56,5 +56,5 @@ public abstract class Validator {
         getLogger().info(pattern, arguments);
     }
 
-    abstract public void validate(Iterator<RpmPathInfo> rpmIt) throws IOException;
+    abstract public void validate(Iterator<RpmInfoURI> rpmIt) throws IOException;
 }

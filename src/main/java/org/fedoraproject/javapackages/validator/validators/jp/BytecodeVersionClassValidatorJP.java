@@ -3,7 +3,7 @@ package org.fedoraproject.javapackages.validator.validators.jp;
 import java.util.Set;
 
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmPathInfo;
+import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.validators.BytecodeVersionJarValidator;
 import org.fedoraproject.javapackages.validator.validators.BytecodeVersionJarValidator.BytecodeVersionClassValidator;
 
@@ -52,7 +52,7 @@ public class BytecodeVersionClassValidatorJP extends BytecodeVersionClassValidat
     });
 
     @Override
-    public void validate(RpmPathInfo rpm, String jarName, String className, int version) {
+    public void validate(RpmInfoURI rpm, String jarName, String className, int version) {
         if (className.equals("module-info.class")) {
             info("{0}: {1}: ignoring module-info.class",
                     Decorated.rpm(rpm),

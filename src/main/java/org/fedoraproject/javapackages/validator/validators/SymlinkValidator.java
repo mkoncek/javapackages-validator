@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmPathInfo;
+import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -57,8 +57,8 @@ public abstract class SymlinkValidator extends ElementwiseValidator {
     }
 
     @Override
-    public void validate(RpmPathInfo rpm) throws IOException {
-        for (var entry : Common.rpmFilesAndSymlinks(rpm.getPath()).entrySet()) {
+    public void validate(RpmInfoURI rpm) throws IOException {
+        for (var entry : Common.rpmFilesAndSymlinks(rpm.getURI()).entrySet()) {
             Path link = Common.getEntryPath(entry.getKey());
             Path target = entry.getValue();
 

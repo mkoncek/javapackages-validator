@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmPathInfo;
+import org.fedoraproject.javapackages.validator.RpmInfoURI;
 
 public abstract class RpmAttributeValidator extends ElementwiseValidator {
     private final String attributeName;
@@ -16,7 +16,7 @@ public abstract class RpmAttributeValidator extends ElementwiseValidator {
         this.attributeName = attributeName;
     }
 
-    protected RpmAttributeValidator(Predicate<RpmPathInfo> filter, String attributeName) {
+    protected RpmAttributeValidator(Predicate<RpmInfoURI> filter, String attributeName) {
         super(filter);
         this.attributeName = attributeName;
     }
@@ -24,7 +24,7 @@ public abstract class RpmAttributeValidator extends ElementwiseValidator {
     public abstract boolean allowedAttribute(RpmInfo rpm, String value);
 
     @Override
-    public void validate(RpmPathInfo rpm) throws IOException {
+    public void validate(RpmInfoURI rpm) throws IOException {
         try {
             Method getter = RpmInfo.class.getMethod("get" + attributeName);
 

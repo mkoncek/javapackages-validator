@@ -26,7 +26,7 @@ public class Decorated {
         this.decorations = decorations;
     }
 
-    public static Decorated rpm(RpmPathInfo rpm) {
+    public static Decorated rpm(RpmInfoURI rpm) {
         return new Decorated(rpm, DECORATION_RPM);
     }
 

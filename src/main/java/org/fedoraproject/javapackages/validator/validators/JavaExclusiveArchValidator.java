@@ -5,7 +5,7 @@ import java.util.Collections;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmPathInfo;
+import org.fedoraproject.javapackages.validator.RpmInfoURI;
 
 public class JavaExclusiveArchValidator extends ElementwiseValidator {
     /**
@@ -18,7 +18,7 @@ public class JavaExclusiveArchValidator extends ElementwiseValidator {
     }
 
     @Override
-    public void validate(RpmPathInfo rpm) throws IOException {
+    public void validate(RpmInfoURI rpm) throws IOException {
         boolean noarch = rpm.getBuildArchs().equals(Collections.singletonList("noarch"));
         String expected = noarch ? JAVA_ARCHES + " noarch" : JAVA_ARCHES;
         String actual = String.join(" ", rpm.getExclusiveArch());
