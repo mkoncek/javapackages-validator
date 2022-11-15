@@ -77,17 +77,17 @@ public class Main {
 
     static void printHelp() {
         System.out.println("Usage: Main [optional flags] <validator flags> <RPM files or directories to test...>");
+        System.out.println("    " + Flag.HELP + " - Print help message");
         System.out.println("Options for specifying validators, can be specified multiple times");
         System.out.println("    " + Flag.SOURCE_FILE + " - File path of a source file");
         System.out.println("    " + Flag.SOURCE_URI + " - URI of a source file");
         System.out.println("    " + Flag.CLASS_FILE + " - File path of a class file");
         System.out.println("    " + Flag.CLASS_URI + " - URI of a class file");
-        System.out.println("    " + Flag.CLASS_NAME + " - class name to obtain from the class path");
+        System.out.println("    " + Flag.CLASS_NAME + " - class name to obtain from the process' class path");
         System.out.println("Options for specifying tested RPM files, can be specified multiple times");
         System.out.println("    " + Flag.FILE + " - File path of an .rpm file");
         System.out.println("    " + Flag.URI + " - URI of an .rpm file");
         System.out.println("Optional flags:");
-        System.out.println("    " + Flag.HELP + " - Print help message");
         System.out.println("    " + Flag.DEBUG + " - Display debugging output");
         System.out.println("    " + Flag.COLOR + " - Display colored output");
     }
@@ -264,14 +264,14 @@ public class Main {
             }
         }
 
-        boolean didRun = false;
+        boolean somePassed = false;
         var failMessages = new ArrayList<String>();
         for (Validator validator : instantiateValidators(classes, classNames, logger)) {
-            didRun = true;
             validator.validate(IteratorUtils.<RpmInfoURI>chainedIterator(new ArgFileIterator(argsPath),
                     argsUri.stream().map(RpmInfoURI::create).iterator()));
             validator.getFailMessages().forEach(failMessages::add);
             for (String passMessage : validator.getPassMessages()) {
+                somePassed = true;
                 System.out.println(passMessage);
             }
         }
@@ -282,13 +282,15 @@ public class Main {
             System.out.println(failMessage);
         }
 
-        if (!didRun) {
-            logger.info("Summary: no checks were run");
-        } else if (exitCode == 0) {
-            logger.info("Summary: all checks {0}", Decorated.custom("passed", Decoration.green, Decoration.bold));
+        if (exitCode == 0) {
+            if (somePassed) {
+                logger.info("Summary: all checks {0}", Decorated.custom("passed", Decoration.green, Decoration.bold));
+            } else {
+                logger.info("Summary: no checks were run");
+            }
         } else {
-            logger.info("Summary: {0} {2} {1}", Decorated.plain(failMessages.size()), Decorated.custom("failed", Decoration.red, Decoration.bold),
-                    Decorated.plain(failMessages.size() == 1 ? "check" : "checks"));
+            logger.info("Summary: {0} {1}", Decorated.plain(failMessages.size()), Decorated.custom(
+                    "failed check" + (failMessages.size() == 1 ? "" : "s"), Decoration.red, Decoration.bold));
             exitCode = 1;
         }
 

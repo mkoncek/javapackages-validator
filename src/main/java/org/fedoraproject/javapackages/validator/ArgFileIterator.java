@@ -68,10 +68,6 @@ public class ArgFileIterator implements Iterator<RpmInfoURI> {
 
     @Override
     public RpmInfoURI next() {
-        try {
-            return new RpmInfoURI(pathIterator.next().toUri());
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
+        return RpmInfoURI.create(pathIterator.next().toUri());
     }
 }
