@@ -7,7 +7,7 @@ import org.fedoraproject.javapackages.validator.RpmInfoURI;
 
 public class JavadocNoarchValidator extends ElementwiseValidator {
     public JavadocNoarchValidator() {
-        super(rpm -> !rpm.isSourcePackage() && rpm.getName().equals(rpm.getPackageName() + "-javadoc"));
+        super(rpm -> rpm.isBinaryPackage() && rpm.getName().equals(rpm.getPackageName() + "-javadoc"));
     }
 
     @Override
