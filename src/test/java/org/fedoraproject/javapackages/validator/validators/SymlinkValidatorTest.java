@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import org.fedoraproject.javapackages.validator.TestCommon;
-import org.fedoraproject.javapackages.validator.validators.SymlinkValidator.SymlinValidatorEnvroot;
+import org.fedoraproject.javapackages.validator.validators.SymlinkValidator.SymlinkValidatorEnvroot;
 import org.junit.jupiter.api.Test;
 
 public class SymlinkValidatorTest {
@@ -18,14 +18,14 @@ public class SymlinkValidatorTest {
 
     @Test
     void testDanglingSymlink() throws IOException {
-        var validator = new SymlinValidatorEnvroot(Paths.get("/"));
+        var validator = new SymlinkValidatorEnvroot(Paths.get("/"));
         validator.validate(TestCommon.iteratorFrom(Stream.of(DANGLING_SYMLINK_RPM)));
         assertFailOne(validator);
     }
 
     @Test
     void testValidSymlink() throws IOException {
-        var validator = new SymlinValidatorEnvroot(Paths.get("/"));
+        var validator = new SymlinkValidatorEnvroot(Paths.get("/"));
         validator.validate(TestCommon.iteratorFrom(Stream.of(VALID_SYMLINK_RPM)));
         assertPass(validator);
     }

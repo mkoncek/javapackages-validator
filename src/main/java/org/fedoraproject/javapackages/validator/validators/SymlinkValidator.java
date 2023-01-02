@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.function.Predicate;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
@@ -32,10 +31,10 @@ public abstract class SymlinkValidator extends ElementwiseValidator {
      * targets against files present on the file system with specified environment
      * root.
      */
-    public static class SymlinValidatorEnvroot extends SymlinkValidator {
+    public static class SymlinkValidatorEnvroot extends SymlinkValidator {
         private Path envroot;
 
-        public SymlinValidatorEnvroot(Path envroot) {
+        public SymlinkValidatorEnvroot(Path envroot) {
             this.envroot = envroot;
         }
 
@@ -53,7 +52,7 @@ public abstract class SymlinkValidator extends ElementwiseValidator {
     }
 
     public SymlinkValidator() {
-        super(Predicate.not(RpmInfo::isSourcePackage));
+        super(RpmInfo::isBinaryPackage);
     }
 
     @Override

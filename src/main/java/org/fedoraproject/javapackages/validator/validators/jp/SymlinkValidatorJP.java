@@ -7,7 +7,7 @@ import org.fedoraproject.javapackages.validator.validators.SymlinkValidator;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
-public class SymlinkValidatorJP extends SymlinkValidator.SymlinValidatorEnvroot {
+public class SymlinkValidatorJP extends SymlinkValidator.SymlinkValidatorEnvroot {
     public SymlinkValidatorJP() {
         super(Paths.get("/mnt/envroot"));
     }
