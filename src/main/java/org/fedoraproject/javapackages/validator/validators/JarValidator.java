@@ -1,7 +1,6 @@
 package org.fedoraproject.javapackages.validator.validators;
 
 import java.io.IOException;
-import java.util.function.Predicate;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
@@ -14,7 +13,7 @@ public abstract class JarValidator extends ElementwiseValidator {
     protected static final Decoration DECORATION_JAR = Decoration.bright_blue;
 
     protected JarValidator() {
-        super(Predicate.not(RpmInfo::isSourcePackage));
+        super(RpmInfo::isBinaryPackage);
     }
 
     @Override

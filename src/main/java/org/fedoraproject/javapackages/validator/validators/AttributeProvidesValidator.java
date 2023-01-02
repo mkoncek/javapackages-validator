@@ -1,7 +1,6 @@
 package org.fedoraproject.javapackages.validator.validators;
 
 import java.io.IOException;
-import java.util.function.Predicate;
 
 import org.fedoraproject.javadeptools.rpm.Reldep;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
@@ -10,7 +9,7 @@ import org.fedoraproject.javapackages.validator.RpmInfoURI;
 
 public class AttributeProvidesValidator extends ElementwiseValidator {
     public AttributeProvidesValidator() {
-        super(Predicate.not(RpmInfo::isSourcePackage));
+        super(RpmInfo::isBinaryPackage);
     }
 
     @Override
