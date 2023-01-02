@@ -4,7 +4,6 @@ import java.util.Set;
 
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
-import org.fedoraproject.javapackages.validator.validators.BytecodeVersionJarValidator;
 import org.fedoraproject.javapackages.validator.validators.BytecodeVersionJarValidator.BytecodeVersionClassValidator;
 
 public class BytecodeVersionClassValidatorJP extends BytecodeVersionClassValidator {
@@ -38,7 +37,7 @@ public class BytecodeVersionClassValidatorJP extends BytecodeVersionClassValidat
             "apache-commons-net",
             "bcel",
             "bsf",
-            "jakarta-activation",
+            "jakarta-activation1",
             "jakarta-mail",
             "jakarta-oro",
             "jdepend",
