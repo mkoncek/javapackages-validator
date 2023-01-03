@@ -3,7 +3,6 @@ package org.fedoraproject.javapackages.validator.validators;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -16,6 +15,8 @@ import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public abstract class BytecodeVersionJarValidator extends JarValidator {
+    protected static final Decoration DECORATION_CLASS = Decoration.bright_yellow;
+
     @Override
     public void validateJarEntry(RpmInfoURI rpm, CpioArchiveEntry rpmEntry, byte[] content) throws IOException {
         String jarName = rpmEntry.getName().substring(1);
@@ -46,10 +47,17 @@ public abstract class BytecodeVersionJarValidator extends JarValidator {
             }
         }
 
-        validate(rpm, jarName, Collections.unmodifiableMap(classVersions));
+        for (var entry : classVersions.entrySet()) {
+            debug("{0}: {1}: {2}: bytecode version: {3}",
+                    Decorated.rpm(rpm),
+                    Decorated.custom(jarName, DECORATION_JAR),
+                    Decorated.custom(entry.getKey(), DECORATION_CLASS),
+                    Decorated.actual(entry.getValue()));
+        }
+
+        validate(rpm, jarName, classVersions);
 
         if (!failed()) {
-            passMessages.clear();
             pass("{0}: {1}: found bytecode versions: {2}",
                     Decorated.rpm(rpm),
                     Decorated.custom(jarName, DECORATION_JAR),
@@ -58,17 +66,4 @@ public abstract class BytecodeVersionJarValidator extends JarValidator {
     }
 
     public abstract void validate(RpmInfoURI rpm, String jarName, Map<String, Integer> classVersions);
-
-    public static abstract class BytecodeVersionClassValidator extends BytecodeVersionJarValidator {
-        protected static final Decoration DECORATION_CLASS = Decoration.bright_yellow;
-
-        @Override
-        public void validate(RpmInfoURI rpm, String jarName, Map<String, Integer> classVersions) {
-            for (var entry : classVersions.entrySet()) {
-                validate(rpm, jarName, entry.getKey(), entry.getValue());
-            }
-        }
-
-        public abstract void validate(RpmInfoURI rpm, String jarName, String className, int version);
-    }
 }
