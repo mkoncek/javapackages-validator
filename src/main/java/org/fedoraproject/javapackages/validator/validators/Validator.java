@@ -2,9 +2,9 @@ package org.fedoraproject.javapackages.validator.validators;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.LogEvent;
@@ -14,8 +14,8 @@ import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public abstract class Validator {
-    protected Collection<String> failMessages = new ArrayList<>(0);
-    protected Collection<String> passMessages = new ArrayList<>(0);
+    protected List<String> failMessages = new ArrayList<>(0);
+    protected List<String> passMessages = new ArrayList<>(0);
     private Logger logger = new Logger();
 
     @SuppressFBWarnings("EI_EXPOSE_REP")
@@ -28,12 +28,12 @@ public abstract class Validator {
         this.logger = logger;
     }
 
-    public Collection<String> getFailMessages() {
-        return Collections.unmodifiableCollection(failMessages);
+    public List<String> getFailMessages() {
+        return Collections.unmodifiableList(failMessages);
     }
 
-    public Collection<String> getPassMessages() {
-        return Collections.unmodifiableCollection(passMessages);
+    public List<String> getPassMessages() {
+        return Collections.unmodifiableList(passMessages);
     }
 
     public boolean failed() {
