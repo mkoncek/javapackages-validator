@@ -28,6 +28,10 @@ public abstract class Validator {
         this.logger = logger;
     }
 
+    public void arguments(String[] args) {
+        throw new IllegalArgumentException(getClass().getSimpleName() + " does not recognize optional arguments");
+    }
+
     public List<String> getFailMessages() {
         return Collections.unmodifiableList(failMessages);
     }
