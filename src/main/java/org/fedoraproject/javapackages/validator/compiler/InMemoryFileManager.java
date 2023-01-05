@@ -1,7 +1,6 @@
 package org.fedoraproject.javapackages.validator.compiler;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -23,8 +22,10 @@ public class InMemoryFileManager implements JavaFileManager {
         this.delegate = delegate;
     }
 
-    public Map<String, ? extends JavaFileObject> getOutputs() {
-        return Collections.unmodifiableMap(classOutputs);
+    public Map<String, JavaFileObject> getOutputs() {
+        var result = classOutputs;
+        classOutputs = new TreeMap<>();
+        return result;
     }
 
     @Override

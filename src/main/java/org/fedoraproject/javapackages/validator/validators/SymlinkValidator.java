@@ -15,39 +15,22 @@ import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
+ * Validator which resolves symbolic link targets against files present
+ * on the file system with specified environment root.
+ *
+ * Optional arguments:
+ *     -e <envroot> -- Environment root (default is /)
+ *
  * Ignores source rpms.
  */
-public abstract class SymlinkValidator extends ElementwiseValidator {
-    /**
-     * @param target The link target. Is always absolute.
-     * @return The textual representation of the location where the link target
-     * was found. Can be a file on the file system or an rpm file. Returning
-     * {@code null} means the target was not found.
-     */
-    public abstract String targetLocation(Path target);
+@SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
+public class SymlinkValidator extends ElementwiseValidator {
+    private Path envroot = Paths.get("/");
 
-    /**
-     * Default implementation of SymlinkValidator which resolves symbolic link
-     * targets against files present on the file system with specified environment
-     * root.
-     */
-    public static class SymlinkValidatorEnvroot extends SymlinkValidator {
-        private Path envroot;
-
-        public SymlinkValidatorEnvroot(Path envroot) {
-            this.envroot = envroot;
-        }
-
-        @Override
-        @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
-        public String targetLocation(Path target) {
-            Path result = envroot.resolve(Paths.get("/").relativize(target));
-
-            if (Files.exists(result, LinkOption.NOFOLLOW_LINKS)) {
-                return result.toString();
-            }
-
-            return null;
+    @Override
+    public void arguments(String[] args) {
+        if (args.length > 0 && args[0].equals("-e")) {
+            envroot = Paths.get(args[1]);
         }
     }
 
@@ -64,22 +47,22 @@ public abstract class SymlinkValidator extends ElementwiseValidator {
             if (target != null) {
                 // Resolve relative links of RPM entries
                 target = link.resolveSibling(target);
+                target = envroot.resolve(Paths.get("/").relativize(target));
 
-                String location = targetLocation(target);
-
-                if (location == null) {
-                    fail("{0}: Link {1} points to {2} (normalized as {3}) which was not found",
-                            Decorated.rpm(rpm),
-                            Decorated.custom(link, Decoration.bright_cyan),
-                            Decorated.custom(target, Decoration.bright_magenta),
-                            Decorated.custom(target.normalize(), Decoration.magenta));
-                } else {
-                    pass("{0}: Link {1} points to {2} (normalized as {3}) located in {4}",
+                if (Files.exists(target, LinkOption.NOFOLLOW_LINKS)) {
+                    pass("{0}: Link {1} points to {2} (normalized as {3}) exists as {4}",
                             Decorated.rpm(rpm),
                             Decorated.custom(link, Decoration.bright_cyan),
                             Decorated.custom(target, Decoration.bright_magenta),
                             Decorated.custom(target.normalize(), Decoration.magenta),
-                            Decorated.outer(location));
+                            Decorated.outer(target));
+                } else {
+                    fail("{0}: Link {1} points to {2} (normalized as {3}) does not exist as {4}",
+                            Decorated.rpm(rpm),
+                            Decorated.custom(link, Decoration.bright_cyan),
+                            Decorated.custom(target, Decoration.bright_magenta),
+                            Decorated.custom(target.normalize(), Decoration.magenta),
+                            Decorated.outer(target));
                 }
             }
         }

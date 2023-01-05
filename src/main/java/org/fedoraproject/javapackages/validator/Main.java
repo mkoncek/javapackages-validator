@@ -5,14 +5,12 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Modifier;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +24,7 @@ import javax.tools.JavaFileObject.Kind;
 import javax.tools.ToolProvider;
 
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 import org.fedoraproject.javapackages.validator.compiler.InMemoryClassLoader;
 import org.fedoraproject.javapackages.validator.compiler.InMemoryFileManager;
@@ -86,6 +85,9 @@ public class Main {
         System.out.println("    " + Flag.CLASS_URI + " - URI of a class file");
         System.out.println("    " + Flag.CLASS_NAME + " - class name to obtain from the process' class path");
         System.out.println();
+        System.out.println("Validator arguments can be immediately followed by space-separated square parentheses");
+        System.out.println("the contents of which will be passed as arguments to the validator.");
+        System.out.println();
         System.out.println("Options for specifying tested RPM files, can be specified multiple times");
         System.out.println("    " + Flag.FILE + " - File path of an .rpm file");
         System.out.println("    " + Flag.URI + " - URI of an .rpm file");
@@ -95,17 +97,15 @@ public class Main {
         System.out.println("    " + Flag.COLOR + " - Display colored output");
     }
 
-    public static Map<String, ? extends JavaFileObject> compileFiles(Iterable<URI> sourceURIs, Iterable<String> compilerOptions, Logger logger) throws IOException {
+    public static Map<String, JavaFileObject> compileFiles(URI sourceURI, Iterable<String> compilerOptions, Logger logger) throws IOException {
         var compilationUnits = new ArrayList<JavaFileObject>();
-        for (URI sourceURI : sourceURIs) {
-            if (sourceURI.getScheme().equalsIgnoreCase("file")) {
-                try (var stream = Files.find(Paths.get(sourceURI), Integer.MAX_VALUE, (path, attributes) ->
-                        !attributes.isDirectory() && path.toString().endsWith(".java"), FileVisitOption.FOLLOW_LINKS)) {
-                    stream.map((path) -> new URIJavaFileObject(path.toUri(), Kind.SOURCE)).forEach(compilationUnits::add);
-                }
-            } else {
-                compilationUnits.add(new URIJavaFileObject(sourceURI, Kind.SOURCE));
+        if (sourceURI.getScheme().equalsIgnoreCase("file")) {
+            try (var stream = Files.find(Paths.get(sourceURI), Integer.MAX_VALUE, (path, attributes) ->
+                    !attributes.isDirectory() && path.toString().endsWith(".java"), FileVisitOption.FOLLOW_LINKS)) {
+                stream.map((path) -> new URIJavaFileObject(path.toUri(), Kind.SOURCE)).forEach(compilationUnits::add);
             }
+        } else {
+            compilationUnits.add(new URIJavaFileObject(sourceURI, Kind.SOURCE));
         }
 
         if (compilationUnits.isEmpty()) {
@@ -130,41 +130,28 @@ public class Main {
     }
 
     @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
-    protected static Collection<Validator> instantiateValidators(Map<String, ? extends JavaFileObject> classes,
-            List<String> classNames, Logger logger) throws IOException {
-        var result = new ArrayList<Validator>();
-
-        logger.debug("Compiled class files: {0}", Decorated.list(List.copyOf(classes.keySet())));
-        logger.debug("Class names from class path: {0}", Decorated.list(classNames));
-
+    protected static Validator instantiateValidator(ClassLoader classLoader,
+            String className, String[] args, Logger logger) throws IOException {
         try {
-            var classTypes = new ArrayList<Class<?>>();
-            for (String className : classNames) {
-                classTypes.add(ClassLoader.getSystemClassLoader().loadClass(className));
-            }
-            ClassLoader cl = new InMemoryClassLoader(classes);
-            for (var className : classes.keySet()) {
-                classTypes.add(cl.loadClass(className));
-            }
-            for (var classType : classTypes) {
-                if (Validator.class.isAssignableFrom(classType)) {
-                    if (Modifier.isAbstract(classType.getModifiers())) {
-                        logger.debug("{0} is convertible to Validator but is abstract",
-                                Decorated.custom(classType.getSimpleName(), Decoration.bright_yellow));
-                    } else {
-                        var validator = Validator.class.cast(classType.getConstructor().newInstance());
-                        validator.setLogger(logger);
-                        result.add(validator);
+            Class<?> classType = classLoader.loadClass(className);
+            if (Validator.class.isAssignableFrom(classType)) {
+                if (Modifier.isAbstract(classType.getModifiers())) {
+                    logger.debug("{0} is convertible to Validator but is abstract",
+                            Decorated.custom(classType.getSimpleName(), Decoration.bright_yellow));
+                } else {
+                    var validator = Validator.class.cast(classType.getConstructor().newInstance());
+                    validator.setLogger(logger);
+                    if (args != null) {
+                        validator.arguments(args);
                     }
+                    return validator;
                 }
             }
         } catch (ReflectiveOperationException ex) {
             throw new RuntimeException(ex);
         }
 
-        logger.debug("Instantiated validators: {0}", Decorated.list(result.stream().map(o -> o.getClass().getSimpleName()).toList()));
-
-        return result;
+        return null;
     }
 
     static final class ClassNameVisitor extends ClassVisitor {
@@ -185,6 +172,18 @@ public class Main {
         }
     }
 
+    static <T> int tryReadArgs(List<MutablePair<T, String[]>> result, String[] args, int pos) {
+        if (pos + 1 < args.length && args[pos + 1].equals("[")) {
+            pos += 2;
+            var begin = pos;
+            while (!args[pos].equals("]")) {
+                ++pos;
+            }
+            result.get(result.size() - 1).setValue(Arrays.copyOfRange(args, begin, pos));
+        }
+        return pos;
+    }
+
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             System.out.println("error: no arguments provided");
@@ -195,9 +194,9 @@ public class Main {
             System.exit(0);
         }
 
-        var sourceUris = new ArrayList<URI>();
-        var classUris = new ArrayList<URI>();
-        var classNames = new ArrayList<String>();
+        var sourceUris = new ArrayList<MutablePair<URI, String[]>>();
+        var classUris = new ArrayList<MutablePair<URI, String[]>>();
+        var classNames = new ArrayList<MutablePair<String, String[]>>();
         var argsPath = new ArrayList<String>();
         var argsUri = new ArrayList<URI>();
 
@@ -208,39 +207,32 @@ public class Main {
             } else if (Flag.DEBUG.equals(args[i])) {
                 debugOutputStream = System.err;
                 continue;
-            } else if (Flag.SOURCE_URI.equals(args[i])) {
-                ++i;
-                try {
-                    sourceUris.add(new URI(args[i]));
-                } catch (URISyntaxException ex) {
-                    throw new IllegalArgumentException(args[i], ex);
-                }
             } else if (Flag.SOURCE_FILE.equals(args[i])) {
                 ++i;
-                sourceUris.add(Paths.get(args[i]).toUri());
-            } else if (Flag.CLASS_URI.equals(args[i])) {
+                sourceUris.add(MutablePair.of(Paths.get(args[i]).toUri(), null));
+                i = tryReadArgs(sourceUris, args, i);
+            } else if (Flag.SOURCE_URI.equals(args[i])) {
                 ++i;
-                try {
-                    classUris.add(new URI(args[i]));
-                } catch (URISyntaxException ex) {
-                    throw new IllegalArgumentException(args[i], ex);
-                }
+                sourceUris.add(MutablePair.of(new URI(args[i]), null));
+                i = tryReadArgs(sourceUris, args, i);
             } else if (Flag.CLASS_FILE.equals(args[i])) {
                 ++i;
-                classUris.add(Paths.get(args[i]).toUri());
+                classUris.add(MutablePair.of(Paths.get(args[i]).toUri(), null));
+                i = tryReadArgs(classUris, args, i);
+            } else if (Flag.CLASS_URI.equals(args[i])) {
+                ++i;
+                classUris.add(MutablePair.of(new URI(args[i]), null));
+                i = tryReadArgs(classUris, args, i);
             } else if (Flag.CLASS_NAME.equals(args[i])) {
                 ++i;
-                classNames.add(args[i]);
+                classNames.add(MutablePair.of(args[i], null));
+                i = tryReadArgs(classNames, args, i);
             } else if (Flag.FILE.equals(args[i])) {
                 ++i;
                 argsPath.add(args[i]);
             } else if (Flag.URI.equals(args[i])) {
                 ++i;
-                try {
-                    argsUri.add(new URI(args[i]));
-                } catch (URISyntaxException ex) {
-                    throw new IllegalArgumentException(args[i], ex);
-                }
+                argsUri.add(new URI(args[i]));
             } else if (args[i].startsWith("-")) {
                 throw new RuntimeException("Unrecognized option: " + args[i]);
             } else {
@@ -257,9 +249,17 @@ public class Main {
         logger.debug("File arguments: {0}", Decorated.list(argsPath));
         logger.debug("URI arguments: {0}", Decorated.list(argsUri));
 
-        var classes = new TreeMap<String, JavaFileObject>(compileFiles(sourceUris, Arrays.asList(), logger));
+        var classes = new TreeMap<String, JavaFileObject>();
+        var classArgs = new TreeMap<JavaFileObject, String[]>();
+        for (var sourceUri : sourceUris) {
+            var compiled = compileFiles(sourceUri.getKey(), Arrays.asList(), logger);
+            classes.putAll(compiled);
+            for (var className : compiled.values()) {
+                classArgs.put(className, sourceUri.getValue());
+            }
+        }
         for (var classUri : classUris) {
-            var uri = new URIJavaFileObject(classUri, Kind.CLASS);
+            var uri = new URIJavaFileObject(classUri.getKey(), Kind.CLASS);
             try (var is = uri.openInputStream()) {
                 var classNameVisitor = new ClassNameVisitor();
                 new ClassReader(is.readAllBytes()).accept(classNameVisitor, 0);
@@ -267,9 +267,27 @@ public class Main {
             }
         }
 
+        logger.debug("Compiled class files: {0}", Decorated.list(List.copyOf(classes.keySet())));
+        logger.debug("Class names from class path: {0}", Decorated.list(classNames.stream().map(MutablePair::getKey).toList()));
+
         boolean somePassed = false;
         var failMessages = new ArrayList<String>();
-        for (Validator validator : instantiateValidators(classes, classNames, logger)) {
+
+        var validators = new ArrayList<Validator>();
+        var classLoader = new InMemoryClassLoader(classes);
+        for (var classObject : classes.entrySet()) {
+            classNames.add(MutablePair.of(classObject.getKey(), classArgs.get(classObject.getValue())));
+        }
+        for (var className : classNames) {
+            var validator = instantiateValidator(classLoader, className.getKey(), className.getValue(), logger);
+            if (validator != null) {
+                validators.add(validator);
+            }
+        }
+
+        logger.debug("Instantiated validators: {0}", Decorated.list(validators.stream().map(o -> o.getClass().getSimpleName()).toList()));
+
+        for (Validator validator : validators) {
             validator.validate(IteratorUtils.<RpmInfoURI>chainedIterator(new ArgFileIterator(argsPath),
                     argsUri.stream().map(RpmInfoURI::create).iterator()));
             validator.getFailMessages().forEach(failMessages::add);
