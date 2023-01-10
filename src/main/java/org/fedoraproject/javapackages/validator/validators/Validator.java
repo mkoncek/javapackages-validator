@@ -11,6 +11,7 @@ import org.fedoraproject.javapackages.validator.LogEvent;
 import org.fedoraproject.javapackages.validator.Logger;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public abstract class Validator {
@@ -28,7 +29,7 @@ public abstract class Validator {
         this.logger = logger;
     }
 
-    public void arguments(String[] args) {
+    public void arguments(@NonNull String[] args) {
         throw new IllegalArgumentException(getClass().getSimpleName() + " does not recognize optional arguments");
     }
 
