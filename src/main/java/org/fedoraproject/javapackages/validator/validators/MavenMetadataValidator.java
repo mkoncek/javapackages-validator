@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -13,6 +14,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
+import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
@@ -42,57 +44,76 @@ public class MavenMetadataValidator extends ElementwiseValidator {
         }
     }
 
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Incorrect claim that Exception is never thrown")
     @Override
     public void validate(RpmInfoURI rpm) throws IOException {
-        CpioArchiveEntry metadataXml = null;
-        byte[] content = null;
+        var metadataXmls = new ArrayList<Pair<CpioArchiveEntry, byte[]>>();
         try (var is = new RpmArchiveInputStream(rpm.getURI().toURL())) {
             for (CpioArchiveEntry rpmEntry; (rpmEntry = is.getNextEntry()) != null;) {
-                if (rpmEntry.getName().equals("./usr/share/maven-metadata/" + rpm.getPackageName() + ".xml")) {
-                    content = new byte[(int) rpmEntry.getSize()];
+                if (rpmEntry.getName().startsWith("./usr/share/maven-metadata/") && rpmEntry.getName().endsWith(".xml")) {
+                    byte[] content = new byte[(int) rpmEntry.getSize()];
                     if (is.read(content) != content.length) {
                         throw Common.INCOMPLETE_READ;
                     }
+                    metadataXmls.add(Pair.of(rpmEntry, content));
                 }
-                metadataXml = rpmEntry;
             }
         }
 
-        if (metadataXml == null) {
+        if (metadataXmls.isEmpty()) {
             info("{0}: maven metadata XML file not found", Decorated.rpm(rpm));
             return;
         }
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
+        factory.setNamespaceAware(true);
         // TODO factory settings (validation, namespace, schema)
 
-        Document metadata = null;
+        /*
+        URL schemaFile = new URL("https://fedora-java.github.io/xmvn/xsd/metadata-2.0.0.xsd");
+        Source xmlFile = new StreamSource(new File("/home/mkoncek/Upstream/javapackages-validator/jakarta-activation1.xml"));
+        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            try (var is = new ByteArrayInputStream(content)) {
-                metadata = builder.parse(is);
-            }
-            var xpath = XPathFactory.newInstance().newXPath();
-            var nodes = NodeList.class.cast(xpath.evaluate("//*[local-name()=\"artifact\"]/*[local-name()=\"path\"]", metadata, XPathConstants.NODESET));
-            for (int i = 0; i != nodes.getLength(); ++i) {
-                var node = nodes.item(i);
-                var artifactPath = Paths.get(node.getTextContent());
-                var resolvedArtifactPath = envroot.resolve(Paths.get("/").relativize(artifactPath));
-                if (Files.exists(resolvedArtifactPath, LinkOption.NOFOLLOW_LINKS)) {
-                    pass("{0}: artifact {1} is present on filesystem as {2}",
-                            Decorated.rpm(rpm),
-                            Decorated.actual(artifactPath),
-                            Decorated.outer(resolvedArtifactPath));
-                } else {
-                    fail("{0}: artifact {1} is not present on filesystem as {2}",
-                            Decorated.rpm(rpm),
-                            Decorated.expected(artifactPath),
-                            Decorated.outer(resolvedArtifactPath));
+            Schema schema = schemaFactory.newSchema(schemaFile);
+            var validator = schema.newValidator();
+            validator.validate(xmlFile);
+            System.out.println(xmlFile.getSystemId() + " is valid");
+        } catch (SAXException e) {
+            System.out.println(xmlFile.getSystemId() + " is NOT valid reason:" + e);
+        } catch (IOException e) {}
+        */
+
+        for (var pair : metadataXmls) {
+            Document metadata = null;
+            try {
+                DocumentBuilder builder = factory.newDocumentBuilder();
+                try (var is = new ByteArrayInputStream(pair.getValue())) {
+                    metadata = builder.parse(is);
                 }
+                var xpath = XPathFactory.newInstance().newXPath();
+                var nodes = NodeList.class.cast(xpath.evaluate("//*[local-name()=\"artifact\"]/*[local-name()=\"path\"]", metadata, XPathConstants.NODESET));
+                for (int i = 0; i != nodes.getLength(); ++i) {
+                    var node = nodes.item(i);
+                    var artifactPath = Paths.get(node.getTextContent());
+                    var resolvedArtifactPath = envroot.resolve(Paths.get("/").relativize(artifactPath));
+                    if (Files.exists(resolvedArtifactPath, LinkOption.NOFOLLOW_LINKS)) {
+                        pass("{0}: {1}: artifact {2} is present on filesystem as {3}",
+                                Decorated.rpm(rpm),
+                                Decorated.outer(pair.getKey().getName()),
+                                Decorated.actual(artifactPath),
+                                Decorated.outer(resolvedArtifactPath));
+                    } else {
+                        fail("{0}: {1}: artifact {2} is not present on filesystem as {3}",
+                                Decorated.rpm(rpm),
+                                Decorated.outer(pair.getKey().getName()),
+                                Decorated.expected(artifactPath),
+                                Decorated.outer(resolvedArtifactPath));
+                    }
+                }
+            } catch (Exception ex) {
+                throw new IOException(ex);
             }
-        } catch (Exception ex) {
-            throw new IOException(ex);
         }
     }
 }
