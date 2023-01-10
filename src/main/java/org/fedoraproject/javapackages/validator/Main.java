@@ -72,7 +72,12 @@ public class Main {
         public String toString() {
             return Stream.of(options()).collect(Collectors.joining(", "));
         }
+
+        static final Flag[] ALL_FLAGS = new Flag[] {
+            SOURCE_FILE, SOURCE_URI, CLASS_FILE, CLASS_URI, CLASS_NAME, FILE, URI, HELP, COLOR, DEBUG,
+        };
     }
+
 
     static void printHelp() {
         System.out.println("Usage: Main [optional flags] <validator flags> <RPM files or directories to test...>");
@@ -200,43 +205,46 @@ public class Main {
         var argsPath = new ArrayList<String>();
         var argsUri = new ArrayList<URI>();
 
+        Flag lastFlag = null;
         for (int i = 0; i != args.length; ++i) {
-            if (Flag.COLOR.equals(args[i])) {
+            if (args[i].startsWith("-")) {
+                lastFlag = null;
+            }
+            for (Flag flag : Flag.ALL_FLAGS) {
+                if (flag.equals(args[i])) {
+                    lastFlag = flag;
+                    ++i;
+                    break;
+                }
+            }
+
+            if (lastFlag == null) {
+                throw new RuntimeException("Unrecognized option: " + args[i]);
+            } else if (lastFlag == Flag.COLOR) {
                 DECORATOR = AnsiDecorator.INSTANCE;
-                continue;
-            } else if (Flag.DEBUG.equals(args[i])) {
+                --i;
+            } else if (lastFlag == Flag.DEBUG) {
                 debugOutputStream = System.err;
-                continue;
-            } else if (Flag.SOURCE_FILE.equals(args[i])) {
-                ++i;
+                --i;
+            } else if (lastFlag == Flag.SOURCE_FILE) {
                 sourceUris.add(MutablePair.of(Paths.get(args[i]).toUri(), null));
                 i = tryReadArgs(sourceUris, args, i);
-            } else if (Flag.SOURCE_URI.equals(args[i])) {
-                ++i;
+            } else if (lastFlag == Flag.SOURCE_URI) {
                 sourceUris.add(MutablePair.of(new URI(args[i]), null));
                 i = tryReadArgs(sourceUris, args, i);
-            } else if (Flag.CLASS_FILE.equals(args[i])) {
-                ++i;
+            } else if (lastFlag == Flag.CLASS_FILE) {
                 classUris.add(MutablePair.of(Paths.get(args[i]).toUri(), null));
                 i = tryReadArgs(classUris, args, i);
-            } else if (Flag.CLASS_URI.equals(args[i])) {
-                ++i;
+            } else if (lastFlag == Flag.CLASS_URI) {
                 classUris.add(MutablePair.of(new URI(args[i]), null));
                 i = tryReadArgs(classUris, args, i);
-            } else if (Flag.CLASS_NAME.equals(args[i])) {
-                ++i;
+            } else if (lastFlag == Flag.CLASS_NAME) {
                 classNames.add(MutablePair.of(args[i], null));
                 i = tryReadArgs(classNames, args, i);
-            } else if (Flag.FILE.equals(args[i])) {
-                ++i;
+            } else if (lastFlag == Flag.FILE) {
                 argsPath.add(args[i]);
-            } else if (Flag.URI.equals(args[i])) {
-                ++i;
+            } else if (lastFlag == Flag.URI) {
                 argsUri.add(new URI(args[i]));
-            } else if (args[i].startsWith("-")) {
-                throw new RuntimeException("Unrecognized option: " + args[i]);
-            } else {
-                throw new RuntimeException("Unrecognized option: " + args[i]);
             }
         }
 
