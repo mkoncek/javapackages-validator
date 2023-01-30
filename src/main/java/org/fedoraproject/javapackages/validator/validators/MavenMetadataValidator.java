@@ -97,16 +97,17 @@ public class MavenMetadataValidator extends ElementwiseValidator {
                     var node = nodes.item(i);
                     var artifactPath = Paths.get(node.getTextContent());
                     var resolvedArtifactPath = envroot.resolve(Paths.get("/").relativize(artifactPath));
+                    var metadataXml = Common.getEntryPath(pair.getKey());
                     if (Files.exists(resolvedArtifactPath, LinkOption.NOFOLLOW_LINKS)) {
                         pass("{0}: {1}: artifact {2} is present on filesystem as {3}",
                                 Decorated.rpm(rpm),
-                                Decorated.outer(pair.getKey().getName()),
+                                Decorated.outer(metadataXml),
                                 Decorated.actual(artifactPath),
                                 Decorated.outer(resolvedArtifactPath));
                     } else {
                         fail("{0}: {1}: artifact {2} is not present on filesystem as {3}",
                                 Decorated.rpm(rpm),
-                                Decorated.outer(pair.getKey().getName()),
+                                Decorated.outer(metadataXml),
                                 Decorated.expected(artifactPath),
                                 Decorated.outer(resolvedArtifactPath));
                     }
