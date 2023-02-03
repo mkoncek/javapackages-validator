@@ -14,7 +14,7 @@ import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
-public abstract class BytecodeVersionJarValidator extends JarValidator {
+public class BytecodeVersionJarValidator extends JarValidator {
     protected static final Decoration DECORATION_CLASS = Decoration.bright_yellow;
 
     @Override
@@ -47,13 +47,6 @@ public abstract class BytecodeVersionJarValidator extends JarValidator {
             }
         }
 
-        for (var entry : classVersions.entrySet()) {
-            debug("{0}: {1}: {2}: bytecode version: {3}",
-                    Decorated.rpm(rpm),
-                    Decorated.custom(jarName, DECORATION_JAR),
-                    Decorated.custom(entry.getKey(), DECORATION_CLASS),
-                    Decorated.actual(entry.getValue()));
-        }
 
         validate(rpm, jarName, classVersions);
 
@@ -65,5 +58,13 @@ public abstract class BytecodeVersionJarValidator extends JarValidator {
         }
     }
 
-    public abstract void validate(RpmInfoURI rpm, String jarName, Map<String, Integer> classVersions);
+    public void validate(RpmInfoURI rpm, String jarName, Map<String, Integer> classVersions) {
+        for (var entry : classVersions.entrySet()) {
+            info("{0}: {1}: {2}: bytecode version: {3}",
+                    Decorated.rpm(rpm),
+                    Decorated.custom(jarName, DECORATION_JAR),
+                    Decorated.custom(entry.getKey(), DECORATION_CLASS),
+                    Decorated.actual(entry.getValue()));
+        }
+    }
 }
