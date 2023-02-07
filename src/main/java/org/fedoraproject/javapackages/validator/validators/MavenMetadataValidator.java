@@ -2,11 +2,9 @@ package org.fedoraproject.javapackages.validator.validators;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.TreeSet;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -28,28 +26,18 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Validator which checks that maven metadata XML file references files
  * present on the file system relative to the environment root.
  *
- * Optional arguments:
- *     -e <envroot> -- Environment root (default is /)
- *
  * Ignores source rpms.
  */
 @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
 public class MavenMetadataValidator extends ElementwiseValidator {
-    private Path envroot = Paths.get("/");
-
-    @Override
-    public void arguments(String[] args) {
-        if (args.length > 0 && args[0].equals("-e")) {
-            envroot = Paths.get(args[1]);
-        }
-    }
-
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Incorrect claim that Exception is never thrown")
     @Override
     public void validate(RpmInfoURI rpm) throws IOException {
         var metadataXmls = new ArrayList<Pair<CpioArchiveEntry, byte[]>>();
+        var foundFiles = new TreeSet<String>();
         try (var is = new RpmArchiveInputStream(rpm.getURI().toURL())) {
             for (CpioArchiveEntry rpmEntry; (rpmEntry = is.getNextEntry()) != null;) {
+                foundFiles.add(Common.getEntryPath(rpmEntry).toString());
                 if (rpmEntry.getName().startsWith("./usr/share/maven-metadata/") && rpmEntry.getName().endsWith(".xml")) {
                     byte[] content = new byte[(int) rpmEntry.getSize()];
                     if (is.read(content) != content.length) {
@@ -96,20 +84,17 @@ public class MavenMetadataValidator extends ElementwiseValidator {
                 for (int i = 0; i != nodes.getLength(); ++i) {
                     var node = nodes.item(i);
                     var artifactPath = Paths.get(node.getTextContent());
-                    var resolvedArtifactPath = envroot.resolve(Paths.get("/").relativize(artifactPath));
                     var metadataXml = Common.getEntryPath(pair.getKey());
-                    if (Files.exists(resolvedArtifactPath, LinkOption.NOFOLLOW_LINKS)) {
-                        pass("{0}: {1}: artifact {2} is present on filesystem as {3}",
+                    if (foundFiles.contains(artifactPath.toString())) {
+                        pass("{0}: {1}: artifact {2} is present in the rpm",
                                 Decorated.rpm(rpm),
                                 Decorated.outer(metadataXml),
-                                Decorated.actual(artifactPath),
-                                Decorated.outer(resolvedArtifactPath));
+                                Decorated.actual(artifactPath));
                     } else {
-                        fail("{0}: {1}: artifact {2} is not present on filesystem as {3}",
+                        fail("{0}: {1}: artifact {2} is not present in the rpm",
                                 Decorated.rpm(rpm),
                                 Decorated.outer(metadataXml),
-                                Decorated.expected(artifactPath),
-                                Decorated.outer(resolvedArtifactPath));
+                                Decorated.expected(artifactPath));
                     }
                 }
             } catch (Exception ex) {
