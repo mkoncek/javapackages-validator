@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -145,7 +146,6 @@ public class Main {
                             Decorated.custom(classType.getSimpleName(), Decoration.bright_yellow));
                 } else {
                     var validator = Validator.class.cast(classType.getConstructor().newInstance());
-                    validator.setLogger(logger);
                     if (args != null) {
                         validator.arguments(args);
                     }
@@ -189,7 +189,8 @@ public class Main {
         return pos;
     }
 
-    public static void main(String[] args) throws Exception {
+    @SuppressFBWarnings({"DM_EXIT", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
+    List<Validator> execute(String[] args) throws Exception {
         if (args.length == 0) {
             System.out.println("error: no arguments provided");
             printHelp();
@@ -278,9 +279,6 @@ public class Main {
         logger.debug("Compiled class files: {0}", Decorated.list(List.copyOf(classes.keySet())));
         logger.debug("Class names from class path: {0}", Decorated.list(classNames.stream().map(MutablePair::getKey).toList()));
 
-        boolean somePassed = false;
-        var failMessages = new ArrayList<String>();
-
         var validators = new ArrayList<Validator>();
         var classLoader = new InMemoryClassLoader(classes);
         for (var classObject : classes.entrySet()) {
@@ -295,34 +293,54 @@ public class Main {
 
         logger.debug("Instantiated validators: {0}", Decorated.list(validators.stream().map(o -> o.getClass().getSimpleName()).toList()));
 
+        validators.stream().parallel().forEach(validator -> validator.pubvalidate(
+                IteratorUtils.<RpmInfoURI>chainedIterator(new ArgFileIterator(argsPath),
+                    argsUri.stream().map(RpmInfoURI::create).iterator()))
+        );
+
+        return validators;
+    }
+
+    @SuppressFBWarnings({"DM_EXIT"})
+    void report(List<Validator> validators) {
+        int passMessages = 0;
         for (Validator validator : validators) {
-            validator.validate(IteratorUtils.<RpmInfoURI>chainedIterator(new ArgFileIterator(argsPath),
-                    argsUri.stream().map(RpmInfoURI::create).iterator()));
-            validator.getFailMessages().forEach(failMessages::add);
-            for (String passMessage : validator.getPassMessages()) {
-                somePassed = true;
-                System.out.println(passMessage);
+            for (var p : validator.getMessages()) {
+                if (LogEvent.pass.equals(p.getKey()) || LogEvent.info.equals(p.getKey())) {
+                    System.out.println(p.getValue());
+                    ++passMessages;
+                }
+            }
+        }
+
+        int failMessages = 0;
+        for (Validator validator : validators) {
+            for (var p : validator.getMessages()) {
+                if (LogEvent.fail.equals(p.getKey())) {
+                    System.out.println(p.getValue());
+                    ++failMessages;
+                }
             }
         }
 
         int exitCode = 0;
-        for (String failMessage : failMessages) {
-            exitCode = 1;
-            System.out.println(failMessage);
-        }
-
-        if (exitCode == 0) {
-            if (somePassed) {
-                logger.info("Summary: all checks {0}", Decorated.custom("passed", Decoration.green, Decoration.bold));
+        if (failMessages == 0) {
+            if (passMessages > 0) {
+                System.err.println(MessageFormat.format("Summary: all checks {0}", Decorated.custom("passed", Decoration.green, Decoration.bold)));
             } else {
-                logger.info("Summary: no checks were run");
+                System.err.println("Summary: no checks were run");
             }
         } else {
-            logger.info("Summary: {0} {1}", Decorated.plain(failMessages.size()), Decorated.custom(
-                    "failed check" + (failMessages.size() == 1 ? "" : "s"), Decoration.red, Decoration.bold));
+            System.err.println(MessageFormat.format("Summary: {0} {1}", Decorated.plain(failMessages), Decorated.custom(
+                    "failed check" + (failMessages == 1 ? "" : "s"), Decoration.red, Decoration.bold)));
             exitCode = 1;
         }
 
         System.exit(exitCode);
+    }
+
+    public static void main(String[] args) throws Exception {
+        var main = new Main();
+        main.report(main.execute(args));
     }
 }

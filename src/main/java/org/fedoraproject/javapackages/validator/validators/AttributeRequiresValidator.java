@@ -6,6 +6,7 @@ import org.fedoraproject.javadeptools.rpm.Reldep;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
+import org.fedoraproject.javapackages.validator.TestResult;
 
 public class AttributeRequiresValidator extends ElementwiseValidator {
     public AttributeRequiresValidator() {
@@ -30,7 +31,7 @@ public class AttributeRequiresValidator extends ElementwiseValidator {
             fail("{0}: Requires field does not contain javapackages-filesystem", Decorated.rpm(rpm));
         }
 
-        if (getFailMessages().isEmpty()) {
+        if (TestResult.pass.equals(getResult())) {
             pass("{0}: ok", Decorated.rpm(rpm));
         }
     }

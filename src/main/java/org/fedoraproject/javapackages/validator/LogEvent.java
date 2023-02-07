@@ -9,6 +9,7 @@ public enum LogEvent {
     info("INFO", Decoration.cyan, Decoration.bold),
     pass("PASS", Decoration.green, Decoration.bold),
     fail("FAIL", Decoration.red, Decoration.bold),
+    error("ERROR", Decoration.bright_red, Decoration.bold),
     ;
 
     private final Decorated decoratedText;

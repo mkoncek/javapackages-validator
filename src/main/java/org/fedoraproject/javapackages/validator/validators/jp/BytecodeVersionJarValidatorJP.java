@@ -60,8 +60,6 @@ public class BytecodeVersionJarValidatorJP extends BytecodeVersionJarValidator {
                     Decorated.custom("module-info.class", DECORATION_CLASS));
         }
 
-        int addedPassMessages = 0;
-
         for (var entry : classVersions.entrySet()) {
             String className = entry.getKey();
             int version = entry.getValue();
@@ -73,7 +71,6 @@ public class BytecodeVersionJarValidatorJP extends BytecodeVersionJarValidator {
                         Decorated.custom(className, DECORATION_CLASS),
                         Decorated.actual(version),
                         Decorated.expected(44 + 11));
-                addedPassMessages = -1;
             } else if (packagesReqVersion8.contains(rpm.getPackageName()) && version > 44 + 8) {
                 fail("{0}: {1}: {2}: class bytecode version is {3} which is larger than {4} (package is a runtime dependency of ant or maven)",
                         Decorated.rpm(rpm),
@@ -81,7 +78,6 @@ public class BytecodeVersionJarValidatorJP extends BytecodeVersionJarValidator {
                         Decorated.custom(className, DECORATION_CLASS),
                         Decorated.actual(version),
                         Decorated.expected(44 + 8));
-                addedPassMessages = -1;
             } else {
                 pass("{0}: {1}: {2}: class bytecode version is {3} which is less or equal than {4}",
                         Decorated.rpm(rpm),
@@ -89,16 +85,7 @@ public class BytecodeVersionJarValidatorJP extends BytecodeVersionJarValidator {
                         Decorated.custom(className, DECORATION_CLASS),
                         Decorated.actual(version),
                         Decorated.expected(44 + 8));
-
-                if (addedPassMessages != -1) {
-                    ++addedPassMessages;
-                }
             }
-        }
-
-        while (addedPassMessages > 0) {
-            passMessages.remove(passMessages.size() - 1);
-            --addedPassMessages;
         }
     }
 }

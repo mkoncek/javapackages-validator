@@ -12,6 +12,7 @@ import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
+import org.fedoraproject.javapackages.validator.TestResult;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public class BytecodeVersionJarValidator extends JarValidator {
@@ -50,7 +51,7 @@ public class BytecodeVersionJarValidator extends JarValidator {
 
         validate(rpm, jarName, classVersions);
 
-        if (!failed()) {
+        if (TestResult.pass.equals(getResult())) {
             pass("{0}: {1}: found bytecode versions: {2}",
                     Decorated.rpm(rpm),
                     Decorated.custom(jarName, DECORATION_JAR),

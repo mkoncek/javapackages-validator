@@ -1,8 +1,6 @@
 package org.fedoraproject.javapackages.validator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,12 +18,16 @@ public class TestCommon {
         return paths.map(path -> RpmInfoURI.create(path.toUri())).iterator();
     }
 
+    public static void assertInfo(Validator validator) {
+        assertEquals(TestResult.info, validator.getResult(), "expected result: INFO");
+    }
+
     public static void assertPass(Validator validator) {
-        assertFalse(validator.failed(), "expected passed result, but it actually failed");
+        assertEquals(TestResult.pass, validator.getResult(), "expected result: PASS");
     }
 
     public static void assertFailOne(Validator validator) {
-        assertTrue(validator.failed(), "expected failed result, but it actually passed");
-        assertEquals(1, validator.getFailMessages().size());
+        assertEquals(TestResult.fail, validator.getResult(), "expected result: FAIL");
+        assertEquals(1, validator.getMessages().stream().filter(p -> LogEvent.fail.equals(p.getKey())).count());
     }
 }
