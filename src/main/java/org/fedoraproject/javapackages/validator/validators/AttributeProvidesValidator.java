@@ -6,6 +6,7 @@ import org.fedoraproject.javadeptools.rpm.Reldep;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
+import org.fedoraproject.javapackages.validator.TestResult;
 
 public class AttributeProvidesValidator extends ElementwiseValidator {
     public AttributeProvidesValidator() {
@@ -26,7 +27,7 @@ public class AttributeProvidesValidator extends ElementwiseValidator {
             }
         }
 
-        if (getFailMessages().isEmpty()) {
+        if (TestResult.pass.equals(getResult())) {
             pass("{0}: ok", Decorated.rpm(rpm));
         }
     }

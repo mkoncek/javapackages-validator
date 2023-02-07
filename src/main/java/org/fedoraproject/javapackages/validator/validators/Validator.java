@@ -1,65 +1,75 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.collections4.list.UnmodifiableList;
+import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.LogEvent;
-import org.fedoraproject.javapackages.validator.Logger;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
+import org.fedoraproject.javapackages.validator.TestResult;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public abstract class Validator {
-    protected List<String> failMessages = new ArrayList<>(0);
-    protected List<String> passMessages = new ArrayList<>(0);
-    private Logger logger = new Logger();
-
-    @SuppressFBWarnings("EI_EXPOSE_REP")
-    public Logger getLogger() {
-        return logger;
-    }
-
-    @SuppressFBWarnings("EI_EXPOSE_REP2")
-    public void setLogger(Logger logger) {
-        this.logger = logger;
-    }
+    protected List<Pair<LogEvent, String>> log = new ArrayList<>();
+    protected TestResult testResult = TestResult.info;
 
     public void arguments(@NonNull String[] args) {
         throw new IllegalArgumentException(getClass().getSimpleName() + " does not recognize optional arguments");
     }
 
-    public List<String> getFailMessages() {
-        return Collections.unmodifiableList(failMessages);
+    public TestResult getResult() {
+        return testResult;
     }
 
-    public List<String> getPassMessages() {
-        return Collections.unmodifiableList(passMessages);
+    public final List<Pair<LogEvent, String>> getMessages() {
+        return new UnmodifiableList<>(log);
     }
 
-    public boolean failed() {
-        return !failMessages.isEmpty();
+    private final void addLog(LogEvent kind, String pattern, Decorated... arguments) {
+        log.add(Pair.of(kind, kind.withFormat(pattern, arguments)));
     }
 
     protected final void fail(String pattern, Decorated... arguments) {
-        failMessages.add(LogEvent.fail.withFormat(pattern, arguments));
+        addLog(LogEvent.fail, pattern, arguments);
+        if (TestResult.fail.compareTo(testResult) > 0) {
+            testResult = TestResult.fail;
+        }
     }
 
     protected final void pass(String pattern, Decorated... arguments) {
-        passMessages.add(LogEvent.pass.withFormat(pattern, arguments));
+        addLog(LogEvent.pass, pattern, arguments);
+        if (TestResult.pass.compareTo(testResult) > 0) {
+            testResult = TestResult.pass;
+        }
     }
 
     protected final void debug(String pattern, Decorated... arguments) {
-        getLogger().debug(pattern, arguments);
+        addLog(LogEvent.debug, pattern, arguments);
     }
 
     protected final void info(String pattern, Decorated... arguments) {
-        getLogger().info(pattern, arguments);
+        addLog(LogEvent.info, pattern, arguments);
     }
 
-    abstract public void validate(Iterator<RpmInfoURI> rpmIt) throws IOException;
+    public final void pubvalidate(Iterator<RpmInfoURI> rpmIt) {
+        try {
+            validate(rpmIt);
+        } catch (Exception ex) {
+            var stackTrace = new ByteArrayOutputStream();
+            ex.printStackTrace(new PrintStream(stackTrace, false, StandardCharsets.UTF_8));
+            addLog(LogEvent.error, "An exception occured:{0}{1}",
+                    Decorated.plain(System.lineSeparator()),
+                    Decorated.plain(new String(stackTrace.toByteArray(), StandardCharsets.UTF_8)));
+            testResult = TestResult.error;
+        }
+    }
+
+    protected abstract void validate(Iterator<RpmInfoURI> rpmIt) throws Exception;
 }

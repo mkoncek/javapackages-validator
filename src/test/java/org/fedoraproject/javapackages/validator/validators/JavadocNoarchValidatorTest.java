@@ -1,6 +1,7 @@
 package org.fedoraproject.javapackages.validator.validators;
 
 import static org.fedoraproject.javapackages.validator.TestCommon.assertFailOne;
+import static org.fedoraproject.javapackages.validator.TestCommon.assertInfo;
 import static org.fedoraproject.javapackages.validator.TestCommon.assertPass;
 
 import java.io.IOException;
@@ -42,6 +43,6 @@ public class JavadocNoarchValidatorTest {
     void testIgnoreNonJavadoc() throws IOException {
         var validator = new JavadocNoarchValidator();
         validator.validate(TestCommon.iteratorFrom(Stream.of(NON_JAVADOC_RPM)));
-        assertPass(validator);
+        assertInfo(validator);
     }
 }
