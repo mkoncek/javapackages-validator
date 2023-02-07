@@ -12,15 +12,17 @@ import org.fedoraproject.javapackages.validator.validators.Validator;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class MainTmt extends Main {
-    private static final Path testDataDir = Paths.get(System.getProperty("TMT_TEST_DATA"));
+    private static final Path testDataDir = Paths.get(System.getenv("TMT_TEST_DATA"));
 
     private static String toDashCase(String value) {
         var result = new StringBuilder();
         for (int i = 0; i != value.length(); ++i) {
             if (Character.isUpperCase(value.charAt(i))) {
                 result.append('-');
+                result.append(Character.toLowerCase(value.charAt(i)));
+            } else {
+                result.append(value.charAt(i));
             }
-            result.append(value.charAt(i));
         }
         if (value.length() > 0 && Character.isUpperCase(value.charAt(0)) ) {
             return result.substring(1);
@@ -32,7 +34,7 @@ public class MainTmt extends Main {
     @Override
     void report(List<Validator> validators) {
         for (var validator : validators) {
-            var logFile = testDataDir.resolve("validator.getClass().getCanonicalName()");
+            var logFile = testDataDir.resolve(validator.getClass().getCanonicalName());
             try {
                 try (var osFail = new FileOutputStream(logFile.toString() + "-fail");
                         var osFull = new FileOutputStream(logFile.toString() + "-full");
@@ -47,7 +49,7 @@ public class MainTmt extends Main {
                 }
                 try (var os = new FileOutputStream(testDataDir.resolve("results.yaml").toFile(), true);
                         var ps = new PrintStream(os, false, StandardCharsets.UTF_8);) {
-                    ps.print("- name: /jpv/");
+                    ps.print("- name: /");
                     var name = validator.getClass().getSimpleName();
                     if (name.endsWith("Validator")) {
                         name = name.substring(0, name.length() - 9);
@@ -56,8 +58,8 @@ public class MainTmt extends Main {
                     ps.print("  result: ");
                     ps.println(validator.getResult());
                     ps.println("  log:");
-                    ps.println("   - " + logFile.toString() + "-fail");
-                    ps.println("   - " + logFile.toString() + "-full");
+                    ps.println("   - " + validator.getClass().getCanonicalName() + "-fail.log");
+                    ps.println("   - " + validator.getClass().getCanonicalName() + "-full.log");
                 }
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -67,7 +69,7 @@ public class MainTmt extends Main {
 
 
     public static void main(String[] args) throws Exception {
-        var main = new Main();
+        var main = new MainTmt();
         main.report(main.execute(args));
     }
 }
