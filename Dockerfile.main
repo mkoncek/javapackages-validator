@@ -29,4 +29,4 @@ RUN apk add rpm openjdk17-jre-headless
 COPY --from=builder "/usr/local/src/javapackages-validator/target/dependency/" "/opt/javapackages-validator/dependency/"
 COPY --from=builder "/usr/local/src/javapackages-validator/target/validator.jar" "/opt/javapackages-validator/validator.jar"
 
-ENTRYPOINT ["java", "--enable-preview", "--add-modules", "jdk.incubator.foreign", "--enable-native-access", "ALL-UNNAMED", "-jar", "/opt/javapackages-validator/validator.jar"]
+ENTRYPOINT ["java", "--enable-preview", "--add-modules", "jdk.incubator.foreign", "--enable-native-access", "ALL-UNNAMED", "-cp", "/opt/javapackages-validator/validator.jar"]
