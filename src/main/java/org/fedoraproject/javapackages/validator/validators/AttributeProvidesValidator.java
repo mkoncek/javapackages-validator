@@ -27,7 +27,7 @@ public class AttributeProvidesValidator extends ElementwiseValidator {
             }
         }
 
-        if (TestResult.pass.equals(getResult())) {
+        if (!TestResult.fail.equals(getResult())) {
             pass("{0}: ok", Decorated.rpm(rpm));
         }
     }

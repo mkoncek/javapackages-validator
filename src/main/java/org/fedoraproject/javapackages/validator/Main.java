@@ -26,6 +26,7 @@ import javax.tools.ToolProvider;
 
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 import org.fedoraproject.javapackages.validator.compiler.InMemoryClassLoader;
 import org.fedoraproject.javapackages.validator.compiler.InMemoryFileManager;
@@ -38,8 +39,8 @@ import org.objectweb.asm.Opcodes;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class Main {
-    private static TextDecorator DECORATOR = TextDecorator.NO_DECORATOR;
-    private static PrintStream debugOutputStream = new PrintStream(OutputStream.nullOutputStream(), false, StandardCharsets.UTF_8);
+    static TextDecorator DECORATOR = TextDecorator.NO_DECORATOR;
+    static PrintStream debugOutputStream = new PrintStream(OutputStream.nullOutputStream(), false, StandardCharsets.UTF_8);
 
     public static TextDecorator getDecorator() {
         return DECORATOR;
@@ -301,13 +302,17 @@ public class Main {
         return validators;
     }
 
+    protected static final String decorated(Pair<LogEvent, String> entry) {
+        return "[" + entry.getKey().getDecoratedText() + "] " + entry.getValue();
+    }
+
     @SuppressFBWarnings({"DM_EXIT"})
     void report(List<Validator> validators) {
         int passMessages = 0;
         for (Validator validator : validators) {
             for (var p : validator.getMessages()) {
                 if (LogEvent.pass.equals(p.getKey()) || LogEvent.info.equals(p.getKey())) {
-                    System.out.println(p.getValue());
+                    System.out.println(decorated(p));
                     ++passMessages;
                 }
             }
@@ -317,7 +322,7 @@ public class Main {
         for (Validator validator : validators) {
             for (var p : validator.getMessages()) {
                 if (LogEvent.fail.equals(p.getKey())) {
-                    System.out.println(p.getValue());
+                    System.out.println(decorated(p));
                     ++failMessages;
                 }
             }
