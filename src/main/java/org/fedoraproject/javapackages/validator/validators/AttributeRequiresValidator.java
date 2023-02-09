@@ -31,7 +31,7 @@ public class AttributeRequiresValidator extends ElementwiseValidator {
             fail("{0}: Requires field does not contain javapackages-filesystem", Decorated.rpm(rpm));
         }
 
-        if (TestResult.pass.equals(getResult())) {
+        if (!TestResult.fail.equals(getResult())) {
             pass("{0}: ok", Decorated.rpm(rpm));
         }
     }

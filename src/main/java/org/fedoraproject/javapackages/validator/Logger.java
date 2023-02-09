@@ -1,6 +1,7 @@
 package org.fedoraproject.javapackages.validator;
 
 import java.io.PrintStream;
+import java.text.MessageFormat;
 import java.util.EnumMap;
 
 public class Logger {
@@ -16,7 +17,7 @@ public class Logger {
     }
 
     private void log(LogEvent logEvent, String pattern, Decorated... arguments) {
-        streams.get(logEvent).println(logEvent.withFormat(pattern, arguments));
+        streams.get(logEvent).append("[" + logEvent.getDecoratedText() + "] ").println(MessageFormat.format(pattern, (Object[]) arguments));
     }
 
     public void debug(String pattern, Decorated... arguments) {

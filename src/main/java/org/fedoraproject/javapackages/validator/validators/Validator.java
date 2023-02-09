@@ -3,6 +3,7 @@ package org.fedoraproject.javapackages.validator.validators;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -33,7 +34,7 @@ public abstract class Validator {
     }
 
     private final void addLog(LogEvent kind, String pattern, Decorated... arguments) {
-        log.add(Pair.of(kind, kind.withFormat(pattern, arguments)));
+        log.add(Pair.of(kind, MessageFormat.format(pattern, (Object[]) arguments)));
     }
 
     protected final void fail(String pattern, Decorated... arguments) {

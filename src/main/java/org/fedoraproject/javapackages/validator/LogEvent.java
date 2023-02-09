@@ -1,7 +1,5 @@
 package org.fedoraproject.javapackages.validator;
 
-import java.text.MessageFormat;
-
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public enum LogEvent {
@@ -20,9 +18,5 @@ public enum LogEvent {
 
     public Decorated getDecoratedText() {
         return decoratedText;
-    }
-
-    public String withFormat(String pattern, Decorated... arguments) {
-        return "[" + getDecoratedText() + "] " + MessageFormat.format(pattern, (Object[]) arguments);
     }
 }
