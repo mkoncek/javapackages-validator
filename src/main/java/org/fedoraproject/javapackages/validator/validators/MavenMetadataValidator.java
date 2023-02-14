@@ -30,6 +30,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
 public class MavenMetadataValidator extends ElementwiseValidator {
+    public MavenMetadataValidator() {
+        super(RpmInfoURI::isBinaryPackage);
+    }
+
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Incorrect claim that Exception is never thrown")
     @Override
     public void validate(RpmInfoURI rpm) throws IOException {
