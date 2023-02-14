@@ -83,6 +83,8 @@ public class MainTmt extends Main {
             }
             for (var validator : validators) {
                 var logFile = testDataDir.resolve(validator.getClass().getSimpleName());
+                try (var os = new FileOutputStream(logFile.toString() + ".log")) {
+                }
                 try (var os = new FileOutputStream(logFile.toString() + ".html");
                         var ps = new HtmlTablePrintStream(os)) {
                     for (var p : validator.getMessages()) {
@@ -104,7 +106,8 @@ public class MainTmt extends Main {
                     System.out.println(reLativeLogPath);
                     // NOTE workaround for tmt relative paths
                     reLativeLogPath = reLativeLogPath.getParent().getParent().getParent().getParent().getParent().relativize(reLativeLogPath);
-                    ps.println("   - " + reLativeLogPath.toString() + ".html");
+                    ps.println("   - " + reLativeLogPath + ".log");
+                    ps.println("   - " + reLativeLogPath + ".html");
                 }
             }
         } catch (Exception ex) {
