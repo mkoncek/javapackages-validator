@@ -6,10 +6,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.TreeSet;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
+import javax.xml.stream.XMLStreamException;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.lang3.tuple.Pair;
@@ -17,8 +14,8 @@ import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
+import org.fedoraproject.xmvn.metadata.PackageMetadata;
+import org.fedoraproject.xmvn.metadata.io.stax.MetadataStaxReader;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -57,52 +54,30 @@ public class MavenMetadataValidator extends ElementwiseValidator {
             return;
         }
 
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-
-        factory.setNamespaceAware(true);
-        // TODO factory settings (validation, namespace, schema)
-
-        /*
-        URL schemaFile = new URL("https://fedora-java.github.io/xmvn/xsd/metadata-2.0.0.xsd");
-        Source xmlFile = new StreamSource(new File("/home/mkoncek/Upstream/javapackages-validator/jakarta-activation1.xml"));
-        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        try {
-            Schema schema = schemaFactory.newSchema(schemaFile);
-            var validator = schema.newValidator();
-            validator.validate(xmlFile);
-            System.out.println(xmlFile.getSystemId() + " is valid");
-        } catch (SAXException e) {
-            System.out.println(xmlFile.getSystemId() + " is NOT valid reason:" + e);
-        } catch (IOException e) {}
-        */
-
         for (var pair : metadataXmls) {
-            Document metadata = null;
-            try {
-                DocumentBuilder builder = factory.newDocumentBuilder();
-                try (var is = new ByteArrayInputStream(pair.getValue())) {
-                    metadata = builder.parse(is);
+            PackageMetadata packageMetadata = null;
+
+            try (var is = new ByteArrayInputStream(pair.getValue())) {
+                packageMetadata = new MetadataStaxReader().read(is, true);
+            } catch (XMLStreamException ex) {
+                fail("{0}: metadata validation failed: {1}", Decorated.rpm(rpm), Decorated.plain(ex.getMessage()));
+                continue;
+            }
+
+            for (var artifact : packageMetadata.getArtifacts()) {
+                var artifactPath = Paths.get(artifact.getPath());
+                var metadataXml = Common.getEntryPath(pair.getKey());
+                if (foundFiles.contains(artifactPath.toString())) {
+                    pass("{0}: {1}: artifact {2} is present in the rpm",
+                            Decorated.rpm(rpm),
+                            Decorated.outer(metadataXml),
+                            Decorated.actual(artifactPath));
+                } else {
+                    fail("{0}: {1}: artifact {2} is not present in the rpm",
+                            Decorated.rpm(rpm),
+                            Decorated.outer(metadataXml),
+                            Decorated.expected(artifactPath));
                 }
-                var xpath = XPathFactory.newInstance().newXPath();
-                var nodes = NodeList.class.cast(xpath.evaluate("//*[local-name()=\"artifact\"]/*[local-name()=\"path\"]", metadata, XPathConstants.NODESET));
-                for (int i = 0; i != nodes.getLength(); ++i) {
-                    var node = nodes.item(i);
-                    var artifactPath = Paths.get(node.getTextContent());
-                    var metadataXml = Common.getEntryPath(pair.getKey());
-                    if (foundFiles.contains(artifactPath.toString())) {
-                        pass("{0}: {1}: artifact {2} is present in the rpm",
-                                Decorated.rpm(rpm),
-                                Decorated.outer(metadataXml),
-                                Decorated.actual(artifactPath));
-                    } else {
-                        fail("{0}: {1}: artifact {2} is not present in the rpm",
-                                Decorated.rpm(rpm),
-                                Decorated.outer(metadataXml),
-                                Decorated.expected(artifactPath));
-                    }
-                }
-            } catch (Exception ex) {
-                throw new IOException(ex);
             }
         }
     }
