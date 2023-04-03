@@ -2,8 +2,7 @@ $(document).ready(function() {
     $(".filter_checkbox").change(function() {
         if (this.checked) {
             $("." + $(this).val()).show();
-        }
-        else {
+        } else {
             $("." + $(this).val()).hide();
         }
     }).change();
