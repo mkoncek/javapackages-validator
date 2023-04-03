@@ -43,6 +43,7 @@ public class MainTmt extends Main {
 <link rel="stylesheet" href="style.css">
 <table>
 <tr>
+    <th>Filter:</th>
     <th><input type="checkbox" class="filter_checkbox" id="checkbox_debug" value="debug"><label for="checkbox_debug">Debug</label></th>
     <th><input type="checkbox" class="filter_checkbox" id="checkbox_info" value="info"><label for="checkbox_info">Info</label></th>
     <th><input type="checkbox" class="filter_checkbox" id="checkbox_pass" value="pass"><label for="checkbox_pass">Pass</label></th>
