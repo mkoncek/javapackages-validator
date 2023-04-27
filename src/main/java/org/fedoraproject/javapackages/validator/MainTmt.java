@@ -35,7 +35,7 @@ public class MainTmt extends Main {
     static private class HtmlTablePrintStream extends PrintStream {
         public HtmlTablePrintStream(OutputStream os) {
             super(os, false, StandardCharsets.UTF_8);
-            super.println("""
+            super.print("""
 <!DOCTYPE html>
 <html>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
@@ -104,7 +104,6 @@ public class MainTmt extends Main {
                     ps.println(validator.getResult());
                     ps.println("  log:");
                     var reLativeLogPath = testDataDir.resolve(validator.getClass().getSimpleName());
-                    System.out.println(reLativeLogPath);
                     // NOTE workaround for tmt relative paths
                     reLativeLogPath = reLativeLogPath.getParent().getParent().getParent().getParent().getParent().relativize(reLativeLogPath);
                     ps.println("   - " + reLativeLogPath + ".log");
@@ -115,7 +114,6 @@ public class MainTmt extends Main {
             throw new RuntimeException(ex);
         }
     }
-
 
     public static void main(String[] args) throws Exception {
         var main = new MainTmt();
