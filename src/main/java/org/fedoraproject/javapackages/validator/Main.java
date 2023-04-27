@@ -3,6 +3,7 @@ package org.fedoraproject.javapackages.validator;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -260,12 +261,19 @@ public class Main {
         logger.debug("URI arguments: {0}", Decorated.list(argsUri));
 
         var classes = new TreeMap<String, JavaFileObject>();
-        var classArgs = new TreeMap<JavaFileObject, String[]>();
-        for (var sourceUri : sourceUris) {
-            var compiled = compileFiles(sourceUri.getKey(), Arrays.asList(), logger);
-            classes.putAll(compiled);
-            for (var className : compiled.values()) {
-                classArgs.put(className, sourceUri.getValue());
+        var classArgs = new TreeMap<JavaFileObject, String[]>((lhs, rhs) -> lhs.toUri().compareTo(rhs.toUri()));
+        for (var entry : sourceUris.parallelStream().collect(Collectors.toUnmodifiableMap(
+                sourceUri -> sourceUri,
+                sourceUri -> {
+                    try {
+                        return compileFiles(sourceUri.getKey(), Arrays.asList(), logger);
+                    } catch (IOException ex) {
+                        throw new UncheckedIOException(ex);
+                    }
+                })).entrySet()) {
+            classes.putAll(entry.getValue());
+            for (var className : entry.getValue().values()) {
+                classArgs.put(className, entry.getKey().getValue());
             }
         }
         for (var classUri : classUris) {
