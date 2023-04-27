@@ -16,7 +16,7 @@ public class Logger {
         streams.put(logEvent, stream);
     }
 
-    private synchronized void log(LogEvent logEvent, String pattern, Decorated... arguments) {
+    private void log(LogEvent logEvent, String pattern, Decorated... arguments) {
         streams.get(logEvent).append("[" + logEvent.getDecoratedText() + "] ").println(MessageFormat.format(pattern, (Object[]) arguments));
     }
 
