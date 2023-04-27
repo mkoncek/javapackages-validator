@@ -117,14 +117,18 @@ public class Main {
         }
 
         if (compilationUnits.isEmpty()) {
-            logger.debug("No source files found");
+            synchronized(logger) {
+                logger.debug("No source files found");
+            }
             return Collections.emptyMap();
         }
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         var fileManager = new InMemoryFileManager(compiler.getStandardFileManager(null, null, null));
 
-        logger.debug("Compiling source files: {0}", Decorated.list(compilationUnits));
+        synchronized(logger) {
+            logger.debug("Compiling source files: {0}", Decorated.list(compilationUnits));
+        }
 
         try {
             if (!compiler.getTask(null, fileManager, null, compilerOptions, null, compilationUnits).call()) {
