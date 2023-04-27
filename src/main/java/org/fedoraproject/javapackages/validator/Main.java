@@ -302,7 +302,7 @@ public class Main {
 
         logger.debug("Instantiated validators: {0}", Decorated.list(validators.stream().map(o -> o.getClass().getSimpleName()).toList()));
 
-        validators.stream().parallel().forEach(validator -> validator.pubvalidate(
+        validators.parallelStream().forEach(validator -> validator.pubvalidate(
                 IteratorUtils.<RpmInfoURI>chainedIterator(new ArgFileIterator(argsPath),
                     argsUri.stream().map(RpmInfoURI::create).iterator()))
         );

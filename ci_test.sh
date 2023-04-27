@@ -22,7 +22,7 @@ prepare_test_env() {
 }
 
 execute() {
-    for component in $(ls ${test_artifacts_dir}/rpms); do
+    for component in "${test_artifacts_dir}"/rpms/*; do
         run_id="jpv-ci-${component}"
         echo "::group::Run tests for ${component}"
 
@@ -44,7 +44,6 @@ execute() {
            run --id "${run_id}" \
                -e TEST_ARTIFACTS="${test_artifacts_dir}/rpms/${component}/rpms" \
                -e JP_VALIDATOR_IMAGE="${jp_validator_image}" \
-               -e ENVROOT="${test_artifacts_dir}/envroot" \
            provision --how local \
            execute --how tmt --no-progress-bar
         then
