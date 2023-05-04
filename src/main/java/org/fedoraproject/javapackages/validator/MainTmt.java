@@ -103,11 +103,8 @@ public class MainTmt extends Main {
                     ps.print("  result: ");
                     ps.println(validator.getResult());
                     ps.println("  log:");
-                    var reLativeLogPath = testDataDir.resolve(validator.getClass().getSimpleName());
-                    // NOTE workaround for tmt relative paths
-                    reLativeLogPath = reLativeLogPath.getParent().getParent().getParent().getParent().getParent().relativize(reLativeLogPath);
-                    ps.println("   - " + reLativeLogPath + ".log");
-                    ps.println("   - " + reLativeLogPath + ".html");
+                    ps.println("   - " + validator.getClass().getSimpleName() + ".log");
+                    ps.println("   - " + validator.getClass().getSimpleName() + ".html");
                 }
             }
         } catch (Exception ex) {
