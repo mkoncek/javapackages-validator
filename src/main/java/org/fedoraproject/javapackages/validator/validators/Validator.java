@@ -15,13 +15,15 @@ import org.fedoraproject.javapackages.validator.LogEvent;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TestResult;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 public abstract class Validator {
     protected List<Pair<LogEvent, String>> log = new ArrayList<>();
     protected TestResult testResult = TestResult.info;
 
-    public void arguments(@NonNull String[] args) {
+    /**
+     * Handle arguments passed on CLI. Executed once before the execution of the validator,
+     * @param args Arguments. Never null.
+     */
+    public void arguments(String[] args) {
         throw new IllegalArgumentException(getClass().getSimpleName() + " does not recognize optional arguments");
     }
 

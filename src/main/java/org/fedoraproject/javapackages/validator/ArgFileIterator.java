@@ -2,6 +2,7 @@ package org.fedoraproject.javapackages.validator;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.FileSystemLoopException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,8 +54,17 @@ public class ArgFileIterator implements Iterator<RpmInfoURI> {
 
     @Override
     public boolean hasNext() {
-        if (pathIterator.hasNext()) {
-            return true;
+        try {
+            if (pathIterator.hasNext()) {
+                return true;
+            }
+        } catch (Exception ex) {
+            // Ignore loops
+            if (ex.getCause() instanceof FileSystemLoopException) {
+                return hasNext();
+            } else {
+                throw ex;
+            }
         }
 
         pathIterator = advance();
