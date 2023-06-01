@@ -89,7 +89,7 @@ public class HtmlDecorator implements TextDecorator {
         }
 
         result.append("\">");
-        result.append(StringEscapeUtils.escapeHtml4(object.toString()));
+        result.append(StringEscapeUtils.escapeHtml4(object.toString()).replace(System.lineSeparator(), "<br>"));
         result.append("</text>");
 
         return result.toString();

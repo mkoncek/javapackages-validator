@@ -9,6 +9,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -29,13 +30,11 @@ import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
+import org.fedoraproject.javapackages.validator.compiler.FilesystemClassLoader;
 import org.fedoraproject.javapackages.validator.compiler.InMemoryClassLoader;
 import org.fedoraproject.javapackages.validator.compiler.InMemoryFileManager;
 import org.fedoraproject.javapackages.validator.compiler.URIJavaFileObject;
 import org.fedoraproject.javapackages.validator.validators.Validator;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Opcodes;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -56,9 +55,7 @@ public class Main {
         static final Flag SOURCE_FILE = new Flag("-sf", "--source-file");
         static final Flag SOURCE_URI = new Flag("-su", "--source-uri");
 
-        static final Flag CLASS_FILE = new Flag("-cf", "--class-file");
-        static final Flag CLASS_URI = new Flag("-cu", "--class-uri");
-        static final Flag CLASS_NAME = new Flag("-cn", "--class-name");
+        static final Flag CLASS_PATH = new Flag("-cp", "--class-path");
 
         static final Flag FILE = new Flag("-f", "--file");
         static final Flag URI = new Flag("-u", "--uri");
@@ -77,26 +74,24 @@ public class Main {
         }
 
         static final Flag[] ALL_FLAGS = new Flag[] {
-            SOURCE_FILE, SOURCE_URI, CLASS_FILE, CLASS_URI, CLASS_NAME, FILE, URI, HELP, COLOR, DEBUG,
+            SOURCE_FILE, SOURCE_URI, CLASS_PATH, FILE, URI, HELP, COLOR, DEBUG,
         };
     }
 
 
     static void printHelp() {
-        System.out.println("Usage: Main [optional flags] <validator flags> <RPM files or directories to test...>");
+        System.out.println("Usage: Main [optional flags] <validator class name> <validator flags> <{-f | -u} RPM files or directories to test>...");
         System.out.println("    " + Flag.HELP + " - Print help message");
         System.out.println();
-        System.out.println("Options for specifying validators, can be specified multiple times");
+        System.out.println("Options for specifying validators, can be specified multiple times:");
         System.out.println("    " + Flag.SOURCE_FILE + " - File path of a source file");
         System.out.println("    " + Flag.SOURCE_URI + " - URI of a source file");
-        System.out.println("    " + Flag.CLASS_FILE + " - File path of a class file");
-        System.out.println("    " + Flag.CLASS_URI + " - URI of a class file");
-        System.out.println("    " + Flag.CLASS_NAME + " - class name to obtain from the process' class path");
+        System.out.println("    " + Flag.CLASS_PATH + " - Additional class path entry");
         System.out.println();
         System.out.println("Validator arguments can be immediately followed by space-separated square parentheses");
         System.out.println("the contents of which will be passed as arguments to the validator.");
         System.out.println();
-        System.out.println("Options for specifying tested RPM files, can be specified multiple times");
+        System.out.println("Options for specifying tested RPM files, can be specified multiple times:");
         System.out.println("    " + Flag.FILE + " - File path of an .rpm file");
         System.out.println("    " + Flag.URI + " - URI of an .rpm file");
         System.out.println();
@@ -105,7 +100,7 @@ public class Main {
         System.out.println("    " + Flag.COLOR + " - Display colored output");
     }
 
-    public static Map<String, JavaFileObject> compileFiles(URI sourceURI, Iterable<String> compilerOptions, Logger logger) throws IOException {
+    public static Map<String, JavaFileObject> compileFile(URI sourceURI, Iterable<String> compilerOptions, Logger logger) throws IOException {
         var compilationUnits = new ArrayList<JavaFileObject>();
         if (sourceURI.getScheme().equalsIgnoreCase("file")) {
             try (var stream = Files.find(Paths.get(sourceURI), Integer.MAX_VALUE, (path, attributes) ->
@@ -143,43 +138,24 @@ public class Main {
 
     @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
     protected static Validator instantiateValidator(ClassLoader classLoader,
-            String className, String[] args, Logger logger) throws IOException {
+            String className, String[] args) throws IOException {
         try {
             Class<?> classType = classLoader.loadClass(className);
-            if (Validator.class.isAssignableFrom(classType)) {
-                if (Modifier.isAbstract(classType.getModifiers())) {
-                    logger.debug("{0} is convertible to Validator but is abstract",
-                            Decorated.custom(classType.getSimpleName(), Decoration.bright_yellow));
-                } else {
-                    var validator = Validator.class.cast(classType.getConstructor().newInstance());
-                    if (args != null) {
-                        validator.arguments(args);
-                    }
-                    return validator;
-                }
+            if (!Validator.class.isAssignableFrom(classType)) {
+                throw new RuntimeException(MessageFormat.format("{0} is not derived from Validator class", classType));
             }
+
+            if (Modifier.isAbstract(classType.getModifiers())) {
+                throw new RuntimeException(MessageFormat.format("{0} is convertible to Validator but is abstract", classType));
+            }
+
+            var validator = Validator.class.cast(classType.getConstructor().newInstance());
+            if (args != null) {
+                validator.arguments(args);
+            }
+            return validator;
         } catch (ReflectiveOperationException ex) {
             throw new RuntimeException(ex);
-        }
-
-        return null;
-    }
-
-    static final class ClassNameVisitor extends ClassVisitor {
-        private String name = null;
-
-        ClassNameVisitor() {
-            super(Opcodes.ASM9);
-        }
-
-        public String getClassName() {
-            return name;
-        }
-
-        @Override
-        public void visit(int version, int access, String name, String signature, String superName,
-                String[] interfaces) {
-            this.name = name.replace('/', '.');
         }
     }
 
@@ -195,6 +171,20 @@ public class Main {
         return pos;
     }
 
+    private Path resolveRelativePathCommon(String path) {
+        var result = Paths.get(path);
+
+        if (!result.isAbsolute()) {
+            result = resolveRelativePath(result);
+        }
+
+        return result;
+    }
+
+    protected Path resolveRelativePath(Path path) {
+        return path;
+    }
+
     @SuppressFBWarnings({"DM_EXIT", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
     List<Validator> execute(String[] args) throws Exception {
         if (args.length == 0) {
@@ -206,8 +196,8 @@ public class Main {
             System.exit(0);
         }
 
-        var sourceUris = new ArrayList<MutablePair<URI, String[]>>();
-        var classUris = new ArrayList<MutablePair<URI, String[]>>();
+        var sourceUris = new ArrayList<URI>();
+        var classpathRoots = new ArrayList<Path>();
         var classNames = new ArrayList<MutablePair<String, String[]>>();
         var argsPath = new ArrayList<String>();
         var argsUri = new ArrayList<URI>();
@@ -216,17 +206,25 @@ public class Main {
         for (int i = 0; i != args.length; ++i) {
             if (args[i].startsWith("-")) {
                 lastFlag = null;
-            }
-            for (Flag flag : Flag.ALL_FLAGS) {
-                if (flag.equals(args[i])) {
-                    lastFlag = flag;
-                    ++i;
-                    break;
+
+                for (Flag flag : Flag.ALL_FLAGS) {
+                    if (flag.equals(args[i])) {
+                        lastFlag = flag;
+                        ++i;
+                        break;
+                    }
                 }
+
+                if (lastFlag == null) {
+                    throw new RuntimeException("Unrecognized option: " + args[i]);
+                }
+            } else {
+                lastFlag = null;
             }
 
             if (lastFlag == null) {
-                throw new RuntimeException("Unrecognized option: " + args[i]);
+                classNames.add(MutablePair.of(args[i], null));
+                i = tryReadArgs(classNames, args, i);
             } else if (lastFlag == Flag.COLOR) {
                 DECORATOR = AnsiDecorator.INSTANCE;
                 --i;
@@ -234,20 +232,11 @@ public class Main {
                 debugOutputStream = System.err;
                 --i;
             } else if (lastFlag == Flag.SOURCE_FILE) {
-                sourceUris.add(MutablePair.of(Paths.get(args[i]).toUri(), null));
-                i = tryReadArgs(sourceUris, args, i);
+                sourceUris.add(resolveRelativePathCommon(args[i]).toUri());
             } else if (lastFlag == Flag.SOURCE_URI) {
-                sourceUris.add(MutablePair.of(new URI(args[i]), null));
-                i = tryReadArgs(sourceUris, args, i);
-            } else if (lastFlag == Flag.CLASS_FILE) {
-                classUris.add(MutablePair.of(Paths.get(args[i]).toUri(), null));
-                i = tryReadArgs(classUris, args, i);
-            } else if (lastFlag == Flag.CLASS_URI) {
-                classUris.add(MutablePair.of(new URI(args[i]), null));
-                i = tryReadArgs(classUris, args, i);
-            } else if (lastFlag == Flag.CLASS_NAME) {
-                classNames.add(MutablePair.of(args[i], null));
-                i = tryReadArgs(classNames, args, i);
+                sourceUris.add(new URI(args[i]));
+            } else if (lastFlag == Flag.CLASS_PATH) {
+                classpathRoots.add(resolveRelativePathCommon(args[i]));
             } else if (lastFlag == Flag.FILE) {
                 argsPath.add(args[i]);
             } else if (lastFlag == Flag.URI) {
@@ -260,48 +249,30 @@ public class Main {
         logger.setStream(LogEvent.fail, System.out);
 
         logger.debug("Source URIs: {0}", Decorated.list(sourceUris));
-        logger.debug("Class URIs: {0}", Decorated.list(classUris));
+        logger.debug("Additional classpath entries: {0}", Decorated.list(classpathRoots));
         logger.debug("File arguments: {0}", Decorated.list(argsPath));
         logger.debug("URI arguments: {0}", Decorated.list(argsUri));
 
         var classes = new TreeMap<String, JavaFileObject>();
-        var classArgs = new TreeMap<JavaFileObject, String[]>((lhs, rhs) -> lhs.toUri().compareTo(rhs.toUri()));
-        for (var entry : sourceUris.parallelStream().collect(Collectors.toUnmodifiableMap(
-                sourceUri -> sourceUri,
-                sourceUri -> {
-                    try {
-                        return compileFiles(sourceUri.getKey(), Arrays.asList(), logger);
-                    } catch (IOException ex) {
-                        throw new UncheckedIOException(ex);
-                    }
-                })).entrySet()) {
-            classes.putAll(entry.getValue());
-            for (var className : entry.getValue().values()) {
-                classArgs.put(className, entry.getKey().getValue());
+        sourceUris.parallelStream().forEach(sourceUri -> {
+            try {
+                var result = compileFile(sourceUri, Arrays.asList(), logger);
+                synchronized (classes) {
+                    classes.putAll(result);
+                }
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
             }
-        }
-        for (var classUri : classUris) {
-            var uri = new URIJavaFileObject(classUri.getKey(), Kind.CLASS);
-            try (var is = uri.openInputStream()) {
-                var classNameVisitor = new ClassNameVisitor();
-                new ClassReader(is.readAllBytes()).accept(classNameVisitor, 0);
-                classes.put(classNameVisitor.getClassName(), uri);
-            }
-        }
+        });
 
         logger.debug("Compiled class files: {0}", Decorated.list(List.copyOf(classes.keySet())));
-        logger.debug("Class names from class path: {0}", Decorated.list(classNames.stream().map(MutablePair::getKey).toList()));
+        logger.debug("Validators: {0}", Decorated.list(classNames.stream().map(MutablePair::getKey).toList()));
 
+        var classLoader = new InMemoryClassLoader(classes, new FilesystemClassLoader(classpathRoots, ClassLoader.getSystemClassLoader()));
         var validators = new ArrayList<Validator>();
-        var classLoader = new InMemoryClassLoader(classes);
-        for (var classObject : classes.entrySet()) {
-            classNames.add(MutablePair.of(classObject.getKey(), classArgs.get(classObject.getValue())));
-        }
+
         for (var className : classNames) {
-            var validator = instantiateValidator(classLoader, className.getKey(), className.getValue(), logger);
-            if (validator != null) {
-                validators.add(validator);
-            }
+            validators.add(instantiateValidator(classLoader, className.getKey(), className.getValue()));
         }
 
         logger.debug("Instantiated validators: {0}", Decorated.list(validators.stream().map(o -> o.getClass().getSimpleName()).toList()));
@@ -340,17 +311,31 @@ public class Main {
             }
         }
 
+        int errorMessages = 0;
+        for (Validator validator : validators) {
+            for (var p : validator.getMessages()) {
+                if (LogEvent.error.equals(p.getKey())) {
+                    System.out.println(decorated(p));
+                    ++errorMessages;
+                }
+            }
+        }
+
         int exitCode = 0;
-        if (failMessages == 0) {
+        if (failMessages == 0 && errorMessages == 0) {
             if (passMessages > 0) {
                 System.err.println(MessageFormat.format("Summary: all checks {0}", Decorated.custom("passed", Decoration.green, Decoration.bold)));
             } else {
-                System.err.println("Summary: no checks were run");
+                System.err.println("Summary: no output available");
             }
-        } else {
+        } else if (errorMessages == 0) {
             System.err.println(MessageFormat.format("Summary: {0} {1}", Decorated.plain(failMessages), Decorated.custom(
                     "failed check" + (failMessages == 1 ? "" : "s"), Decoration.red, Decoration.bold)));
             exitCode = 1;
+        } else if (failMessages == 0) {
+            System.err.println(MessageFormat.format("Summary: {0} {1} occured", Decorated.plain(errorMessages), Decorated.custom(
+                    "error" + (errorMessages == 1 ? "" : "s"), Decoration.red, Decoration.bold)));
+            exitCode = 2;
         }
 
         System.exit(exitCode);

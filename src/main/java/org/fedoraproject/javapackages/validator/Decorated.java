@@ -5,7 +5,6 @@ import java.util.List;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public class Decorated {
-
     private static final Decoration DECORATION_RPM = Decoration.bright_red;
     private static final Decoration DECORATION_EXPECTED = Decoration.bright_cyan;
     private static final Decoration DECORATION_ACTUAL = Decoration.bright_magenta;
@@ -54,6 +53,7 @@ public class Decorated {
         return new Decorated(obj, decorations);
     }
 
+    @Override
     public String toString() {
         return Main.getDecorator().decorate(object, decorations);
     }

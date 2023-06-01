@@ -10,7 +10,9 @@ import javax.tools.JavaFileObject;
 public class InMemoryClassLoader extends ClassLoader {
     private Map<String, Class<?>> classes = new TreeMap<>();
 
-    public InMemoryClassLoader(Map<String, ? extends JavaFileObject> classes) {
+    public InMemoryClassLoader(Map<String, ? extends JavaFileObject> classes, ClassLoader parent) {
+        super(parent);
+
         for (var entry : classes.entrySet()) {
             byte[] bytes;
             try (var is = entry.getValue().openInputStream()) {
@@ -20,6 +22,10 @@ public class InMemoryClassLoader extends ClassLoader {
             }
             this.classes.put(entry.getKey(), defineClass(entry.getKey(), bytes, 0, bytes.length));
         }
+    }
+
+    public InMemoryClassLoader(Map<String, ? extends JavaFileObject> classes) {
+        this(classes, null);
     }
 
     @Override

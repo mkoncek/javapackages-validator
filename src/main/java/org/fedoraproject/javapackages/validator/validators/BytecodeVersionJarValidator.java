@@ -3,6 +3,8 @@ package org.fedoraproject.javapackages.validator.validators;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -20,14 +22,14 @@ public class BytecodeVersionJarValidator extends JarValidator {
 
     @Override
     public void validateJarEntry(RpmInfoURI rpm, CpioArchiveEntry rpmEntry, byte[] content) throws IOException {
-        String jarName = rpmEntry.getName().substring(1);
-        var classVersions = new TreeMap<String, Integer>();
+        var jarPath = Paths.get(rpmEntry.getName().substring(1));
+        var classVersions = new TreeMap<Path, Integer>();
 
         try (var jarStream = new JarArchiveInputStream(new ByteArrayInputStream(content))) {
             for (JarArchiveEntry jarEntry; ((jarEntry = jarStream.getNextJarEntry()) != null);) {
-                String className = jarEntry.getName();
+                var classPath = Paths.get(jarEntry.getName());
 
-                if (className.endsWith(".class")) {
+                if (classPath.toString().endsWith(".class")) {
                     // Read 6-th and 7-th bytes which indicate the .class bytecode version
                     if (jarStream.skip(6) != 6) {
                         throw Common.INCOMPLETE_READ;
@@ -43,27 +45,26 @@ public class BytecodeVersionJarValidator extends JarValidator {
 
                     var version = versionBuffer.getShort();
 
-                    classVersions.put(className, Integer.valueOf(version));
+                    classVersions.put(classPath, Integer.valueOf(version));
                 }
             }
         }
 
-
-        validate(rpm, jarName, classVersions);
+        validate(rpm, jarPath, classVersions);
 
         if (TestResult.pass.equals(getResult())) {
             pass("{0}: {1}: found bytecode versions: {2}",
                     Decorated.rpm(rpm),
-                    Decorated.custom(jarName, DECORATION_JAR),
+                    Decorated.custom(jarPath, DECORATION_JAR),
                     Decorated.list(classVersions.values().stream().sorted().distinct().toList()));
         }
     }
 
-    public void validate(RpmInfoURI rpm, String jarName, Map<String, Integer> classVersions) {
+    public void validate(RpmInfoURI rpm, Path jarPath, Map<Path, Integer> classVersions) {
         for (var entry : classVersions.entrySet()) {
             info("{0}: {1}: {2}: bytecode version: {3}",
                     Decorated.rpm(rpm),
-                    Decorated.custom(jarName, DECORATION_JAR),
+                    Decorated.custom(jarPath, DECORATION_JAR),
                     Decorated.custom(entry.getKey(), DECORATION_CLASS),
                     Decorated.actual(entry.getValue()));
         }

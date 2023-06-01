@@ -19,7 +19,10 @@ public class JavaExclusiveArchValidator extends ElementwiseValidator {
 
     @Override
     public void validate(RpmInfoURI rpm) throws IOException {
-        boolean noarch = rpm.getBuildArchs().equals(Collections.singletonList("noarch"));
+        var buildArchs = rpm.getBuildArchs();
+        debug("{0}: Build archs: {1}", Decorated.rpm(rpm), Decorated.list(buildArchs));
+        boolean noarch = buildArchs.equals(Collections.singletonList("noarch"));
+
         String expected = noarch ? JAVA_ARCHES + " noarch" : JAVA_ARCHES;
         String actual = String.join(" ", rpm.getExclusiveArch());
 
