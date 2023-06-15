@@ -1,6 +1,7 @@
 package org.fedoraproject.javapackages.validator;
 
 import java.util.EnumMap;
+import java.util.Objects;
 
 public class AnsiDecorator implements TextDecorator {
     public static final AnsiDecorator INSTANCE = new AnsiDecorator();
@@ -86,7 +87,7 @@ public class AnsiDecorator implements TextDecorator {
             break;
         }
 
-        result.append(object.toString());
+        result.append(Objects.toString(object));
         result.append("\033[0m");
 
         return result.toString();

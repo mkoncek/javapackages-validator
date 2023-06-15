@@ -1,6 +1,7 @@
 package org.fedoraproject.javapackages.validator;
 
 import java.util.EnumMap;
+import java.util.Objects;
 
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -30,7 +31,7 @@ public class HtmlDecorator implements TextDecorator {
         DECORATIONS.put(Decoration.bright_yellow, "color:goldenrod;");
         DECORATIONS.put(Decoration.bright_blue, "color:blue;");
         DECORATIONS.put(Decoration.bright_magenta, "color:magenta;");
-        DECORATIONS.put(Decoration.bright_cyan, "color:cyan;");
+        DECORATIONS.put(Decoration.bright_cyan, "color:#00e5ff;");
         DECORATIONS.put(Decoration.bright_white, "color:white;");
     }
 
@@ -52,7 +53,7 @@ public class HtmlDecorator implements TextDecorator {
             color = Decoration.black;
         }
 
-        StringBuilder result = new StringBuilder("<text style=\"");
+        var result = new StringBuilder("<text style=\"");
 
         for (var decoration : decorations) {
             switch (decoration) {
@@ -89,7 +90,7 @@ public class HtmlDecorator implements TextDecorator {
         }
 
         result.append("\">");
-        result.append(StringEscapeUtils.escapeHtml4(object.toString()).replace(System.lineSeparator(), "<br>"));
+        result.append(StringEscapeUtils.escapeHtml4(Objects.toString(object)).replace(System.lineSeparator(), "<br>"));
         result.append("</text>");
 
         return result.toString();

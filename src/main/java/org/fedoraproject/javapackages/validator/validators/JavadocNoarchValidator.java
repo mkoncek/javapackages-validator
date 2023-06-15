@@ -12,7 +12,7 @@ public class JavadocNoarchValidator extends ElementwiseValidator {
 
     @Override
     public void validate(RpmInfoURI rpm) throws IOException {
-        if (!"noarch".equals(rpm.getArch())) {
+        if (!rpm.getArch().equals("noarch")) {
             fail("{0} is a javadoc package but its architecture is {1}",
                     Decorated.rpm(rpm),
                     Decorated.actual(rpm.getArch()));

@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator.validators;
+package org.fedoraproject.javapackages.validator;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -10,10 +10,6 @@ import java.util.List;
 
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.apache.commons.lang3.tuple.Pair;
-import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.LogEvent;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
-import org.fedoraproject.javapackages.validator.TestResult;
 
 public abstract class Validator {
     protected List<Pair<LogEvent, String>> log = new ArrayList<>();
@@ -23,8 +19,33 @@ public abstract class Validator {
      * Handle arguments passed on CLI. Executed once before the execution of the validator,
      * @param args Arguments. Never null.
      */
-    public void arguments(String[] args) {
+    public void arguments(String[] args) throws Exception {
         throw new IllegalArgumentException(getClass().getSimpleName() + " does not recognize optional arguments");
+    }
+
+    private static String toDashCase(String string) {
+        var result = new StringBuilder();
+
+        boolean wasLowerCase = false;
+
+        for (int i = 0; i != string.length(); ++i) {
+            if (Character.isLowerCase(string.charAt(i))) {
+                wasLowerCase = true;
+            } else if (Character.isUpperCase(string.charAt(i))) {
+                if (wasLowerCase) {
+                    result.append('-');
+                }
+                wasLowerCase = false;
+            }
+
+            result.append(Character.toLowerCase(string.charAt(i)));
+        }
+
+        return result.toString();
+    }
+
+    protected String getTestName() {
+        return toDashCase(getClass().getSimpleName());
     }
 
     public TestResult getResult() {
@@ -39,18 +60,26 @@ public abstract class Validator {
         log.add(Pair.of(kind, MessageFormat.format(pattern, (Object[]) arguments)));
     }
 
-    protected final void fail(String pattern, Decorated... arguments) {
-        addLog(LogEvent.fail, pattern, arguments);
+    protected final void fail() {
         if (TestResult.fail.compareTo(testResult) > 0) {
             testResult = TestResult.fail;
         }
     }
 
-    protected final void pass(String pattern, Decorated... arguments) {
-        addLog(LogEvent.pass, pattern, arguments);
+    protected final void fail(String pattern, Decorated... arguments) {
+        addLog(LogEvent.fail, pattern, arguments);
+        fail();
+    }
+
+    protected final void pass() {
         if (TestResult.pass.compareTo(testResult) > 0) {
             testResult = TestResult.pass;
         }
+    }
+
+    protected final void pass(String pattern, Decorated... arguments) {
+        addLog(LogEvent.pass, pattern, arguments);
+        pass();
     }
 
     protected final void debug(String pattern, Decorated... arguments) {
@@ -61,17 +90,23 @@ public abstract class Validator {
         addLog(LogEvent.info, pattern, arguments);
     }
 
-    public final void pubvalidate(Iterator<RpmInfoURI> rpmIt) {
+    final void error(String pattern, Decorated... arguments) {
+        addLog(LogEvent.error, pattern, arguments);
+    }
+
+    public final Validator pubvalidate(Iterator<RpmInfoURI> rpmIt) {
         try {
             validate(rpmIt);
         } catch (Exception ex) {
             var stackTrace = new ByteArrayOutputStream();
             ex.printStackTrace(new PrintStream(stackTrace, false, StandardCharsets.UTF_8));
-            addLog(LogEvent.error, "An exception occured:{0}{1}",
+            error("An exception occured:{0}{1}",
                     Decorated.plain(System.lineSeparator()),
                     Decorated.plain(new String(stackTrace.toByteArray(), StandardCharsets.UTF_8)));
             testResult = TestResult.error;
         }
+
+        return this;
     }
 
     protected abstract void validate(Iterator<RpmInfoURI> rpmIt) throws Exception;

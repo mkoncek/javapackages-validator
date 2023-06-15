@@ -7,8 +7,6 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-import org.fedoraproject.javapackages.validator.validators.Validator;
-
 public class TestCommon {
     public static final Path RPMBUILD_PATH_PREFIX = Paths.get("src/test/resources/rpmbuild");
     public static final Path RPM_PATH_PREFIX = RPMBUILD_PATH_PREFIX.resolve(Paths.get("RPMS"));

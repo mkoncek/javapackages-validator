@@ -17,6 +17,7 @@ import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
+import org.fedoraproject.javapackages.validator.Validator;
 
 public abstract class DuplicateFileValidator extends Validator {
     @Override
