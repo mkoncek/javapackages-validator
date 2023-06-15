@@ -15,15 +15,12 @@ import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TestResult;
-import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public class BytecodeVersionJarValidator extends JarValidator {
-    protected static final Decoration DECORATION_CLASS = Decoration.bright_yellow;
-
     @Override
     public void validateJarEntry(RpmInfoURI rpm, CpioArchiveEntry rpmEntry, byte[] content) throws IOException {
         var jarPath = Paths.get(rpmEntry.getName().substring(1));
-        var classVersions = new TreeMap<Path, Integer>();
+        var classVersions = new TreeMap<Path, Short>();
 
         try (var jarStream = new JarArchiveInputStream(new ByteArrayInputStream(content))) {
             for (JarArchiveEntry jarEntry; ((jarEntry = jarStream.getNextJarEntry()) != null);) {
@@ -45,7 +42,7 @@ public class BytecodeVersionJarValidator extends JarValidator {
 
                     var version = versionBuffer.getShort();
 
-                    classVersions.put(classPath, Integer.valueOf(version));
+                    classVersions.put(classPath, Short.valueOf(version));
                 }
             }
         }
@@ -60,12 +57,12 @@ public class BytecodeVersionJarValidator extends JarValidator {
         }
     }
 
-    public void validate(RpmInfoURI rpm, Path jarPath, Map<Path, Integer> classVersions) {
+    public void validate(RpmInfoURI rpm, Path jarPath, Map<Path, Short> classVersions) {
         for (var entry : classVersions.entrySet()) {
             info("{0}: {1}: {2}: bytecode version: {3}",
                     Decorated.rpm(rpm),
                     Decorated.custom(jarPath, DECORATION_JAR),
-                    Decorated.custom(entry.getKey(), DECORATION_CLASS),
+                    Decorated.struct(entry.getKey()),
                     Decorated.actual(entry.getValue()));
         }
     }

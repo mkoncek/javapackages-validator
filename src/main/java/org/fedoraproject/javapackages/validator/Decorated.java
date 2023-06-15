@@ -8,6 +8,7 @@ public class Decorated {
     private static final Decoration DECORATION_RPM = Decoration.bright_red;
     private static final Decoration DECORATION_EXPECTED = Decoration.bright_cyan;
     private static final Decoration DECORATION_ACTUAL = Decoration.bright_magenta;
+    private static final Decoration DECORATION_CLASS = Decoration.bright_yellow;
 
     /**
      * Decoration used for describing objects which hold inspected values
@@ -31,6 +32,10 @@ public class Decorated {
 
     public static Decorated actual(Object actual) {
         return new Decorated(actual, DECORATION_ACTUAL);
+    }
+
+    public static Decorated struct(Object struct) {
+        return new Decorated(struct, DECORATION_CLASS);
     }
 
     public static Decorated expected(Object expected) {

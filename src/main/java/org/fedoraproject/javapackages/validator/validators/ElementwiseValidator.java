@@ -6,7 +6,7 @@ import java.util.function.Predicate;
 
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
-import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
+import org.fedoraproject.javapackages.validator.Validator;
 
 public abstract class ElementwiseValidator extends Validator {
     private Predicate<RpmInfoURI> filter;
@@ -27,8 +27,8 @@ public abstract class ElementwiseValidator extends Validator {
             if (filter.test(rpm)) {
                 validate(rpm);
             } else {
-                debug("{0}: filtered out {1}",
-                        Decorated.custom(getClass().getSimpleName(), Decoration.bright_yellow),
+                debug("{0} filtered out {1}",
+                        Decorated.struct(getClass().getCanonicalName()),
                         Decorated.rpm(rpm));
             }
         }

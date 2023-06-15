@@ -1,7 +1,9 @@
 package org.fedoraproject.javapackages.validator;
 
+import java.util.Objects;
+
 public interface TextDecorator {
-    public static final TextDecorator NO_DECORATOR = (object, decorations) -> object.toString();
+    public static final TextDecorator NO_DECORATOR = (object, decorations) -> Objects.toString(object);
 
     public enum Decoration
     {
