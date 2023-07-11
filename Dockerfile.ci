@@ -1,5 +1,5 @@
-FROM quay.io/fedora/fedora:36
-RUN dnf -y install findutils git-core koji
+FROM quay.io/fedora/fedora:rawhide
+RUN dnf5 -y install findutils git-core koji
 
 # Force rebuild
 RUN echo 3
@@ -7,6 +7,4 @@ RUN echo 3
 COPY "prepare_ci.sh" "/usr/local/bin/"
 RUN mkdir "/usr/local/src/rpms" && cd "/usr/local/src/rpms" && "/usr/local/bin/prepare_ci.sh"
 
-RUN dnf -y --nogpgcheck --installroot /srv/envroot --setopt reposdir=/dev/null --setopt tsflags= --repofrompath rawhide,https://kojipkgs.fedoraproject.org/repos/rawhide/latest/x86_64 install $(find /usr/local/src/rpms \( -name \*.noarch.rpm -o -name \*.x86_64.rpm \) -a \! -name maven-openjdk\* -a \! -name maven-local-openjdk\*)
-
-ENTRYPOINT ["cp", "-r", "/usr/local/src/rpms", "/srv/envroot", "-t"]
+ENTRYPOINT ["cp", "-r", "/usr/local/src/rpms", "-t"]
