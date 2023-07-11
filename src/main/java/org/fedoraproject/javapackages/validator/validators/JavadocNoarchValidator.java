@@ -4,7 +4,9 @@ import java.io.IOException;
 
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
+import org.fedoraproject.javapackages.validator.TmtTest;
 
+@TmtTest("/java/javadoc_noarch")
 public class JavadocNoarchValidator extends ElementwiseValidator {
     public JavadocNoarchValidator() {
         super(rpm -> rpm.isBinaryPackage() && rpm.getName().equals(rpm.getPackageName() + "-javadoc"));

@@ -5,7 +5,9 @@ import java.util.Map;
 
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
+import org.fedoraproject.javapackages.validator.TmtTest;
 
+@TmtTest("/java/bytecode_version")
 public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
     private short min = Short.MIN_VALUE;
     private short max = Short.MAX_VALUE;

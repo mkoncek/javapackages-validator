@@ -4,16 +4,24 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.apache.commons.lang3.tuple.Pair;
 
 public abstract class Validator {
-    protected List<Pair<LogEvent, String>> log = new ArrayList<>();
-    protected TestResult testResult = TestResult.info;
+    static TextDecorator DECORATOR = TextDecorator.NO_DECORATOR;
+
+    private List<Pair<LogEvent, String>> log = new ArrayList<>();
+    private TestResult testResult = TestResult.info;
+    private LocalDateTime startTime = null;
+    private LocalDateTime endTime = null;
 
     /**
      * Handle arguments passed on CLI. Executed once before the execution of the validator,
@@ -45,7 +53,12 @@ public abstract class Validator {
     }
 
     protected String getTestName() {
-        return toDashCase(getClass().getSimpleName());
+        var annotation = getClass().getAnnotation(TmtTest.class);
+        if (annotation != null) {
+            return annotation.value();
+        } else {
+            return toDashCase(getClass().getSimpleName());
+        }
     }
 
     public TestResult getResult() {
@@ -57,7 +70,7 @@ public abstract class Validator {
     }
 
     private final void addLog(LogEvent kind, String pattern, Decorated... arguments) {
-        log.add(Pair.of(kind, MessageFormat.format(pattern, (Object[]) arguments)));
+        log.add(Pair.of(kind, MessageFormat.format(pattern, Stream.of(arguments).map(a -> a.toString(DECORATOR)).toArray())));
     }
 
     protected final void fail() {
@@ -82,6 +95,17 @@ public abstract class Validator {
         pass();
     }
 
+    protected final void error() {
+        if (TestResult.error.compareTo(testResult) > 0) {
+            testResult = TestResult.error;
+        }
+    }
+
+    final void error(String pattern, Decorated... arguments) {
+        addLog(LogEvent.error, pattern, arguments);
+        error();
+    }
+
     protected final void debug(String pattern, Decorated... arguments) {
         addLog(LogEvent.debug, pattern, arguments);
     }
@@ -90,23 +114,35 @@ public abstract class Validator {
         addLog(LogEvent.info, pattern, arguments);
     }
 
-    final void error(String pattern, Decorated... arguments) {
-        addLog(LogEvent.error, pattern, arguments);
-    }
-
     public final Validator pubvalidate(Iterator<RpmInfoURI> rpmIt) {
+        startTime = LocalDateTime.now(Clock.systemUTC());
         try {
-            validate(rpmIt);
+            if (!testResult.equals(TestResult.error)) {
+                validate(rpmIt);
+            }
         } catch (Exception ex) {
             var stackTrace = new ByteArrayOutputStream();
             ex.printStackTrace(new PrintStream(stackTrace, false, StandardCharsets.UTF_8));
             error("An exception occured:{0}{1}",
                     Decorated.plain(System.lineSeparator()),
                     Decorated.plain(new String(stackTrace.toByteArray(), StandardCharsets.UTF_8)));
-            testResult = TestResult.error;
         }
 
+        endTime = LocalDateTime.now(Clock.systemUTC());
         return this;
+    }
+
+    public final LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public final LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public final String getFormattedDuration() {
+        var duration = Duration.between(startTime, endTime);
+        return String.format("%02d:%02d:%02d.%d", duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart(), duration.toMillisPart());
     }
 
     protected abstract void validate(Iterator<RpmInfoURI> rpmIt) throws Exception;
