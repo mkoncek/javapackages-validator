@@ -7,7 +7,9 @@ import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TestResult;
+import org.fedoraproject.javapackages.validator.TmtTest;
 
+@TmtTest("/java/attributes/requires")
 public class AttributeRequiresValidator extends ElementwiseValidator {
     public AttributeRequiresValidator() {
         super(RpmInfo::isBinaryPackage);

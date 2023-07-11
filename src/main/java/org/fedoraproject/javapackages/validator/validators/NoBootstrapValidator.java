@@ -4,7 +4,9 @@ import java.io.IOException;
 
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
+import org.fedoraproject.javapackages.validator.TmtTest;
 
+@TmtTest("/no_bootstrap")
 public class NoBootstrapValidator extends ElementwiseValidator {
     public NoBootstrapValidator() {
         super(RpmInfoURI::isBinaryPackage);

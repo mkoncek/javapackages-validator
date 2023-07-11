@@ -14,6 +14,7 @@ import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.RpmInfoURI;
+import org.fedoraproject.javapackages.validator.TmtTest;
 import org.fedoraproject.xmvn.metadata.PackageMetadata;
 import org.fedoraproject.xmvn.metadata.io.stax.MetadataStaxReader;
 
@@ -26,6 +27,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Ignores source rpms.
  */
 @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
+@TmtTest("/java/maven_metadata")
 public class MavenMetadataValidator extends ElementwiseValidator {
     public MavenMetadataValidator() {
         super(RpmInfoURI::isBinaryPackage);

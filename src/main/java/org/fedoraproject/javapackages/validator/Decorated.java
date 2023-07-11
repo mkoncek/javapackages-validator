@@ -58,8 +58,12 @@ public class Decorated {
         return new Decorated(obj, decorations);
     }
 
+    public String toString(TextDecorator decorator) {
+        return decorator.decorate(object, decorations);
+    }
+
     @Override
     public String toString() {
-        return Main.getDecorator().decorate(object, decorations);
+        return toString(Main.getDecorator());
     }
 }

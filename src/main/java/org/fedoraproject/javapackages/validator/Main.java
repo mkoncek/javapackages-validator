@@ -1,8 +1,6 @@
 package org.fedoraproject.javapackages.validator;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -148,9 +146,7 @@ public class Main {
             ).toList();
             var compilationUnits = fileManager.getJavaFileObjectsFromPaths(sourceFiles);
 
-            synchronized(logger) {
-                logger.debug("Compiling source files: {0}", Decorated.list(sourceFiles));
-            }
+            logger.debug("Compiling source files: {0}", Decorated.list(sourceFiles));
 
             try {
                 if (!javac.getTask(null, fileManager, null, compilerOptions, null, compilationUnits).call()) {
@@ -246,6 +242,7 @@ public class Main {
                 i = tryReadArgs(parameters.validatorArgs, args, i);
             } else if (lastFlag == Flag.COLOR) {
                 DECORATOR = AnsiDecorator.INSTANCE;
+                Validator.DECORATOR = DECORATOR;
                 --i;
             } else if (lastFlag == Flag.DEBUG) {
                 debugOutputStream = System.err;
@@ -277,9 +274,9 @@ public class Main {
         if (parameters.classPath != null) {
             compileFiles(parameters.sourcePath, parameters.classPath, List.of("-d", parameters.classPath.toString()), logger);
             var serviceOutFile = Files.createDirectories(parameters.classPath.resolve("META-INF").resolve("services")).resolve(Validator.class.getCanonicalName());
-            try (var os = new FileOutputStream(serviceOutFile.toFile())) {
+            try (var os = Files.newOutputStream(serviceOutFile)) {
                 for (var serviceFile : Files.find(parameters.sourcePath, Integer.MAX_VALUE, (p, a) -> !a.isDirectory() && p.getFileName().equals(Paths.get(Validator.class.getCanonicalName()))).toList()) {
-                    try (var is = new FileInputStream(serviceFile.toFile())) {
+                    try (var is = Files.newInputStream(serviceFile)) {
                         is.transferTo(os);
                     }
                 }
@@ -341,12 +338,18 @@ public class Main {
         return validators.stream().filter(selector).toList();
     }
 
-    @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
-    List<Validator> execute(List<Validator> validators) throws Exception {
+    private final List<Validator> privselect(List<Validator> validators) throws Exception {
+        validators = select(validators);
+
         logger.debug("Selected validators:{0}", Decorated.plain(validators.stream().map(v ->
             System.lineSeparator() + Decorated.struct(v.getClass().getCanonicalName())
         ).collect(Collectors.joining())));
 
+        return validators;
+    }
+
+    @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
+    List<Validator> execute(List<Validator> validators) throws Exception {
         validators.parallelStream().forEach(validator -> validator.pubvalidate(
                 IteratorUtils.<RpmInfoURI>chainedIterator(new ArgFileIterator(parameters.argPaths),
                         parameters.argUris.stream().map(RpmInfoURI::create).iterator())));
@@ -420,7 +423,7 @@ public class Main {
     void run(String[] args) throws Exception {
         parseArguments(args);
         var tests = discover();
-        execute(select(tests));
+        execute(privselect(tests));
         report(tests);
     }
 
