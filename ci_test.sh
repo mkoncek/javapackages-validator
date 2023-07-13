@@ -1,11 +1,11 @@
 #!/bin/bash
-set -eu
+set -eux
 
 jp_validator_image='javapackages-validator'
 test_artifacts_dir='/tmp/test_artifacts'
-jpv_tests_dir='/tmp/javapackages-tests.git'
-jpv_tests_url='https://src.fedoraproject.org/tests/javapackages.git'
-jpv_tests_ref='f37'
+jpv_tests_dir='/tmp/javapackages.git'
+jpv_tests_url='https://src.fedoraproject.org/forks/mkoncek/tests/javapackages.git'
+jpv_tests_ref='f39'
 
 build_local_image() {
     podman build -f Dockerfile.main -t "${jp_validator_image}"
@@ -13,7 +13,7 @@ build_local_image() {
 
 download_ci_env() {
     mkdir -p "${test_artifacts_dir}"
-    podman run --privileged --mount type=bind,source="${test_artifacts_dir}",target='/mnt/rpms' --rm -it "quay.io/mizdebsk/javapackages-validator-ci" '/mnt/rpms'
+    podman run --privileged --mount type=bind,source="${test_artifacts_dir}",target='/mnt/rpms' --rm -it "quay.io/mkoncek/javapackages-validator-ci" '/mnt/rpms'
 }
 
 prepare_test_env() {
@@ -23,6 +23,7 @@ prepare_test_env() {
 
 execute() {
     for component in "${test_artifacts_dir}"/rpms/*; do
+        component="${component##*/}"
         run_id="jpv-ci-${component}"
         echo "::group::Run tests for ${component}"
 
@@ -56,7 +57,7 @@ execute() {
     done
 }
 
-if [ "${1}" = 'build_local_image' ]; then
+if [ "${1}" = 'build-local-image' ]; then
     build_local_image
 elif [ "${1}" = 'prepare' ]; then
     prepare_test_env
