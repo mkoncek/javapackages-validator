@@ -1,51 +1,44 @@
 # javapackages-validator
-Validator runs a single check on a set of `rpm` files.
+
+Javapackages-validator is a tool used to test `.rpm` files. It executes checks implemented as Java classes.
 
 ## Usage
-`run.sh <simple class name of the check> [optional flags] <RPM files or directories to test...>`
 
-The parameters specifying RPM files can either be RPM file paths or directories.
-In case of directories, the tool recursively searches for `.rpm` files found
-inside.
+`Main [optional flags] <validator class name> [validator flags] [-f|-u RPM files or directories to test]...`
 
-### Optional flags
-* **`-c, --config-file`** -- File path of a configuration source, can be specified multiple times
-* **`-u, --config-uri`** -- URI of a configuration source, can be specified multiple times
-* **`-r, --color`** -- Display debugging output
-* **`-x, --debug`** -- Display colored output
+      -h, --help - Print help message
 
-## Checks
-* **`BytecodeVersionCheck`** -- Inspects the `.class` entries inside `.jar`
-  archives inside test rpms and resolves their version against provided
-  configuration.
+Options for specifying validators:
 
-* **`DuplicateFileCheck`** -- Checks whether the set of rpms contains duplicate
-  file entries. Ignores duplicate directories as well as duplicate entries of
-  rpms in case each rpm is of a unique architecture.
+      -sp, --source-path - File path of a source file
+      -cp, --class-path - Additional class path entry
 
-* **`FilesCheck`** -- Inspects the files entries found inside each rpm and
-  resolves their path against the provided configuration.
+The tool recursively finds all `.java` files present in the *source path* directory, compiles them and places the results under the path specified as the *class path*. The entries on this class path are used to add additional validator classes to the tool.
 
-* **`JavadocNoarchCheck`** -- Checks whether all javadoc subpackages have
-  BuildArch `noarch`.
+Validator arguments can be immediately followed by space-separated square parentheses the contents of which will be passed as arguments to the validator.
 
-* **`JavaExclusiveArchCheck`** -- Checks whether packages follow Fedora policy
-  of having `%{java_arches}` field in their `ExclusiveArch` attribute.
+Options for specifying tested RPM files, can be specified multiple times:
 
-* **`RpmFilesizeCheck`** -- Resolves the rpm file size against provided
-  configuration.
+      -f, --file - File path of an .rpm file
+      -u, --uri - URI of an .rpm file
 
-* **`SymlinkCheck`** -- Inspects the rpm for symbolic links and resolves their
-  targets against provided configuration.
+Optional flags:
 
-* **`attribute.*`** -- Inspects the rpm attributes and resolves them against
-  provided configuration.
-	* **`ConflictsCheck`**
-	* **`EnhancesCheck`**
-	* **`ObsoletesCheck`**
-	* **`OrderWithRequiresCheck`**
-	* **`ProvidesCheck`**
-	* **`RecommendsCheck`**
-	* **`RequiresCheck`**
-	* **`SuggestsCheck`**
-	* **`SupplementsCheck`**
+      -x, --debug - Display debugging output
+      -r, --color - Display colored output
+
+
+The parameters specifying RPM files can either be RPM file paths or directories. In case of directories, the tool recursively searches for `.rpm` files found inside.
+
+## TMT
+
+The tool contains another main class `MainTmt` which is intended to be invoked  from within Tmt tests. The tool reads the output of discovered tests and  executes validators whose test name matches the discovered tests.
+
+In order to be able to run it in this mode, the environment variables: `TMT_TEST_DATA` and `TMT_TREE` need to be defined.
+
+The optional flags for the validator can be specified in the test plan YAML file under the context in the following form:
+
+      context:
+        /name/of/the/test: ["arg1", "arg2", ...]
+
+The tool executes matching validators and creates results in the form of HTML files.

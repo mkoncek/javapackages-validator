@@ -80,10 +80,10 @@ public class Main {
     }
 
     static void printHelp() {
-        System.out.println("Usage: Main [optional flags] <validator class name> <validator flags> <{-f | -u} RPM files or directories to test>...");
+        System.out.println("Usage: Main [optional flags] <validator class name> [validator flags] <-f|-u RPM files or directories to test>...");
         System.out.println("    " + Flag.HELP + " - Print help message");
         System.out.println();
-        System.out.println("Options for specifying validators, can be specified multiple times:");
+        System.out.println("Options for specifying validators:");
         System.out.println("    " + Flag.SOURCE_PATH + " - File path of a source file");
         System.out.println("    " + Flag.CLASS_PATH + " - Additional class path entry");
         System.out.println();
