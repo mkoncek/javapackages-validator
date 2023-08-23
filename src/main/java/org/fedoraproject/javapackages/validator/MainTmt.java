@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -76,9 +77,17 @@ public class MainTmt extends Main {
         var validatorTests = new TreeMap<String, Validator>();
         validators = new ArrayList<>(validators);
         validators.sort((lhs, rhs) -> lhs.getTestName().compareTo(rhs.getTestName()));
+        var intersection = new TreeSet<String>();
         for (var validator : validators) {
             var testName = validator.getTestName();
-            if (!discoveredTests.contains(testName)) {
+            if (discoveredTests.contains(testName)) {
+                intersection.add(testName);
+            }
+        }
+
+        for (var validator : validators) {
+            var testName = validator.getTestName();
+            if (!intersection.isEmpty() && !intersection.contains(testName)) {
                 continue;
             }
 
