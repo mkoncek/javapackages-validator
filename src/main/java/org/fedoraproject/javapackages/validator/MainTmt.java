@@ -21,7 +21,6 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.yaml.snakeyaml.Yaml;
 
 public class MainTmt extends Main {
@@ -57,10 +56,10 @@ public class MainTmt extends Main {
 """);
         }
 
-        public void printRow(Pair<LogEvent, String> entry) {
-            println("  <tr class=\"" + entry.getKey() + "\">");
-            println("    <td style=\"text-align:center;\">" + entry.getKey().getDecoratedText().toString(HtmlDecorator.INSTANCE) + "</td>");
-            println("    <td>" + entry.getValue() + "</td>");
+        public void printRow(Validator.LogEntry entry) {
+            println("  <tr class=\"" + entry.kind() + "\">");
+            println("    <td style=\"text-align:center;\">" + entry.kind().getDecoratedText().toString(HtmlDecorator.INSTANCE) + "</td>");
+            println("    <td>" + entry.toString(HtmlDecorator.INSTANCE) + "</td>");
             println("  </tr>");
         }
 
@@ -205,10 +204,16 @@ public class MainTmt extends Main {
             var resultFile = "results/";
             resultFile += entry.getKey().substring(1).replace('/', '#');
 
-            try (var os = Files.newOutputStream(TMT_TEST_DATA.resolve(resultFile + ".log"))) {
+            try (var os = Files.newOutputStream(TMT_TEST_DATA.resolve(resultFile + ".log"));
+                    var ps = new PrintStream(os, false, StandardCharsets.UTF_8)) {
+                for (var validator : entry.getValue()) {
+                    for (var p : validator.getMessages()) {
+                        ps.println(Main.decorated(p));
+                    }
+                }
             }
             try (var os = Files.newOutputStream(TMT_TEST_DATA.resolve(resultFile + ".html"));
-                var ps = new HtmlTablePrintStream(os)) {
+                    var ps = new HtmlTablePrintStream(os)) {
                 for (var validator : entry.getValue()) {
                     for (var p : validator.getMessages()) {
                         ps.printRow(p);
@@ -289,7 +294,6 @@ public class MainTmt extends Main {
     }
 
     public static void main(String[] args) throws Exception {
-        Validator.DECORATOR = HtmlDecorator.INSTANCE;
         new MainTmt().run(args);
     }
 }

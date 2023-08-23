@@ -13,12 +13,15 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.commons.collections4.list.UnmodifiableList;
-import org.apache.commons.lang3.tuple.Pair;
 
 public abstract class Validator {
-    static TextDecorator DECORATOR = TextDecorator.NO_DECORATOR;
+    record LogEntry(LogEvent kind, String pattern, Decorated... objects) {
+        String toString(TextDecorator decorator) {
+            return MessageFormat.format(pattern, Stream.of(objects).map(a -> a.toString(decorator)).toArray());
+        }
+    }
 
-    private List<Pair<LogEvent, String>> log = new ArrayList<>();
+    private List<LogEntry> log = new ArrayList<>();
     private TestResult testResult = TestResult.info;
     private LocalDateTime startTime = null;
     private LocalDateTime endTime = null;
@@ -65,12 +68,12 @@ public abstract class Validator {
         return testResult;
     }
 
-    public final List<Pair<LogEvent, String>> getMessages() {
+    public final List<LogEntry> getMessages() {
         return new UnmodifiableList<>(log);
     }
 
     private final void addLog(LogEvent kind, String pattern, Decorated... arguments) {
-        log.add(Pair.of(kind, MessageFormat.format(pattern, Stream.of(arguments).map(a -> a.toString(DECORATOR)).toArray())));
+        log.add(new LogEntry(kind, pattern, arguments));
     }
 
     protected final void fail() {

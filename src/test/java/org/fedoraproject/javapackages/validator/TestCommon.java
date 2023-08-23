@@ -26,6 +26,6 @@ public class TestCommon {
 
     public static void assertFailOne(Validator validator) {
         assertEquals(TestResult.fail, validator.getResult(), "expected result: FAIL");
-        assertEquals(1, validator.getMessages().stream().filter(p -> LogEvent.fail.equals(p.getKey())).count());
+        assertEquals(1, validator.getMessages().stream().filter(p -> LogEvent.fail.equals(p.kind())).count());
     }
 }
