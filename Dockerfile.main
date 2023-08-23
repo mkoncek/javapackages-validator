@@ -23,7 +23,7 @@ RUN mvn -B clean install
 
 ################################################################################
 
-FROM docker.io/library/alpine:3.18
+FROM docker.io/library/alpine:3.18.3
 RUN apk add openjdk17-jre-headless rpm
 
 COPY --from=builder "/usr/local/src/javapackages-validator/target/dependency/" "/opt/javapackages-validator/dependency/"
