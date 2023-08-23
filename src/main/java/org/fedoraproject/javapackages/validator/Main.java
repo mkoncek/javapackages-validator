@@ -33,7 +33,6 @@ import javax.tools.ToolProvider;
 
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -242,7 +241,6 @@ public class Main {
                 i = tryReadArgs(parameters.validatorArgs, args, i);
             } else if (lastFlag == Flag.COLOR) {
                 DECORATOR = AnsiDecorator.INSTANCE;
-                Validator.DECORATOR = DECORATOR;
                 --i;
             } else if (lastFlag == Flag.DEBUG) {
                 debugOutputStream = System.err;
@@ -357,8 +355,8 @@ public class Main {
         return validators;
     }
 
-    protected static final String decorated(Pair<LogEvent, String> entry) {
-        return "[" + entry.getKey().getDecoratedText() + "] " + entry.getValue();
+    protected static final String decorated(Validator.LogEntry entry) {
+        return "[" + entry.kind().getDecoratedText() + "] " + entry.toString(Main.DECORATOR);
     }
 
     @SuppressFBWarnings({"DM_EXIT"})
@@ -366,14 +364,14 @@ public class Main {
         int passMessages = 0;
         for (Validator validator : validators) {
             for (var p : validator.getMessages()) {
-                if (!LogEvent.fail.equals(p.getKey()) && !LogEvent.error.equals(p.getKey())) {
-                    if (LogEvent.debug.equals(p.getKey())) {
+                if (!LogEvent.fail.equals(p.kind()) && !LogEvent.error.equals(p.kind())) {
+                    if (LogEvent.debug.equals(p.kind())) {
                         getDebugOutputStream().println(decorated(p));
                     } else {
                         System.out.println(decorated(p));
                     }
 
-                    if (LogEvent.pass.equals(p.getKey())) {
+                    if (LogEvent.pass.equals(p.kind())) {
                         ++passMessages;
                     }
                 }
@@ -383,7 +381,7 @@ public class Main {
         int failMessages = 0;
         for (Validator validator : validators) {
             for (var p : validator.getMessages()) {
-                if (LogEvent.fail.equals(p.getKey())) {
+                if (LogEvent.fail.equals(p.kind())) {
                     System.out.println(decorated(p));
                     ++failMessages;
                 }
@@ -393,7 +391,7 @@ public class Main {
         int errorMessages = 0;
         for (var validator : validators) {
             for (var p : validator.getMessages()) {
-                if (LogEvent.error.equals(p.getKey())) {
+                if (LogEvent.error.equals(p.kind())) {
                     System.out.println(decorated(p));
                     ++errorMessages;
                 }

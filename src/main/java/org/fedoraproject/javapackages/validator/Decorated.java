@@ -1,6 +1,7 @@
 package org.fedoraproject.javapackages.validator;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
@@ -15,14 +16,14 @@ public class Decorated {
      */
     private static final Decoration DECORATION_OUTER = Decoration.bright_blue;
 
-    private final Object object;
+    private final String object;
     private final Decoration[] decorations;
 
     private Decorated(Object object, Decoration... decorations) {
         if (object instanceof Decorated) {
             throw new IllegalArgumentException("Object is already decorated");
         }
-        this.object = object;
+        this.object = Objects.toString(object);
         this.decorations = decorations;
     }
 
