@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -110,45 +111,59 @@ public class MainTmt extends Main {
             }
         }
 
-        var optPlanFile = Files.find(TMT_TREE, Integer.MAX_VALUE,
-                (p, a) -> a.isRegularFile() && p.getFileName().toString().equals("javapackages.fmf"))
-                .min((lhs, rhs) -> Integer.compare(lhs.getNameCount(), rhs.getNameCount()));
+        var optConfigFile = Optional.<Path>of(TMT_TREE.resolve("plans").resolve("javapackages-validator.yaml"));
+        if (!Files.isRegularFile(optConfigFile.get())) {
+            optConfigFile = Optional.<Path>of(TMT_TREE.resolve("javapackages-validator.yaml"));
+            if (!Files.isRegularFile(optConfigFile.get())) {
+                optConfigFile = Optional.empty();
+            }
+        }
 
-        if (optPlanFile.isPresent()) {
-            var planFile = optPlanFile.get();
-            var plan = Collections.<String, Object>emptyMap();;
-            try (var is = Files.newInputStream(planFile)) {
+        if (optConfigFile.isPresent()) {
+            var configPath = optConfigFile.get();
+            var configuration = Collections.<String, Object>emptyMap();;
+            try (var is = Files.newInputStream(configPath)) {
                 try {
-                    plan = new Yaml().load(is);
+                    configuration = new Yaml().load(is);
                 } catch (Exception ex) {
                     var os = new ByteArrayOutputStream();
                     var ps = new PrintStream(os, false, StandardCharsets.UTF_8);
                     ex.printStackTrace(ps);
                     logger.debug("An exception occured when attempting to read yaml file {0}: {1}",
-                            Decorated.actual(planFile),
+                            Decorated.actual(configPath),
                             Decorated.plain(new String(os.toByteArray(), StandardCharsets.UTF_8)));
                 }
             }
 
-            var context = (Map<?, ?>) plan.get("context");
+            for (var entry : configuration.entrySet()) {
+                var key = String.class.cast(entry.getKey());
+                Validator validator;
 
-            if (context != null) {
-                for (var entry : context.entrySet()) {
-                    var key = String.class.cast(entry.getKey());
-                    var validator = validatorTests.get(key);
+                if (key.startsWith("/") && (validator = validatorTests.get(key)) != null) {
+                    String[] args;
+                    try {
+                        args = ((List<?>) entry.getValue()).toArray(String[]::new);
+                    } catch (ClassCastException ex) {
+                        validator.error("{0}", Decorated.plain(
+                                "Wrong format of validator arguments in tmt plan Yaml, must be a list of strings"));
+                        parameters.validatorArgs.remove(validator.getClass().getCanonicalName());
+                        continue;
+                    }
 
-                    if (key.startsWith("/") && validator != null) {
-                        String[] args;
-                        try {
-                            args = ((List<?>) entry.getValue()).toArray(String[]::new);
-                        } catch (ClassCastException ex) {
-                            validator.error("{0}", Decorated.plain(
-                                    "Wrong format of validator arguments in tmt plan Yaml, must be a list of strings"));
+                    parameters.validatorArgs.put(validator.getClass().getCanonicalName(), Optional.of(args));
+                }
+            }
+
+            var exclusions = Collections.<Pattern>emptyList();
+            var discover = configuration.get("discover");
+            if (discover != null) {
+                var exclude = (List<?>) ((Map<?, ?>) discover).get("exclude");
+                if (exclude != null) {
+                    exclusions = exclude.stream().map(pattern -> Pattern.compile(String.class.cast(pattern))).toList();
+                    for (var validator : validators) {
+                        if (exclusions.stream().anyMatch(pattern -> pattern.matcher(validator.getTestName()).matches())) {
                             parameters.validatorArgs.remove(validator.getClass().getCanonicalName());
-                            continue;
                         }
-
-                        parameters.validatorArgs.put(validator.getClass().getCanonicalName(), Optional.of(args));
                     }
                 }
             }
