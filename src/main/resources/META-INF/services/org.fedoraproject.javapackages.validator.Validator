@@ -2,4 +2,5 @@ org.fedoraproject.javapackages.validator.validators.AttributeProvidesValidator
 org.fedoraproject.javapackages.validator.validators.BytecodeVersionValidator
 org.fedoraproject.javapackages.validator.validators.JavadocNoarchValidator
 org.fedoraproject.javapackages.validator.validators.JavaExclusiveArchValidator
+org.fedoraproject.javapackages.validator.validators.JpmsProvidesValidator
 org.fedoraproject.javapackages.validator.validators.MavenMetadataValidator
