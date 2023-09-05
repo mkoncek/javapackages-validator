@@ -17,7 +17,7 @@ public abstract class JarValidator extends ElementwiseValidator {
     }
 
     @Override
-    public final void validate(RpmInfoURI rpm) throws IOException {
+    public void validate(RpmInfoURI rpm) throws IOException {
         try (var is = new RpmArchiveInputStream(rpm.getURI().toURL())) {
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
                 if (!rpmEntry.isSymbolicLink() && rpmEntry.getName().endsWith(".jar")) {

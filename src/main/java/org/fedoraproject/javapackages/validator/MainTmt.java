@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -27,9 +28,17 @@ public class MainTmt extends Main {
     private Path TMT_TEST_DATA = null;
     private Path TMT_TREE = null;
 
+    static private String getenv(String key) {
+        var result = System.getenv(key);
+        if (result == null) {
+            throw new RuntimeException("Environment variable " + Objects.toString(key) + " not set");
+        }
+        return result;
+    }
+
     public MainTmt() {
-        TMT_TEST_DATA = Paths.get(System.getenv("TMT_TEST_DATA"));
-        TMT_TREE = Paths.get(System.getenv("TMT_TREE"));
+        TMT_TEST_DATA = Paths.get(getenv("TMT_TEST_DATA"));
+        TMT_TREE = Paths.get(getenv("TMT_TREE"));
     }
 
     private static class HtmlTablePrintStream extends PrintStream {

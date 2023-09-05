@@ -27,7 +27,9 @@ public abstract class Validator {
     private LocalDateTime endTime = null;
 
     /**
-     * Handle arguments passed on CLI. Executed once before the execution of the validator,
+     * Handle arguments passed on CLI. This method is executed once before the
+     * execution of the validator. It is not executed if optional arguments were
+     * not specified.
      * @param args Arguments. Never null.
      */
     public void arguments(String[] args) throws Exception {
@@ -104,7 +106,7 @@ public abstract class Validator {
         }
     }
 
-    final void error(String pattern, Decorated... arguments) {
+    protected final void error(String pattern, Decorated... arguments) {
         addLog(LogEvent.error, pattern, arguments);
         error();
     }
