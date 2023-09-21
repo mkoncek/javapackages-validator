@@ -117,7 +117,7 @@ public class MainTmt extends Main {
 
         for (var entry : validatorTests.entrySet()) {
             if (entry.getValue() == null) {
-                logger.debug("Test {0} implemented by multiple validators",
+                logger.debug("Test {0} is implemented by multiple validators",
                         Decorated.actual(entry.getKey()));
             }
         }
@@ -162,7 +162,7 @@ public class MainTmt extends Main {
                         args = ((List<?>) entry.getValue()).toArray(String[]::new);
                     } catch (ClassCastException ex) {
                         validator.error("{0}", Decorated.plain(
-                                "Wrong format of validator arguments in tmt plan Yaml, must be a list of strings"));
+                                "Wrong format of validator arguments in configuration Yaml file, must be a list of strings"));
                         parameters.validatorArgs.remove(validator.getClass().getCanonicalName());
                         continue;
                     }
@@ -172,15 +172,12 @@ public class MainTmt extends Main {
             }
 
             var exclusions = Collections.<Pattern>emptyList();
-            var discover = configuration.get("discover");
-            if (discover != null) {
-                var exclude = (List<?>) ((Map<?, ?>) discover).get("exclude");
-                if (exclude != null) {
-                    exclusions = exclude.stream().map(pattern -> Pattern.compile(String.class.cast(pattern))).toList();
-                    for (var validator : validators) {
-                        if (exclusions.stream().anyMatch(pattern -> pattern.matcher(validator.getTestName()).matches())) {
-                            parameters.validatorArgs.remove(validator.getClass().getCanonicalName());
-                        }
+            List<?> exclude = List.class.cast(configuration.get("exclude-tests-matching"));
+            if (exclude != null) {
+                exclusions = exclude.stream().map(pattern -> Pattern.compile(String.class.cast(pattern))).toList();
+                for (var validator : validators) {
+                    if (exclusions.stream().anyMatch(pattern -> pattern.matcher(validator.getTestName()).matches())) {
+                        parameters.validatorArgs.remove(validator.getClass().getCanonicalName());
                     }
                 }
             }
@@ -211,7 +208,7 @@ public class MainTmt extends Main {
 
         for (var entry : testReports.entrySet()) {
             var resultFile = "results/";
-            resultFile += entry.getKey().substring(1).replace('/', '#');
+            resultFile += entry.getKey().substring(1).replace('/', '.');
 
             try (var os = Files.newOutputStream(TMT_TEST_DATA.resolve(resultFile + ".log"));
                     var ps = new PrintStream(os, false, StandardCharsets.UTF_8)) {

@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.stream.Stream;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.TestCommon;
@@ -19,27 +18,26 @@ public class DuplicateFileValidatorTest {
     private static final Path DUPLICATE_FILE2_RPM = TestCommon.RPM_PATH_PREFIX.resolve(Paths.get("noarch/duplicate-file2-1-1.noarch.rpm"));
 
     @Test
-    void testIllegalDuplicateFile() throws IOException {
+    void testIllegalDuplicateFile() throws Exception {
         var validator = new DuplicateFileValidatorDefault() {
             @Override
             public boolean allowedDuplicateFile(Path path, Collection<? extends RpmInfo> providerRpms) throws IOException {
                 return false;
             }
         };
-        validator.validate(TestCommon.iteratorFrom(Stream.of(
-                DUPLICATE_FILE1_RPM, DUPLICATE_FILE2_RPM)));
+        validator.validate(TestCommon.fromPaths(DUPLICATE_FILE1_RPM, DUPLICATE_FILE2_RPM));
         assertFailOne(validator);
     }
 
     @Test
-    void testAllowedDuplicateFile() throws IOException {
+    void testAllowedDuplicateFile() throws Exception {
         var validator = new DuplicateFileValidatorDefault() {
             @Override
             public boolean allowedDuplicateFile(Path path, Collection<? extends RpmInfo> providerRpms) throws IOException {
                 return true;
             }
         };
-        validator.validate(TestCommon.iteratorFrom(Stream.of(DUPLICATE_FILE1_RPM, DUPLICATE_FILE2_RPM)));
+        validator.validate(TestCommon.fromPaths(DUPLICATE_FILE1_RPM, DUPLICATE_FILE2_RPM));
         assertPass(validator);
     }
 }

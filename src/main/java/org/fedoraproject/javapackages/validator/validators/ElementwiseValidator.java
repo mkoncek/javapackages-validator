@@ -1,30 +1,28 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import java.io.IOException;
-import java.util.Iterator;
 import java.util.function.Predicate;
 
+import org.fedoraproject.javadeptools.rpm.RpmFile;
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.Validator;
 
 public abstract class ElementwiseValidator extends Validator {
-    private Predicate<RpmInfoURI> filter;
+    private Predicate<RpmInfo> filter;
 
     protected ElementwiseValidator() {
         this(rpm -> true);
     }
 
-    protected ElementwiseValidator(Predicate<RpmInfoURI> filter) {
+    protected ElementwiseValidator(Predicate<RpmInfo> filter) {
         super();
         this.filter = filter;
     }
 
     @Override
-    public final void validate(Iterator<RpmInfoURI> rpmIt) throws IOException {
-        while (rpmIt.hasNext()) {
-            RpmInfoURI rpm = rpmIt.next();
-            if (filter.test(rpm)) {
+    public final void validate(Iterable<RpmFile> rpms) throws Exception {
+        for (var rpm : rpms) {
+            if (filter.test(rpm.getInfo())) {
                 validate(rpm);
             } else {
                 debug("{0} filtered out {1}",
@@ -34,5 +32,5 @@ public abstract class ElementwiseValidator extends Validator {
         }
     }
 
-    public abstract void validate(RpmInfoURI rpm) throws IOException;
+    public abstract void validate(RpmFile rpm) throws Exception;
 }

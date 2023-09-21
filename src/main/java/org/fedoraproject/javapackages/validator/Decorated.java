@@ -3,6 +3,7 @@ package org.fedoraproject.javapackages.validator;
 import java.util.List;
 import java.util.Objects;
 
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public class Decorated {
@@ -27,7 +28,7 @@ public class Decorated {
         this.decorations = decorations;
     }
 
-    public static Decorated rpm(RpmInfoURI rpm) {
+    public static Decorated rpm(RpmFile rpm) {
         return new Decorated(rpm, DECORATION_RPM);
     }
 

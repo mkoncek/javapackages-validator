@@ -11,7 +11,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
-public class ArgFileIterator implements Iterator<RpmInfoURI> {
+import org.fedoraproject.javadeptools.rpm.RpmFile;
+
+public class ArgFileIterator implements Iterator<RpmFile> {
     private Iterator<String> argIterator;
     private Iterator<Path> pathIterator = null;
 
@@ -77,7 +79,11 @@ public class ArgFileIterator implements Iterator<RpmInfoURI> {
     }
 
     @Override
-    public RpmInfoURI next() {
-        return RpmInfoURI.create(pathIterator.next().toUri());
+    public RpmFile next() {
+        try {
+            return RpmFile.from(pathIterator.next().toUri().toURL());
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

@@ -1,15 +1,14 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -39,8 +38,8 @@ public class SymlinkValidator extends ElementwiseValidator {
     }
 
     @Override
-    public void validate(RpmInfoURI rpm) throws IOException {
-        for (var entry : Common.rpmFilesAndSymlinks(rpm.getURI()).entrySet()) {
+    public void validate(RpmFile rpm) throws Exception {
+        for (var entry : Common.rpmFilesAndSymlinks(rpm).entrySet()) {
             Path link = Common.getEntryPath(entry.getKey());
             Path target = entry.getValue();
 

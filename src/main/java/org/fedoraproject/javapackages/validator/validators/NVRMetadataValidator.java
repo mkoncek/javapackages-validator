@@ -1,19 +1,18 @@
 package org.fedoraproject.javapackages.validator.validators;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.jar.JarInputStream;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
 
 public class NVRMetadataValidator extends JarValidator {
     private static interface Entry {
         String name();
-        String valueOf(RpmInfoURI rpm);
+        String valueOf(RpmFile rpm);
     }
 
     private static class RpmName implements Entry {
@@ -22,8 +21,8 @@ public class NVRMetadataValidator extends JarValidator {
             return "Rpm-Name";
         }
         @Override
-        public String valueOf(RpmInfoURI rpm) {
-            return rpm.getName();
+        public String valueOf(RpmFile rpm) {
+            return rpm.getInfo().getName();
         }
     }
 
@@ -33,8 +32,8 @@ public class NVRMetadataValidator extends JarValidator {
             return "Rpm-Epoch";
         }
         @Override
-        public String valueOf(RpmInfoURI rpm) {
-            return String.valueOf(rpm.getEpoch());
+        public String valueOf(RpmFile rpm) {
+            return String.valueOf(rpm.getInfo().getEpoch());
         }
     }
 
@@ -44,8 +43,8 @@ public class NVRMetadataValidator extends JarValidator {
             return "Rpm-Version";
         }
         @Override
-        public String valueOf(RpmInfoURI rpm) {
-            return rpm.getVersion();
+        public String valueOf(RpmFile rpm) {
+            return rpm.getInfo().getVersion();
         }
     }
 
@@ -55,34 +54,35 @@ public class NVRMetadataValidator extends JarValidator {
             return "Rpm-Release";
         }
         @Override
-        public String valueOf(RpmInfoURI rpm) {
-            return rpm.getRelease();
+        public String valueOf(RpmFile rpm) {
+            return rpm.getInfo().getRelease();
         }
     }
 
     private static List<Entry> ENTRIES = List.of(new RpmName(), new RpmEpoch(), new RpmVersion(), new RpmRelease());
 
     @Override
-    public void validateJarEntry(RpmInfoURI rpm, CpioArchiveEntry rpmEntry, byte[] content) throws IOException {
+    public void validateJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
         try (var is = new JarInputStream(new ByteArrayInputStream(content))) {
             var mf = is.getManifest();
             var attrs = mf.getMainAttributes();
+
             for (var entry : ENTRIES) {
                 var attrValue = attrs.getValue(entry.name());
 
                 if (attrValue == null) {
-                    fail("{0}: {1}: Attribute {2} is not present",
+                    fail("{0}: {1}: Jar manifest attribute {2} is not present",
                             Decorated.rpm(rpm),
                             Decorated.custom(Common.getEntryPath(rpmEntry), DECORATION_JAR),
                             Decorated.struct(entry.name()));
                 } else if (entry.valueOf(rpm).equals(attrValue)) {
-                    pass("{0}: {1}: Attribute {2} with value {3} exactly matches the RPM attribute",
+                    pass("{0}: {1}: Jar manifest attribute {2} with value {3} exactly matches the RPM attribute",
                             Decorated.rpm(rpm),
                             Decorated.custom(Common.getEntryPath(rpmEntry), DECORATION_JAR),
                             Decorated.struct(entry.name()),
                             Decorated.actual(attrValue));
                 } else {
-                    fail("{0}: {1}: Attribute {2} with value {3} does not match the RPM attribute {4}",
+                    fail("{0}: {1}: Jar manifest attribute {2} with value {3} does not match the RPM attribute value {4}",
                             Decorated.rpm(rpm),
                             Decorated.custom(Common.getEntryPath(rpmEntry), DECORATION_JAR),
                             Decorated.struct(entry.name()),

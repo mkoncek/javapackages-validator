@@ -3,8 +3,8 @@ package org.fedoraproject.javapackages.validator.validators;
 import java.nio.file.Path;
 import java.util.Map;
 
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TmtTest;
 
 @TmtTest("/java/bytecode_version")
@@ -43,7 +43,7 @@ public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
     }
 
     @Override
-    public void validate(RpmInfoURI rpm, Path jarPath, Map<Path, Short> classVersions) {
+    public void validate(RpmFile rpm, Path jarPath, Map<Path, Short> classVersions) {
         for (var entry : classVersions.entrySet()) {
             boolean failed = false;
 

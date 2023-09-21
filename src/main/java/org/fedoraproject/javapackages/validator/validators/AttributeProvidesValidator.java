@@ -1,11 +1,9 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import java.io.IOException;
-
 import org.fedoraproject.javadeptools.rpm.Reldep;
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TestResult;
 import org.fedoraproject.javapackages.validator.TmtTest;
 
@@ -16,8 +14,8 @@ public class AttributeProvidesValidator extends ElementwiseValidator {
     }
 
     @Override
-    public void validate(RpmInfoURI rpm) throws IOException {
-        for (Reldep provide : rpm.getProvides()) {
+    public void validate(RpmFile rpm) throws Exception {
+        for (Reldep provide : rpm.getInfo().getProvides()) {
             if (provide.getName().startsWith("mvn(") && provide.getName().endsWith(")")) {
                 if (provide.getVersion() == null) {
                     fail("{0}: Provide field {1} does not contain version",
@@ -30,7 +28,7 @@ public class AttributeProvidesValidator extends ElementwiseValidator {
         }
 
         if (!TestResult.fail.equals(getResult())) {
-            pass("{0}: ok", Decorated.rpm(rpm));
+            pass("{0}: RPM attribute Provides - ok", Decorated.rpm(rpm));
         }
     }
 }
