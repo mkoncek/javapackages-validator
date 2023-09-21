@@ -12,15 +12,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.yaml.snakeyaml.Yaml;
 
@@ -81,23 +77,12 @@ public class MainTmt extends Main {
 
     @Override
     List<Validator> select(List<Validator> validators) throws Exception {
-        var discoveredTests = discoverTests();
         var validatorTests = new TreeMap<String, Validator>();
         validators = new ArrayList<>(validators);
         validators.sort((lhs, rhs) -> lhs.getTestName().compareTo(rhs.getTestName()));
-        var intersection = new TreeSet<String>();
-        for (var validator : validators) {
-            var testName = validator.getTestName();
-            if (discoveredTests.contains(testName)) {
-                intersection.add(testName);
-            }
-        }
 
         for (var validator : validators) {
             var testName = validator.getTestName();
-            if (!intersection.isEmpty() && !intersection.contains(testName)) {
-                continue;
-            }
 
             logger.debug("Test {0} is implemented by {1}",
                     Decorated.actual(testName),
@@ -274,29 +259,6 @@ public class MainTmt extends Main {
     @Override
     protected Path resolveRelativePath(Path path) {
         return TMT_TEST_DATA.resolve(path);
-    }
-
-    private Set<String> discoverTests() throws Exception {
-        var testsFile = TMT_TREE.getParent();
-
-        if (testsFile == null) {
-            throw new IllegalStateException("The parent of tmt plan data does not exist");
-        }
-
-        testsFile = testsFile.resolve("discover").resolve("tests.yaml");
-
-        List<Map<String, Object>> testsYaml;
-
-        try (var is = Files.newInputStream(testsFile)) {
-            testsYaml = new Yaml().load(is);
-        }
-
-        var result = testsYaml.stream().map(m -> String.class.cast(m.get("name"))).collect(Collectors.toSet());
-
-        logger.debug("Discovered tests:{0}", Decorated.plain(result.stream().map(t ->
-            System.lineSeparator() + Decorated.struct(t)).collect(Collectors.joining())));
-
-        return result;
     }
 
     public static void main(String[] args) throws Exception {
