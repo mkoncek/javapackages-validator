@@ -8,11 +8,11 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.apache.commons.collections4.list.UnmodifiableList;
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 
 public abstract class Validator {
     record LogEntry(LogEvent kind, String pattern, Decorated... objects) {
@@ -71,10 +71,10 @@ public abstract class Validator {
     }
 
     public final List<LogEntry> getMessages() {
-        return new UnmodifiableList<>(log);
+        return Collections.unmodifiableList(log);
     }
 
-    private final void addLog(LogEvent kind, String pattern, Decorated... arguments) {
+    private void addLog(LogEvent kind, String pattern, Decorated... arguments) {
         log.add(new LogEntry(kind, pattern, arguments));
     }
 
@@ -119,11 +119,11 @@ public abstract class Validator {
         addLog(LogEvent.info, pattern, arguments);
     }
 
-    public final Validator pubvalidate(Iterator<RpmInfoURI> rpmIt) {
+    final Validator pubvalidate(Iterable<RpmFile> rpms) {
         startTime = LocalDateTime.now(Clock.systemUTC());
         try {
             if (!testResult.equals(TestResult.error)) {
-                validate(rpmIt);
+                validate(rpms);
             }
         } catch (Exception ex) {
             var stackTrace = new ByteArrayOutputStream();
@@ -150,5 +150,5 @@ public abstract class Validator {
         return String.format("%02d:%02d:%02d.%d", duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart(), duration.toMillisPart());
     }
 
-    protected abstract void validate(Iterator<RpmInfoURI> rpmIt) throws Exception;
+    protected abstract void validate(Iterable<RpmFile> rpms) throws Exception;
 }

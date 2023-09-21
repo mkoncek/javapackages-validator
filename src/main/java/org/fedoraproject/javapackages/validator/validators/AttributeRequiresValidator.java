@@ -1,11 +1,9 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import java.io.IOException;
-
 import org.fedoraproject.javadeptools.rpm.Reldep;
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TestResult;
 import org.fedoraproject.javapackages.validator.TmtTest;
 
@@ -16,10 +14,10 @@ public class AttributeRequiresValidator extends ElementwiseValidator {
     }
 
     @Override
-    public void validate(RpmInfoURI rpm) throws IOException {
+    public void validate(RpmFile rpm) throws Exception {
         boolean jpFilesystem = false;
 
-        for (Reldep require : rpm.getRequires()) {
+        for (Reldep require : rpm.getInfo().getRequires()) {
             jpFilesystem |= require.getName().equals("javapackages-filesystem");
             if (require.getName().startsWith("mvn(") && require.getName().endsWith(")")) {
                 if (require.getVersion() != null && require.getVersion().chars().noneMatch(Character::isDigit)) {
@@ -34,7 +32,7 @@ public class AttributeRequiresValidator extends ElementwiseValidator {
         }
 
         if (!TestResult.fail.equals(getResult())) {
-            pass("{0}: ok", Decorated.rpm(rpm));
+            pass("{0}: RPM attribute Requires ok", Decorated.rpm(rpm));
         }
     }
 }

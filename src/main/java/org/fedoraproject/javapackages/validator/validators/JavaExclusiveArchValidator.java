@@ -1,11 +1,10 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import java.io.IOException;
 import java.util.Collections;
 
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TmtTest;
 
 @TmtTest("/java/exclusive_arch")
@@ -20,13 +19,13 @@ public class JavaExclusiveArchValidator extends ElementwiseValidator {
     }
 
     @Override
-    public void validate(RpmInfoURI rpm) throws IOException {
-        var buildArchs = rpm.getBuildArchs();
+    public void validate(RpmFile rpm) throws Exception {
+        var buildArchs = rpm.getInfo().getBuildArchs();
         debug("{0}: Build archs: {1}", Decorated.rpm(rpm), Decorated.list(buildArchs));
         boolean noarch = buildArchs.equals(Collections.singletonList("noarch"));
 
         String expected = noarch ? JAVA_ARCHES + " noarch" : JAVA_ARCHES;
-        String actual = String.join(" ", rpm.getExclusiveArch());
+        String actual = String.join(" ", rpm.getInfo().getExclusiveArch());
 
         if (expected.equals(actual)) {
             pass("{0}: ExclusiveArch with %java_arches - ok",

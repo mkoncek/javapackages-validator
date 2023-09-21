@@ -18,6 +18,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -25,14 +26,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.tools.ToolProvider;
 
-import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.compress.utils.Iterators;
 import org.apache.commons.io.FileUtils;
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -58,7 +59,7 @@ public class Main {
         static final Flag CLASS_PATH = new Flag("-cp", "--class-path");
 
         static final Flag FILE = new Flag("-f", "--file");
-        static final Flag URI = new Flag("-u", "--uri");
+        static final Flag URL = new Flag("-u", "--url");
 
         static final Flag HELP = new Flag("-h", "--help");
         static final Flag COLOR = new Flag("-r", "--color");
@@ -74,7 +75,7 @@ public class Main {
         }
 
         static final Flag[] ALL_FLAGS = new Flag[] {
-            SOURCE_PATH, CLASS_PATH, FILE, URI, HELP, COLOR, DEBUG,
+            SOURCE_PATH, CLASS_PATH, FILE, URL, HELP, COLOR, DEBUG,
         };
     }
 
@@ -91,7 +92,7 @@ public class Main {
         System.out.println();
         System.out.println("Options for specifying tested RPM files, can be specified multiple times:");
         System.out.println("    " + Flag.FILE + " - File path of an .rpm file");
-        System.out.println("    " + Flag.URI + " - URI of an .rpm file");
+        System.out.println("    " + Flag.URL + " - URL of an .rpm file");
         System.out.println();
         System.out.println("Optional flags:");
         System.out.println("    " + Flag.DEBUG + " - Display debugging output");
@@ -106,7 +107,7 @@ public class Main {
 	            } catch (IOException ex) {
 	                throw new RuntimeException(ex);
                 }
-	        }).max((lhs, rhs) -> lhs.compareTo(rhs));
+	        }).max(Comparator.naturalOrder());
 	    } catch (IOException ex) {
 	        throw new RuntimeException(ex);
     	}
@@ -200,7 +201,7 @@ public class Main {
         Path sourcePath = null;
         Path classPath = null;
         List<String> argPaths = new ArrayList<>(0);
-        List<URI> argUris = new ArrayList<>(0);
+        List<URL> argUrls = new ArrayList<>(0);
         Map<String, Optional<String[]>> validatorArgs = new LinkedHashMap<>();
     }
 
@@ -251,8 +252,8 @@ public class Main {
                 parameters.classPath = resolveRelativePathCommon(args[i]);
             } else if (lastFlag == Flag.FILE) {
                 parameters.argPaths.add(args[i]);
-            } else if (lastFlag == Flag.URI) {
-                parameters.argUris.add(new URI(args[i]));
+            } else if (lastFlag == Flag.URL) {
+                parameters.argUrls.add(new URI(args[i]).toURL());
             }
         }
 
@@ -261,7 +262,7 @@ public class Main {
         logger.debug("Source path: {0}", Decorated.plain(parameters.sourcePath));
         logger.debug("Class path: {0}", Decorated.plain(parameters.classPath));
         logger.debug("Path arguments: {0}", Decorated.list(parameters.argPaths));
-        logger.debug("URI arguments: {0}", Decorated.list(parameters.argUris));
+        logger.debug("URL arguments: {0}", Decorated.list(parameters.argUrls));
     }
 
     private List<Validator> discover() throws Exception {
@@ -305,35 +306,45 @@ public class Main {
             return result.toString();
         }).collect(Collectors.joining())));
 
-        Predicate<Validator> selector = v -> {
-            var args = parameters.validatorArgs.get(v.getClass().getCanonicalName());
-
-            if (args != null) {
-                if (args.isPresent()) {
-                    try {
-                        v.arguments(args.get());
-                    } catch (Exception ex) {
-                        var stackTrace = new ByteArrayOutputStream();
-                        ex.printStackTrace(new PrintStream(stackTrace, false, StandardCharsets.UTF_8));
-                        v.error("An exception occured during arugment processing in {0}:{1}{2}",
-                                Decorated.struct(v.getClass().getCanonicalName()),
-                                Decorated.plain(System.lineSeparator()),
-                                Decorated.plain(new String(stackTrace.toByteArray(), StandardCharsets.UTF_8)));
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
-        };
+        var result = new ArrayList<Validator>();
 
         if (parameters.validatorArgs.isEmpty()) {
-            selector = v -> true;
+            result.addAll(validators);
+        } else {
+            for (var validator : validators) {
+                var args = parameters.validatorArgs.get(validator.getClass().getCanonicalName());
+                if (args != null) {
+                    if (args.isPresent()) {
+                        try {
+                            validator.arguments(args.get());
+                        } catch (Exception ex) {
+                            var stackTrace = new ByteArrayOutputStream();
+                            ex.printStackTrace(new PrintStream(stackTrace, false, StandardCharsets.UTF_8));
+                            validator.error("An exception occured during arugment processing in {0}:{1}{2}",
+                                    Decorated.struct(validator.getClass().getCanonicalName()),
+                                    Decorated.plain(System.lineSeparator()),
+                                    Decorated.plain(new String(stackTrace.toByteArray(), StandardCharsets.UTF_8)));
+                            continue;
+                        }
+                    }
+
+                    result.add(validator);
+                }
+            }
         }
 
-        return validators.stream().filter(selector).toList();
+        var notFoundValidators = new ArrayList<String>(0);
+        for (var validator : parameters.validatorArgs.keySet()) {
+            if (validators.stream().filter(v -> validator.equals(v.getClass().getCanonicalName())).findFirst().isEmpty()) {
+                notFoundValidators.add(validator);
+            }
+        }
+
+        if (!notFoundValidators.isEmpty()) {
+            throw new RuntimeException("The following arguments were not listed as available Validator services: " + notFoundValidators);
+        }
+
+        return result;
     }
 
     private final List<Validator> privselect(List<Validator> validators) throws Exception {
@@ -348,9 +359,20 @@ public class Main {
 
     @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
     List<Validator> execute(List<Validator> validators) throws Exception {
-        validators.parallelStream().forEach(validator -> validator.pubvalidate(
-                IteratorUtils.<RpmInfoURI>chainedIterator(new ArgFileIterator(parameters.argPaths),
-                        parameters.argUris.stream().map(RpmInfoURI::create).iterator())));
+        var rpms = new ArrayList<RpmFile>();
+        parameters.argUrls.parallelStream().forEach(url -> {
+            RpmFile rpm;
+            try {
+                rpm = RpmFile.from(url);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+            synchronized (rpms) {
+                rpms.add(rpm);
+            }
+        });
+        Iterators.addAll(rpms, new ArgFileIterator(parameters.argPaths));
+        validators.parallelStream().forEach(validator -> validator.pubvalidate(rpms));
 
         return validators;
     }

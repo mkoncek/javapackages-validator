@@ -1,38 +1,32 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
-import org.apache.commons.compress.utils.Iterators;
 import org.apache.commons.lang3.tuple.Pair;
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.Validator;
 
 public abstract class DuplicateFileValidator extends Validator {
     @Override
-    public void validate(Iterator<RpmInfoURI> rpmIt) throws IOException {
-        var rpms = new ArrayList<RpmInfoURI>();
-        Iterators.addAll(rpms, rpmIt);
-
+    public void validate(Iterable<RpmFile> rpms) throws Exception {
         // The union of file paths present in all RPM files mapped to the RPM file names they are present in
         var files = new TreeMap<String, ArrayList<Pair<CpioArchiveEntry, Path>>>();
 
-        for (RpmInfoURI rpm : rpms) {
-            if (!rpm.isSourcePackage()) {
-                for (var pair : Common.rpmFilesAndSymlinks(rpm.getURI()).entrySet()) {
+        for (var rpm : rpms) {
+            if (!rpm.getInfo().isSourcePackage()) {
+                for (var pair : Common.rpmFilesAndSymlinks(rpm).entrySet()) {
                     files.computeIfAbsent(Common.getEntryPath(pair.getKey()).toString(), key -> new ArrayList<>())
-                        .add(Pair.of(pair.getKey(), Paths.get(rpm.getURI().getPath())));
+                        .add(Pair.of(pair.getKey(), Paths.get(rpm.getURL().getPath())));
                 }
             }
         }
@@ -77,11 +71,11 @@ public abstract class DuplicateFileValidator extends Validator {
         }
     }
 
-    public abstract void validate(Path path, Collection<? extends RpmInfo> providerRpms) throws IOException;
+    public abstract void validate(Path path, Collection<? extends RpmInfo> providerRpms) throws Exception;
 
     public static abstract class DuplicateFileValidatorDefault extends DuplicateFileValidator {
         @Override
-        public void validate(Path path, Collection<? extends RpmInfo> providerRpms) throws IOException {
+        public void validate(Path path, Collection<? extends RpmInfo> providerRpms) throws Exception {
             Decorated decoratedFile = Decorated.actual(path);
             Decorated decoratedProviders = Decorated.list(List.copyOf(providerRpms));
 
@@ -94,6 +88,6 @@ public abstract class DuplicateFileValidator extends Validator {
             }
         }
 
-        public abstract boolean allowedDuplicateFile(Path path, Collection<? extends RpmInfo> providerRpms) throws IOException;
+        public abstract boolean allowedDuplicateFile(Path path, Collection<? extends RpmInfo> providerRpms) throws Exception;
     }
 }

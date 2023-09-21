@@ -3,10 +3,8 @@ package org.fedoraproject.javapackages.validator.validators;
 import static org.fedoraproject.javapackages.validator.TestCommon.assertFailOne;
 import static org.fedoraproject.javapackages.validator.TestCommon.assertPass;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.stream.Stream;
 
 import org.fedoraproject.javapackages.validator.TestCommon;
 import org.junit.jupiter.api.Test;
@@ -16,16 +14,16 @@ public class SymlinkValidatorTest {
     private static final Path VALID_SYMLINK_RPM = TestCommon.RPM_PATH_PREFIX.resolve(Paths.get("noarch/valid-symlink-1-1.noarch.rpm"));
 
     @Test
-    void testDanglingSymlink() throws IOException {
+    void testDanglingSymlink() throws Exception {
         var validator = new SymlinkValidator();
-        validator.validate(TestCommon.iteratorFrom(Stream.of(DANGLING_SYMLINK_RPM)));
+        validator.validate(TestCommon.fromPaths(DANGLING_SYMLINK_RPM));
         assertFailOne(validator);
     }
 
     @Test
-    void testValidSymlink() throws IOException {
+    void testValidSymlink() throws Exception {
         var validator = new SymlinkValidator();
-        validator.validate(TestCommon.iteratorFrom(Stream.of(VALID_SYMLINK_RPM)));
+        validator.validate(TestCommon.fromPaths(VALID_SYMLINK_RPM));
         assertPass(validator);
     }
 }

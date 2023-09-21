@@ -1,68 +1,91 @@
 package org.fedoraproject.javapackages.validator.validators;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
+import org.apache.commons.lang3.tuple.Pair;
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
 
 public class JpmsProvidesValidator extends JarValidator {
     private Map<String, String> jarModuleNames = new TreeMap<>();
 
+    private static Pattern VERSIONS_PATTERN = Pattern.compile("META-INF/versions/\\d+/module-info\\.class");
+
     @Override
-    public void validateJarEntry(RpmInfoURI rpm, CpioArchiveEntry rpmEntry, byte[] content) throws IOException {
-        var moduleName = Optional.<String>empty();
+    public void validateJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
+        var moduleNames = new ArrayList<Pair<String, String>>();
+        var rpmEntryString = Common.getEntryPath(rpmEntry).toString();
 
         try (var is = new JarInputStream(new ByteArrayInputStream(content))) {
             for (JarEntry entry; (entry = is.getNextJarEntry()) != null;) {
-                if (entry.getName().equals("module-info.class")) {
+                if (entry.getName().equals("module-info.class")
+                        || (entry.getName().startsWith("META-INF/versions/")
+                            && VERSIONS_PATTERN.matcher(entry.getName()).matches())) {
                     var md = ModuleDescriptor.read(ByteBuffer.wrap(is.readNBytes((int) entry.getSize())));
-                    moduleName = Optional.of(md.name());
-                    break;
+                    moduleNames.add(Pair.of(entry.getName(), md.name()));
                 }
             }
 
-            if (moduleName.isEmpty()) {
+            if (moduleNames.isEmpty()) {
                 var mf = is.getManifest();
-                moduleName = Optional.ofNullable(mf.getMainAttributes().getValue("Automatic-Module-Name"));
+                var moduleName = mf.getMainAttributes().getValue("Automatic-Module-Name");
+                if (moduleName != null) {
+                    moduleNames.add(Pair.of("META-INF/MANIFEST.MF:Automatic-Module-Name", moduleName));
+                }
             }
         }
 
-        if (moduleName.isPresent()) {
-            debug("{0}: Module name {1} found in {2}",
+        for (var entry : moduleNames) {
+            debug("{0}: {1}: {2}: Found module name: {3}",
                     Decorated.rpm(rpm),
-                    Decorated.actual(moduleName.get()),
-                    Decorated.outer(Common.getEntryPath(rpmEntry)));
-            jarModuleNames.put(moduleName.get(), Common.getEntryPath(rpmEntry).toString());
+                    Decorated.outer(rpmEntryString),
+                    Decorated.struct(entry.getKey()),
+                    Decorated.actual(entry.getValue()));
+        }
+
+        String moduleName = null;
+        for (var entry : moduleNames) {
+            if (moduleName == null) {
+                moduleName = entry.getValue();
+                jarModuleNames.put(rpmEntryString, moduleName);
+            } else if (! moduleName.equals(entry.getValue())) {
+                fail("{0}: {1}: Differing module names: {2} and {3}",
+                        Decorated.rpm(rpm),
+                        Decorated.outer(rpmEntryString),
+                        Decorated.struct(moduleName),
+                        Decorated.actual(entry.getValue()));
+            }
         }
     }
 
     @Override
-    public void validate(RpmInfoURI rpm) throws IOException {
-        super.validate(rpm);
+    public void validate(RpmFile rpm) throws Exception {
         var providedModuleNames = new TreeSet<String>();
 
-        for (var reldep : rpm.getProvides()) {
+        for (var reldep : rpm.getInfo().getProvides()) {
             var name = reldep.getName();
             if (name.startsWith("jpms(") && name.endsWith(")")) {
                 providedModuleNames.add(name);
+                debug("{0}: Provides JPMS name: {1}", Decorated.rpm(rpm), Decorated.actual(name));
             }
         }
 
+        super.validate(rpm);
         boolean ok = true;
 
         for (var providedModuleName : providedModuleNames) {
-            if (! jarModuleNames.keySet().contains(providedModuleName)) {
+            if (! jarModuleNames.values().contains(providedModuleName)) {
                 ok = false;
                 fail("{0}: Module name {1} provided by this RPM was not found in any JAR file",
                         Decorated.rpm(rpm),
@@ -71,17 +94,17 @@ public class JpmsProvidesValidator extends JarValidator {
         }
 
         for (var jarModuleNameEntry : jarModuleNames.entrySet()) {
-            if (! providedModuleNames.contains(jarModuleNameEntry.getKey())) {
+            if (! providedModuleNames.contains(jarModuleNameEntry.getValue())) {
                 ok = false;
-                fail("{0}: Module name {1} of {2} is not provided by this RPM",
+                fail("{0}: {1}: Module name {2} is not provided by this RPM",
                         Decorated.rpm(rpm),
-                        Decorated.actual(jarModuleNameEntry.getKey()),
-                        Decorated.outer(jarModuleNameEntry.getValue()));
+                        Decorated.outer(jarModuleNameEntry.getKey()),
+                        Decorated.actual(jarModuleNameEntry.getValue()));
             }
         }
 
         if (ok) {
-            pass("{0}: found module names exactly match provided jpms fields, {1}",
+            pass("{0}: found module names exactly match provided JPMS fields, {1}",
                     Decorated.rpm(rpm),
                     Decorated.list(providedModuleNames.stream().toList()));
         }

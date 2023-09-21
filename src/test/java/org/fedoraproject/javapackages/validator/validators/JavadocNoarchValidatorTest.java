@@ -4,10 +4,8 @@ import static org.fedoraproject.javapackages.validator.TestCommon.assertFailOne;
 import static org.fedoraproject.javapackages.validator.TestCommon.assertInfo;
 import static org.fedoraproject.javapackages.validator.TestCommon.assertPass;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.stream.Stream;
 
 import org.fedoraproject.javapackages.validator.TestCommon;
 import org.junit.jupiter.api.Test;
@@ -19,30 +17,30 @@ public class JavadocNoarchValidatorTest {
     private static final Path NON_JAVADOC_RPM = TestCommon.RPM_PATH_PREFIX.resolve(Paths.get("noarch/javadoc-noarch-noarch-1-1.noarch.rpm"));
 
     @Test
-    void testIllegalArchfulJavadoc() throws IOException {
+    void testIllegalArchfulJavadoc() throws Exception {
         var validator = new JavadocNoarchValidator();
-        validator.validate(TestCommon.iteratorFrom(Stream.of(ARCH_ARCH_RPM)));
+        validator.validate(TestCommon.fromPaths(ARCH_ARCH_RPM));
         assertFailOne(validator);
     }
 
     @Test
-    void testAllowedNoarchJavadocArchfulPackage() throws IOException {
+    void testAllowedNoarchJavadocArchfulPackage() throws Exception {
         var validator = new JavadocNoarchValidator();
-        validator.validate(TestCommon.iteratorFrom(Stream.of(ARCH_NOARCH_RPM)));
+        validator.validate(TestCommon.fromPaths(ARCH_NOARCH_RPM));
         assertPass(validator);
     }
 
     @Test
-    void testAllowedNoarchJavadocNoarchPackage() throws IOException {
+    void testAllowedNoarchJavadocNoarchPackage() throws Exception {
         var validator = new JavadocNoarchValidator();
-        validator.validate(TestCommon.iteratorFrom(Stream.of(NOARCH_NOARCH_RPM)));
+        validator.validate(TestCommon.fromPaths(NOARCH_NOARCH_RPM));
         assertPass(validator);
     }
 
     @Test
-    void testIgnoreNonJavadoc() throws IOException {
+    void testIgnoreNonJavadoc() throws Exception {
         var validator = new JavadocNoarchValidator();
-        validator.validate(TestCommon.iteratorFrom(Stream.of(NON_JAVADOC_RPM)));
+        validator.validate(TestCommon.fromPaths(NON_JAVADOC_RPM));
         assertInfo(validator);
     }
 }

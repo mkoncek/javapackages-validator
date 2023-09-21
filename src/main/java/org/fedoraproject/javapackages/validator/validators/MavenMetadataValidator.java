@@ -1,7 +1,6 @@
 package org.fedoraproject.javapackages.validator.validators;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.TreeSet;
@@ -11,9 +10,10 @@ import javax.xml.stream.XMLStreamException;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
+import org.fedoraproject.javadeptools.rpm.RpmFile;
+import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TmtTest;
 import org.fedoraproject.xmvn.metadata.PackageMetadata;
 import org.fedoraproject.xmvn.metadata.io.stax.MetadataStaxReader;
@@ -30,15 +30,15 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @TmtTest("/java/maven_metadata")
 public class MavenMetadataValidator extends ElementwiseValidator {
     public MavenMetadataValidator() {
-        super(RpmInfoURI::isBinaryPackage);
+        super(RpmInfo::isBinaryPackage);
     }
 
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Incorrect claim that Exception is never thrown")
     @Override
-    public void validate(RpmInfoURI rpm) throws IOException {
+    public void validate(RpmFile rpm) throws Exception {
         var metadataXmls = new ArrayList<Pair<CpioArchiveEntry, byte[]>>();
         var foundFiles = new TreeSet<String>();
-        try (var is = new RpmArchiveInputStream(rpm.getURI().toURL())) {
+        try (var is = new RpmArchiveInputStream(rpm)) {
             for (CpioArchiveEntry rpmEntry; (rpmEntry = is.getNextEntry()) != null;) {
                 foundFiles.add(Common.getEntryPath(rpmEntry).toString());
                 if (rpmEntry.getName().startsWith("./usr/share/maven-metadata/") && rpmEntry.getName().endsWith(".xml")) {
@@ -70,12 +70,12 @@ public class MavenMetadataValidator extends ElementwiseValidator {
                 var artifactPath = Paths.get(artifact.getPath());
                 var metadataXml = Common.getEntryPath(pair.getKey());
                 if (foundFiles.contains(artifactPath.toString())) {
-                    pass("{0}: {1}: artifact {2} is present in the rpm",
+                    pass("{0}: {1}: artifact {2} is present in the RPM",
                             Decorated.rpm(rpm),
                             Decorated.outer(metadataXml),
                             Decorated.actual(artifactPath));
                 } else {
-                    fail("{0}: {1}: artifact {2} is not present in the rpm",
+                    fail("{0}: {1}: artifact {2} is not present in the RPM",
                             Decorated.rpm(rpm),
                             Decorated.outer(metadataXml),
                             Decorated.expected(artifactPath));

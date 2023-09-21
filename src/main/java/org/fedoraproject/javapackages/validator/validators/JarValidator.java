@@ -1,12 +1,10 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import java.io.IOException;
-
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
-import org.fedoraproject.javapackages.validator.RpmInfoURI;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public abstract class JarValidator extends ElementwiseValidator {
@@ -17,8 +15,8 @@ public abstract class JarValidator extends ElementwiseValidator {
     }
 
     @Override
-    public void validate(RpmInfoURI rpm) throws IOException {
-        try (var is = new RpmArchiveInputStream(rpm.getURI().toURL())) {
+    public void validate(RpmFile rpm) throws Exception {
+        try (var is = new RpmArchiveInputStream(rpm)) {
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
                 if (!rpmEntry.isSymbolicLink() && rpmEntry.getName().endsWith(".jar")) {
                     var content = new byte[(int) rpmEntry.getSize()];
@@ -33,5 +31,5 @@ public abstract class JarValidator extends ElementwiseValidator {
         }
     }
 
-    public abstract void validateJarEntry(RpmInfoURI rpm, CpioArchiveEntry rpmEntry, byte[] content) throws IOException;
+    public abstract void validateJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception;
 }

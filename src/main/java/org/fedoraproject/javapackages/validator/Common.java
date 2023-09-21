@@ -1,7 +1,6 @@
 package org.fedoraproject.javapackages.validator;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,6 +9,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
+import org.fedoraproject.javadeptools.rpm.RpmFile;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -27,10 +27,10 @@ public class Common {
      * or null, if the file path is not a symlink.
      * @throws IOException
      */
-    public static SortedMap<CpioArchiveEntry, Path> rpmFilesAndSymlinks(URI rpmUri) throws IOException {
+    public static SortedMap<CpioArchiveEntry, Path> rpmFilesAndSymlinks(RpmFile rpm) throws IOException {
         var result = new TreeMap<CpioArchiveEntry, Path>((lhs, rhs) -> lhs.getName().compareTo(rhs.getName()));
 
-        try (var is = new RpmArchiveInputStream(rpmUri.toURL())) {
+        try (var is = new RpmArchiveInputStream(rpm)) {
             for (CpioArchiveEntry rpmEntry; (rpmEntry = is.getNextEntry()) != null;) {
                 Path target = null;
 
