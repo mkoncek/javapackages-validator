@@ -76,7 +76,8 @@ exclude-tests-matching:
   - "/java/.*"
 ----
 
-The tool executes matching validators and creates results in the form of HTML files.
+==== Result
+The tool generates both `.log` and `.html` reports with filenames matching the validator test names.
 
 == Building
 Project is built with maven. Simply run:
