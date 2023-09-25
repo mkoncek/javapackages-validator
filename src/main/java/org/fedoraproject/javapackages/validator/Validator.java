@@ -37,7 +37,7 @@ public abstract class Validator {
     }
 
     private static String toDashCase(String string) {
-        var result = new StringBuilder();
+        var result = new StringBuilder("/");
 
         boolean wasLowerCase = false;
 
@@ -147,7 +147,7 @@ public abstract class Validator {
 
     public final String getFormattedDuration() {
         var duration = Duration.between(startTime, endTime);
-        return String.format("%02d:%02d:%02d.%d", duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart(), duration.toMillisPart());
+        return String.format("%02d:%02d:%02d.%03d", duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart(), duration.toMillisPart());
     }
 
     protected abstract void validate(Iterable<RpmFile> rpms) throws Exception;
