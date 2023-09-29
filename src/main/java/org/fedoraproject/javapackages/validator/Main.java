@@ -10,6 +10,7 @@ import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -116,7 +117,9 @@ public class Main {
     public static void compileFiles(Path sourcePath, Path classPath, Iterable<String> compilerOptions, Logger logger) throws IOException {
         var sourceMtime = getRecursiveFileTime(sourcePath, (p, a) -> true).get();
 
-        if (Files.notExists(classPath)) {
+        if (Files.isSymbolicLink(classPath)) {
+            classPath = Files.readSymbolicLink(classPath);
+        } else {
             Files.createDirectories(classPath);
         }
 
