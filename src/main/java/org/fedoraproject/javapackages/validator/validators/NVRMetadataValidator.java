@@ -8,7 +8,9 @@ import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
+import org.fedoraproject.javapackages.validator.TmtTest;
 
+@TmtTest("/java/nvr-jar-metadata")
 public class NVRMetadataValidator extends JarValidator {
     private static interface Entry {
         String name();
@@ -60,6 +62,19 @@ public class NVRMetadataValidator extends JarValidator {
     }
 
     private static List<Entry> ENTRIES = List.of(new RpmName(), new RpmEpoch(), new RpmVersion(), new RpmRelease());
+
+    /*
+    public NVRMetadataValidator() {
+        super(rpm -> {
+            var release = rpm.getRelease();
+            int i = 0;
+            while (release.charAt(i) != '.') {
+                ++i;
+            }
+            return release.substring(i + 1).startsWith("el");
+        });
+    }
+    */
 
     @Override
     public void validateJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {

@@ -22,6 +22,9 @@ prepare_test_env() {
 }
 
 execute() {
+    mkdir -p /tmp/jpv-classes
+    find /tmp/jpv-classes -exec touch -m -d '9999-01-01 00:00:00' {} +
+
     for component in "${test_artifacts_dir}"/rpms/*; do
         component="${component##*/}"
         run_id="jpv-ci-${component}"
@@ -45,6 +48,7 @@ execute() {
            run --id "${run_id}" \
                -e TEST_ARTIFACTS="${test_artifacts_dir}/rpms/${component}/rpms" \
                -e JP_VALIDATOR_IMAGE="${jp_validator_image}" \
+               -e JP_VALIDATOR_CLASSPATH="/tmp/jpv-classes" \
            provision --how local \
            execute --how tmt --no-progress-bar
         then

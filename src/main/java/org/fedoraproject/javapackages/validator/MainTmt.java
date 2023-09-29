@@ -160,9 +160,14 @@ public class MainTmt extends Main {
             List<?> exclude = List.class.cast(configuration.get("exclude-tests-matching"));
             if (exclude != null) {
                 exclusions = exclude.stream().map(pattern -> Pattern.compile(String.class.cast(pattern))).toList();
+                logger.debug("Found exclusion patterns: {0}", Decorated.list(exclusions));
                 for (var validator : validators) {
-                    if (exclusions.stream().anyMatch(pattern -> pattern.matcher(validator.getTestName()).matches())) {
-                        parameters.validatorArgs.remove(validator.getClass().getCanonicalName());
+                    for (var exclusionPattern : exclusions) {
+                        if (exclusionPattern.matcher(validator.getTestName()).matches()) {
+                            logger.debug("Exclusion pattern {0} matches test {1}", Decorated.actual(exclusionPattern), Decorated.struct(validator.getTestName()));
+                            parameters.validatorArgs.remove(validator.getClass().getCanonicalName());
+                            break;
+                        }
                     }
                 }
             }
