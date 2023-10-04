@@ -25,7 +25,7 @@ public class JpmsProvidesValidator extends JarValidator {
     private static Pattern VERSIONS_PATTERN = Pattern.compile("META-INF/versions/\\d+/module-info\\.class");
 
     @Override
-    public void validateJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
+    public void acceptJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
         var moduleNames = new ArrayList<Pair<String, String>>();
         var rpmEntryString = Common.getEntryPath(rpmEntry).toString();
 
