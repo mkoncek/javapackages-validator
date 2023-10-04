@@ -20,7 +20,7 @@ public abstract class ElementwiseValidator extends Validator {
     }
 
     @Override
-    public final void validate(Iterable<RpmFile> rpms) throws Exception {
+    public void validate(Iterable<RpmFile> rpms) throws Exception {
         for (var rpm : rpms) {
             if (filter.test(rpm.getInfo())) {
                 validate(rpm);

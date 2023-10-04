@@ -17,7 +17,7 @@ import org.fedoraproject.javapackages.validator.TestResult;
 
 public class BytecodeVersionJarValidator extends JarValidator {
     @Override
-    public void validateJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
+    public void acceptJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
         var jarPath = Paths.get(rpmEntry.getName().substring(1));
         var classVersions = new TreeMap<Path, Short>();
 
