@@ -107,7 +107,7 @@ The tool generates both `.log` and `.html` reports with filenames matching the v
 These files are placed in the directory `${TMT_TEST_DATA}/results`.
 
 == Building
-Project is built with maven. Simply run:
+Project is built with Maven. Simply run:
 [source, shell]
 ----
 $ mvn install
