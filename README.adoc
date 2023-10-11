@@ -1,11 +1,13 @@
+[.text-justify]
+= Javapackages-validator
 :source-highlighter: rouge
 
-= Javapackages-validator
-
-Javapackages-validator is a tool used to test RPM files. It executes checks implemented as Java classes over the set of provided RPM files.
+_Javapackages-validator_ is a tool used to test RPM files.
+It executes checks implemented as Java classes over the set of provided RPM files.
 
 == Usage
-The tool is executed from command line using `java` command with the proper class path. JVM of version at least 17 is required.
+The tool is executed from command line using `java` command with the proper class path.
+JVM of version at least 17 is required.
 
 ----
 Main [optional flags] <validator class name> [validator flags] [-f|-u RPM files or directories to test]...
@@ -35,29 +37,51 @@ Options for specifying tested RPM files, can be specified multiple times::
 [horizontal!]
 
 === RPM files
-The parameters specifying RPM files can either be RPM file paths or directories. In case of directories, the tool recursively searches for RPM files found inside.
+The parameters specifying RPM files can either be RPM file paths or directories.
+In case of directories, the tool recursively searches for RPM files found inside.
 
 === Validator arguments
-The tool recursively finds all `.java` files present in the _source path_ directory, compiles them and places the results under the path specified as the _class path_. Class path may already exist and contain `.class` files. This is useful to implement caching. The entries on this class path are used to add additional validator classes to the tool.
+The tool recursively finds all `.java` files present in the _source path_ directory, compiles them and places the results under the path specified as the _class path_.
+Class path may already exist and contain `.class` files, this is useful to implement <<_recompilation, caching>>.
+The entries on this class path are used to add additional validator classes to the tool.
 
 Validator arguments can be immediately followed by space-separated square parentheses the contents of which will be passed as arguments to the validator.
 
 .Example
+[source, shell]
 ----
 $ Main package.name.ClassName [ arg1 arg2 'arg 3' ] -f file.rpm
 ----
 
-=== Service file
-The file `META-INF/services/org.fedoraproject.javapackages.validator.Validator` contains a line-separated list of validator class names which are available to be executed. This file will be copied from the source path to the class path and is expected to be present on the class path if source path is not specified.
+[#_recompilation]
+==== Recompilation
+If the directory pointed to by the `--class-path` parameter exists, then the tool searches for files inside and inspects their modification time.
+Recompilation is caused by any of these conditions:
 
-The validator main argument passed to _javapackages-validator_ must exactly match one of the names listed in either the service file or the service file on the built-in class path.
+- Class path directory is empty.
+- Any *regular* file present on the class path is older than *any* file present on the source path
+- Any directory on the class path has been modified after the latest modification time of any regular file present on the class path.
+(This can mean that some `.class` files were deleted from the class path.)
+
+Recompilation causes the class path directory to be cleaned before the newly compiled classes are placed there.
+
+=== Service file
+The file `META-INF/services/org.fedoraproject.javapackages.validator.Validator` contains a line-separated list of validator class names which are available to be executed.
+This file will be copied from the source path to the class path and is expected to be present on the class path if source path is not specified.
+
+The validator main argument passed to javapackages-validator must exactly match one of the names listed in either the service file or the service file on the built-in class path.
 
 === TMT
-The tool contains another main class `MainTmt` which is intended to be invoked from within Tmt tests. When the validator is run from the Tmt entry point, it requires the environment variables `TMT_TEST_DATA` and `TMT_TREE` to be defined.
+The tool contains another main class `MainTmt` which is intended to be invoked from within Tmt tests.
+When the validator is run from the Tmt entry point, it requires the environment variables `TMT_TEST_DATA` and `TMT_TREE` to be defined.
 
-Test execution from this entry point is configured using a configuration file named `javapackages-validator.yaml`. This file can be located either in the root, i.e. the value of the `TMT_TREE` variable or in the `plans` directory of the project.
+Test execution from this entry point is configured using a configuration file named `javapackages-validator.yaml`.
+This file can be located either in the root, i.e. the value of the `TMT_TREE` variable or in the `plans` directory of the project.
 
-Every validator has an associated _test name_. This is the result of the virtual `getTestName` function. This name must be in the format of TMT tests, i.e. starting with `/`. Test names are used to create report files.
+Every validator has an associated _test name_.
+This is the result of the virtual `getTestName` function.
+This name must be in the format of TMT tests, i.e. starting with `/`.
+Test names are used to create report files.
 
 ==== Configuration
 The following fields are allowed in the YAML configuration file.
@@ -66,10 +90,12 @@ _Fields starting with_ `/`::
 The key is a Tmt test name. The value of the field must be a list of strings. It will be passed as the arguments to the according validator.
 
 `exclude-tests-matching`::
-The value of this field is a list of strings. The strings must be valid https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html[Java regular expressions]. If any of these patterns matches the test name of a validator, it will be skipped.
+The value of this field is a list of strings.
+The strings must be valid https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html[Java regular expressions].
+If any of these patterns matches the test name of a validator, it will be skipped.
 
 .Example of `javapackages-validator.yaml` configuration file
-[,yaml]
+[source, yaml]
 ----
 /java/bytecode_version: [":52"]
 exclude-tests-matching:
@@ -78,9 +104,11 @@ exclude-tests-matching:
 
 ==== Result
 The tool generates both `.log` and `.html` reports with filenames matching the validator test names.
+These files are placed in the directory `${TMT_TEST_DATA}/results`.
 
 == Building
 Project is built with maven. Simply run:
+[source, shell]
 ----
 $ mvn install
 ----
@@ -90,13 +118,42 @@ The project currently requires a https://github.com/mkoncek/java-deptools-native
 In order to build this project you need to build and install this forked project also with Maven.
 
 == Custom validators
-A custom validator must inherit from the `org.fedoraproject.javapackages.validator.Validator` class and have its name listed in the service file on the class path of the program. Custom validators can override functions:
+A custom validator must inherit from the `org.fedoraproject.javapackages.validator.Validator` class and have its name listed in the service file on the class path of the program.
+Custom validators can override functions:
 
 `void arguments(String[] args)`::
 This is invoked during argument processing before the test execution to configure the validator from the arguments that were passed to it.
 
 `void validate(Iterable<RpmFile> rpms)`::
-This is the main function of the validator. The validator is executed on a collection of RPM files. The validator is supposed to call functions `debug`, `info`, `pass`, `fail`, `error` to provide information about its execution. the resulting state is based on the hierarchy of the result types in the reverse order as listed previously. The default state is `info`, `debug` is not an actual state.
+This is the main function of the validator.
+The validator is executed on a collection of RPM files.
+The validator is supposed to call functions `debug`, `info`, `pass`, `fail`, `error` to provide information about its execution.
+For details, see the section <<_result_states>>.
 
 `String getTestName()`::
 This is used to obtain the TMT test name. See also the `TmtTest` annotation class.
+
+[#_result_states]
+=== Result states
+Each validator has a single result state.
+The starting state is `info`.
+The state is overriden by calling corresponding methods of the `Validator` class.
+The state listed lower in the following hierarchy overrides the previous states but not vice-versa.
+Note that `debug` is not a result state, it only serves for the validator to provide verbose info.
+
+.Result states
+[horizontal]
+`info`::
+Validator provided some informational message.
+For example the values of some attributes of the RPM.
+This can also mean that the property being tested was not present in the RPM.
+
+`pass`::
+RPM passed the validator checks.
+
+`fail`::
+RPM failed at at least one check.
+
+`error`::
+An error occured, for example invalid input or an unexpected state.
+[horizontal!]
