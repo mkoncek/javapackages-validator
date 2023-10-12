@@ -7,7 +7,7 @@ It executes checks implemented as Java classes over the set of provided RPM file
 
 == Usage
 The tool is executed from command line using `java` command with the proper class path.
-JVM of version at least 17 is required.
+JVM of version 20 is required.
 
 ----
 Main [optional flags] <validator class name> [validator flags] [-f|-u RPM files or directories to test]...
@@ -15,7 +15,7 @@ Main [optional flags] <validator class name> [validator flags] [-f|-u RPM files 
 
 [NOTE]
 Due to the usage of the Foreign Memory Accesss feature, JVM arguments must include: +
-`--enable-preview --add-modules jdk.incubator.foreign --enable-native-access ALL-UNNAMED`.
+`--enable-preview --enable-native-access ALL-UNNAMED`.
 
 Optional flags::
 [horizontal]
@@ -113,7 +113,7 @@ Project is built with Maven. Simply run:
 $ mvn install
 ----
 
-The project currently requires a https://github.com/mkoncek/java-deptools-native.git[custom fork] of the _java-deptools-native_ project.
+The project currently requires a https://github.com/mkoncek/java-deptools-native[custom fork] of the _java-deptools-native_ project.
 
 In order to build this project you need to build and install this forked project also with Maven.
 

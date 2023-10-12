@@ -82,10 +82,9 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
-          <release>17</release>
+          <release>20</release>
           <compilerArgs>
-            <arg>--add-modules</arg>
-            <arg>jdk.incubator.foreign</arg>
+            <arg>--enable-preview</arg>
           </compilerArgs>
         </configuration>
       </plugin>
@@ -125,7 +124,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.1.2</version>
         <configuration>
-          <argLine>--enable-preview --add-modules jdk.incubator.foreign --enable-native-access ALL-UNNAMED</argLine>
+          <argLine>--enable-preview --enable-native-access ALL-UNNAMED</argLine>
         </configuration>
       </plugin>
       <plugin>
