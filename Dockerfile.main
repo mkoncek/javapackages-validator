@@ -1,15 +1,18 @@
 FROM registry.access.redhat.com/ubi9-minimal AS builder
-RUN microdnf -y install git-core maven-openjdk17 rpm-libs
+RUN curl -O "https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
+RUN rpm -i "./epel-release-latest-9.noarch.rpm"
+RUN microdnf -y install git-core java-latest-openjdk-devel maven-openjdk17 rpm-libs
 
 WORKDIR "/usr/local/src"
 
-ENV java_deptools_hash='f173289a01eef50e0242eccd73d9a57bdd1f7083'
+ARG java_deptools_hash="3631d8546a14bd2a038e33f695c871689aa75d77"
 RUN echo "${java_deptools_hash}"
 RUN git clone "https://github.com/mkoncek/java-deptools-native.git"
 
 WORKDIR "/usr/local/src/java-deptools-native"
 
 RUN git reset --hard "${java_deptools_hash}"
+ARG JAVA_HOME="/usr/lib/jvm/java-20-openjdk"
 RUN mvn -B clean install
 
 WORKDIR "/usr/local/src/javapackages-validator"
@@ -23,10 +26,12 @@ RUN mvn -B clean install
 
 ################################################################################
 
-FROM docker.io/library/alpine:3.18.3
-RUN apk add openjdk17-jre-headless rpm
+FROM registry.access.redhat.com/ubi9-minimal
+RUN curl -O "https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
+RUN rpm -i "./epel-release-latest-9.noarch.rpm"
+RUN microdnf -y install java-latest-openjdk-headless rpm-libs
 
 COPY --from=builder "/usr/local/src/javapackages-validator/target/dependency/" "/opt/javapackages-validator/dependency/"
 COPY --from=builder "/usr/local/src/javapackages-validator/target/validator.jar" "/opt/javapackages-validator/validator.jar"
 
-ENTRYPOINT ["java", "--enable-preview", "--add-modules", "jdk.incubator.foreign", "--enable-native-access", "ALL-UNNAMED", "-cp", "/opt/javapackages-validator/validator.jar"]
+ENTRYPOINT ["/usr/lib/jvm/jre-20-openjdk/bin/java", "--enable-preview", "--enable-native-access", "ALL-UNNAMED", "-cp", "/opt/javapackages-validator/validator.jar"]

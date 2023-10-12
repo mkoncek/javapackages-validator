@@ -4,7 +4,7 @@ set -eux
 jp_validator_image='javapackages-validator'
 test_artifacts_dir='/tmp/test_artifacts'
 jpv_tests_dir='/tmp/javapackages.git'
-jpv_tests_url='https://src.fedoraproject.org/forks/mkoncek/tests/javapackages.git'
+jpv_tests_url='https://src.fedoraproject.org/tests/javapackages.git'
 jpv_tests_ref='f40'
 
 build_local_image() {
