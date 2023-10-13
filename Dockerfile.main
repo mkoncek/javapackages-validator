@@ -29,9 +29,9 @@ RUN mvn -B clean install
 FROM registry.access.redhat.com/ubi9-minimal
 RUN curl -O "https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
 RUN rpm -i "./epel-release-latest-9.noarch.rpm"
-RUN microdnf -y install java-latest-openjdk-headless rpm-libs
+RUN microdnf -y install java-latest-openjdk-devel rpm-libs
 
 COPY --from=builder "/usr/local/src/javapackages-validator/target/dependency/" "/opt/javapackages-validator/dependency/"
 COPY --from=builder "/usr/local/src/javapackages-validator/target/validator.jar" "/opt/javapackages-validator/validator.jar"
 
-ENTRYPOINT ["/usr/lib/jvm/jre-20-openjdk/bin/java", "--enable-preview", "--enable-native-access", "ALL-UNNAMED", "-cp", "/opt/javapackages-validator/validator.jar"]
+ENTRYPOINT ["/usr/lib/jvm/java-20-openjdk/bin/java", "--enable-preview", "--enable-native-access", "ALL-UNNAMED", "-cp", "/opt/javapackages-validator/validator.jar"]
