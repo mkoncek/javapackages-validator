@@ -10,7 +10,6 @@ import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -274,7 +273,7 @@ public class Main {
         }
 
         if (parameters.classPath != null) {
-            compileFiles(parameters.sourcePath, parameters.classPath, List.of("-d", parameters.classPath.toString()), logger);
+            compileFiles(parameters.sourcePath, parameters.classPath, List.of("--enable-preview", "--release", "20", "-d", parameters.classPath.toString()), logger);
             var serviceOutFile = Files.createDirectories(parameters.classPath.resolve("META-INF").resolve("services")).resolve(Validator.class.getCanonicalName());
             try (var os = Files.newOutputStream(serviceOutFile)) {
                 for (var serviceFile : Files.find(parameters.sourcePath, Integer.MAX_VALUE, (p, a) -> !a.isDirectory() && p.getFileName().equals(Paths.get(Validator.class.getCanonicalName()))).toList()) {
