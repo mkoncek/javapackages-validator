@@ -7,7 +7,7 @@ It executes checks implemented as Java classes over the set of provided RPM file
 
 == Usage
 The tool is executed from command line using `java` command with the proper class path.
-JVM of version 20 is required.
+JVM of version 21 is required.
 
 ----
 Main [optional flags] <validator class name> [validator flags] [-f|-u RPM files or directories to test]...
