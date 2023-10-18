@@ -1,18 +1,15 @@
-FROM registry.access.redhat.com/ubi9-minimal AS builder
-RUN curl -O "https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
-RUN rpm -i "./epel-release-latest-9.noarch.rpm"
-RUN microdnf -y install git-core java-latest-openjdk-devel maven-openjdk17 rpm-libs
+FROM docker.io/library/eclipse-temurin:21-jdk-ubi9-minimal AS builder
+RUN microdnf -y install git-core maven rpm-libs
 
 WORKDIR "/usr/local/src"
 
-ARG java_deptools_hash="3631d8546a14bd2a038e33f695c871689aa75d77"
+ARG java_deptools_hash="eef6155c1e4d9ce094c3178f12208e809f98c33e"
 RUN echo "${java_deptools_hash}"
 RUN git clone "https://github.com/mkoncek/java-deptools-native.git"
 
 WORKDIR "/usr/local/src/java-deptools-native"
 
 RUN git reset --hard "${java_deptools_hash}"
-ARG JAVA_HOME="/usr/lib/jvm/java-20-openjdk"
 RUN mvn -B clean install
 
 WORKDIR "/usr/local/src/javapackages-validator"
@@ -26,12 +23,10 @@ RUN mvn -B clean install
 
 ################################################################################
 
-FROM registry.access.redhat.com/ubi9-minimal
-RUN curl -O "https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
-RUN rpm -i "./epel-release-latest-9.noarch.rpm"
-RUN microdnf -y install java-latest-openjdk-devel rpm-libs
+FROM docker.io/library/eclipse-temurin:21-jdk-ubi9-minimal
+RUN microdnf -y install rpm-libs
 
 COPY --from=builder "/usr/local/src/javapackages-validator/target/dependency/" "/opt/javapackages-validator/dependency/"
 COPY --from=builder "/usr/local/src/javapackages-validator/target/validator.jar" "/opt/javapackages-validator/validator.jar"
 
-ENTRYPOINT ["/usr/lib/jvm/java-20-openjdk/bin/java", "--enable-preview", "--enable-native-access", "ALL-UNNAMED", "-cp", "/opt/javapackages-validator/validator.jar"]
+ENTRYPOINT ["/opt/java/openjdk/bin/java", "--enable-preview", "--enable-native-access", "ALL-UNNAMED", "-cp", "/opt/javapackages-validator/validator.jar"]
