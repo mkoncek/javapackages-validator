@@ -2,7 +2,7 @@
 
 set -e
 
-java_bin='/usr/lib/jvm/jre-20-openjdk/bin'
+java_bin='/usr/lib/jvm/jre-21-openjdk/bin'
 
 exec "${java_bin}"/java --enable-preview --enable-native-access ALL-UNNAMED -jar 'target/validator.jar' "${@}"
 
