@@ -1,19 +1,19 @@
 #!/bin/bash
 set -eux
 
-jp_validator_image='javapackages-validator'
+jp_validator_image='javapackages-validator:2'
 test_artifacts_dir='/tmp/test_artifacts'
 jpv_tests_dir='/tmp/javapackages.git'
 jpv_tests_url='https://src.fedoraproject.org/tests/javapackages.git'
 jpv_tests_ref='f40'
 
 build_local_image() {
-    podman build -f Dockerfile.main -t "${jp_validator_image}:2"
+    podman build -f Dockerfile.main -t "${jp_validator_image}"
 }
 
 download_ci_env() {
     mkdir -p "${test_artifacts_dir}"
-    podman run --privileged --mount type=bind,source="${test_artifacts_dir}",target='/mnt/rpms' --rm -it "quay.io/mkoncek/javapackages-validator-ci" '/mnt/rpms'
+    podman run --privileged --mount type=bind,source="${test_artifacts_dir}",target='/mnt/rpms' --rm -it "quay.io/fedora-java/javapackages-validator-ci:2" '/mnt/rpms'
 }
 
 prepare_test_env() {
