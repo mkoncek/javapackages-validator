@@ -24,6 +24,7 @@ RUN mvn -B clean install
 ################################################################################
 
 FROM docker.io/library/eclipse-temurin:21-jdk-ubi9-minimal
+RUN microdnf -y update
 RUN microdnf -y install rpm-libs
 
 COPY --from=builder "/usr/local/src/javapackages-validator/target/dependency/" "/opt/javapackages-validator/dependency/"
