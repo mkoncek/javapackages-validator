@@ -8,7 +8,7 @@ jpv_tests_url='https://src.fedoraproject.org/tests/javapackages.git'
 jpv_tests_ref='f40'
 
 build_local_image() {
-    podman build -f Dockerfile.main -t "${jp_validator_image}"
+    podman build -f Dockerfile.main -t "${jp_validator_image}:2"
 }
 
 download_ci_env() {
