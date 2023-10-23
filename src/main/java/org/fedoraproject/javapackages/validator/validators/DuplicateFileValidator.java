@@ -52,7 +52,7 @@ public abstract class DuplicateFileValidator extends Validator {
                 boolean okDirectory = entry.getValue().stream().map(Pair::getKey).allMatch(CpioArchiveEntry::isDirectory);
 
                 Decorated decoratedFile = Decorated.actual(entry.getKey());
-                Decorated decoratedProviders = Decorated.list(List.copyOf(entry.getValue()));
+                Decorated decoratedProviders = Decorated.list(entry.getValue().stream().map(p -> p.getValue().getFileName()).toList());
 
                 if (okDifferentArchs[0]) {
                     pass("File {0} provided by RPMs of unique architectures: {1}",
