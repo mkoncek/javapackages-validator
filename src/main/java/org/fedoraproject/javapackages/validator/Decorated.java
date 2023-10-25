@@ -60,12 +60,16 @@ public class Decorated {
         return new Decorated(obj, decorations);
     }
 
-    public String toString(TextDecorator decorator) {
-        return decorator.decorate(object, decorations);
+    Object getObject() {
+        return object;
+    }
+
+    Decoration[] getDecorations() {
+        return decorations;
     }
 
     @Override
     public String toString() {
-        return toString(Main.getDecorator());
+        return Main.getDecorator().decorate(this);
     }
 }

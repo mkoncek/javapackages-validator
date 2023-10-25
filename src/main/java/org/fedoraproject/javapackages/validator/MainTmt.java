@@ -8,23 +8,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
+import org.apache.commons.collections4.IterableUtils;
 import org.yaml.snakeyaml.Yaml;
 
 public class MainTmt extends Main {
     private Path TMT_TEST_DATA = null;
     private Path TMT_TREE = null;
+    private Map<String, DefaultResult> notExecuted = new TreeMap<>();
+    private Map<String, List<LogEntry>> additionalLogs = new TreeMap<>();
 
-    static private String getenv(String key) {
+    private static String getenv(String key) {
         var result = System.getenv(key);
         if (result == null) {
             throw new RuntimeException("Environment variable " + Objects.toString(key) + " not set");
@@ -61,10 +67,10 @@ public class MainTmt extends Main {
 """);
         }
 
-        public void printRow(Validator.LogEntry entry) {
+        public void printRow(LogEntry entry) {
             println("  <tr class=\"" + entry.kind() + "\">");
-            println("    <td style=\"text-align:center;\">" + entry.kind().getDecoratedText().toString(HtmlDecorator.INSTANCE) + "</td>");
-            println("    <td>" + entry.toString(HtmlDecorator.INSTANCE) + "</td>");
+            println("    <td style=\"text-align:center;\">" + HtmlDecorator.INSTANCE.decorate(entry.kind().getDecoratedText()) + "</td>");
+            println("    <td>" + HtmlDecorator.INSTANCE.decorate(entry.kind().getDecoratedText()) + "</td>");
             println("  </tr>");
         }
 
@@ -80,6 +86,7 @@ public class MainTmt extends Main {
         var validatorTests = new TreeMap<String, Validator>();
         validators = new ArrayList<>(validators);
         validators.sort((lhs, rhs) -> lhs.getTestName().compareTo(rhs.getTestName()));
+        validators = super.select(validators);
 
         for (var validator : validators) {
             var testName = validator.getTestName();
@@ -88,29 +95,29 @@ public class MainTmt extends Main {
                     Decorated.actual(testName),
                     Decorated.struct(validator.getClass().getCanonicalName()));
 
-            parameters.validatorArgs.put(validator.getClass().getCanonicalName(), Optional.empty());
+            {
+                Function<Validator, LogEntry> duplicate = v -> {
+                    return LogEntry.error("Test is implemented by multiple validators: {0}",
+                            Decorated.struct(v.getClass().getCanonicalName()));
+                };
 
-            if (!validatorTests.containsKey(testName)) {
-                validatorTests.put(testName, validator);
-            } else {
-                Consumer<Validator> print = v -> v.error("Test is implemented by multiple validators: {0}",
-                        Decorated.struct(v.getClass().getCanonicalName()));
-                Optional.ofNullable(validatorTests.put(testName, null)).ifPresent(print);
-                print.accept(validator);
+                var present = notExecuted.get(testName);
+                if (present != null) {
+                    present.addLog(duplicate.apply(validator));
+                } else {
+                    var previousValidator = validatorTests.put(testName, validator);
+                    var result = new DefaultResult();
+                    result.error();
+                    result.addLog(duplicate.apply(previousValidator));
+                    result.addLog(duplicate.apply(validatorTests.remove(testName)));
+                    notExecuted.put(testName, result);
+                }
             }
         }
 
-        for (var entry : validatorTests.entrySet()) {
-            if (entry.getValue() == null) {
-                logger.debug("Test {0} is implemented by multiple validators",
-                        Decorated.actual(entry.getKey()));
-            }
-        }
-
-        for (var validator : validatorTests.values()) {
-            if (validator != null) {
-                parameters.validatorArgs.put(validator.getClass().getCanonicalName(), Optional.empty());
-            }
+        for (var result : notExecuted.keySet()) {
+            logger.debug("Test {0} is implemented by multiple validators",
+                    Decorated.actual(result));
         }
 
         var optConfigFile = Optional.<Path>of(TMT_TREE.resolve("plans").resolve("javapackages-validator.yaml"));
@@ -134,6 +141,7 @@ public class MainTmt extends Main {
                     logger.debug("An exception occured when attempting to read yaml file {0}: {1}",
                             Decorated.actual(configPath),
                             Decorated.plain(new String(os.toByteArray(), StandardCharsets.UTF_8)));
+                    throw ex;
                 }
             }
 
@@ -146,13 +154,17 @@ public class MainTmt extends Main {
                     try {
                         args = ((List<?>) entry.getValue()).toArray(String[]::new);
                     } catch (ClassCastException ex) {
-                        validator.error("{0}", Decorated.plain(
-                                "Wrong format of validator arguments in configuration Yaml file, must be a list of strings"));
-                        parameters.validatorArgs.remove(validator.getClass().getCanonicalName());
+                        var result = notExecuted.computeIfAbsent(validator.getTestName(), k -> new DefaultResult());
+                        result.error("{0}", Decorated.plain("Wrong format of validator arguments " +
+                                "in configuration Yaml file, must be a list of strings"));
                         continue;
                     }
 
-                    parameters.validatorArgs.put(validator.getClass().getCanonicalName(), Optional.of(args));
+                    var previous = parameters.validatorArgs.put(validator.getClass().getCanonicalName(), Optional.of(args));
+                    if (previous != null) {
+                        additionalLogs.put(validator.getTestName(), new ArrayList<>(Collections.singletonList(
+                                LogEntry.debug("Overriding arguments for {0}", Decorated.struct(validator.getClass().getCanonicalName())))));
+                    }
                 }
             }
 
@@ -164,8 +176,12 @@ public class MainTmt extends Main {
                 for (var validator : validators) {
                     for (var exclusionPattern : exclusions) {
                         if (exclusionPattern.matcher(validator.getTestName()).matches()) {
-                            logger.debug("Exclusion pattern {0} matches test {1}", Decorated.actual(exclusionPattern), Decorated.struct(validator.getTestName()));
-                            parameters.validatorArgs.remove(validator.getClass().getCanonicalName());
+                            var message = LogEntry.info("Exclusion pattern {0} matches test {1}",
+                                    Decorated.actual(exclusionPattern),
+                                    Decorated.struct(validator.getTestName()));
+                            logger.debug(message.pattern(), message.objects());
+                            var result = notExecuted.computeIfAbsent(validator.getTestName(), k -> new DefaultResult());
+                            result.info(message.pattern(), message.objects());
                             break;
                         }
                     }
@@ -173,11 +189,18 @@ public class MainTmt extends Main {
             }
         }
 
-        return super.select(validators);
+        validators.removeIf(validator -> notExecuted.containsKey(validator.getTestName()));
+
+        return validators;
+    }
+
+    private static String getFormattedDuration(LocalDateTime startTime, LocalDateTime endTime) {
+        var duration = Duration.between(startTime, endTime);
+        return String.format("%02d:%02d:%02d.%03d", duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart(), duration.toMillisPart());
     }
 
     @Override
-    void report(List<Validator> validators) throws Exception {
+    void report(List<NamedResult> results) throws Exception {
         try (var os = Files.newOutputStream(TMT_TEST_DATA.resolve("filter.js"));
                 var is = MainTmt.class.getResourceAsStream("/tmt_html/filter.js")) {
             is.transferTo(os);
@@ -189,74 +212,73 @@ public class MainTmt extends Main {
 
         Files.createDirectories(TMT_TEST_DATA.resolve("results"));
 
-        var testReports = new TreeMap<String, ArrayList<Validator>>();
-        for (var validator : validators) {
-            if (parameters.validatorArgs.containsKey(validator.getClass().getCanonicalName())) {
-                testReports.computeIfAbsent(validator.getTestName(), k -> new ArrayList<>()).add(validator);
-            }
-        }
+        var testResults = IterableUtils.chainedIterable(results, notExecuted.entrySet().stream().map(e -> new NamedResult(e.getValue(), e.getKey())).toList());
 
-        for (var entry : testReports.entrySet()) {
+        for (var namedResult : testResults) {
             var resultFile = "results/";
-            resultFile += entry.getKey().substring(1).replace('/', '.');
+            resultFile += namedResult.getTestName().substring(1).replace('/', '.');
+
+            var chainedLogs = IterableUtils.chainedIterable(additionalLogs
+                    .getOrDefault(namedResult.getTestName(), Collections.emptyList()), namedResult);
 
             try (var os = Files.newOutputStream(TMT_TEST_DATA.resolve(resultFile + ".log"));
                     var ps = new PrintStream(os, false, StandardCharsets.UTF_8)) {
-                for (var validator : entry.getValue()) {
-                    for (var p : validator.getMessages()) {
-                        ps.println(Main.decorated(p));
-                    }
+                for (var entry : chainedLogs) {
+                    ps.println(Main.decorated(entry));
                 }
             }
             try (var os = Files.newOutputStream(TMT_TEST_DATA.resolve(resultFile + ".html"));
                     var ps = new HtmlTablePrintStream(os)) {
-                for (var validator : entry.getValue()) {
-                    for (var p : validator.getMessages()) {
-                        ps.printRow(p);
-                    }
+                for (var entry : chainedLogs) {
+                    ps.printRow(entry);
                 }
             }
 
-            var result = new StringBuilder();
-            result.append("- name: '");
-            result.append(entry.getKey());
-            result.append("'");
-            result.append(System.lineSeparator());
-            result.append("  result: ");
+            var resultYaml = new StringBuilder();
+            resultYaml.append("- name: '");
+            resultYaml.append(namedResult.getTestName());
+            resultYaml.append("'");
+            resultYaml.append(System.lineSeparator());
+            resultYaml.append("  result: ");
+            resultYaml.append(namedResult.getResult());
+            resultYaml.append(System.lineSeparator());
 
-            if (entry.getValue().size() == 1) {
-                var validator = entry.getValue().get(0);
-                result.append(validator.getResult());
-                result.append(System.lineSeparator());
-                result.append("  starttime: '");
-                result.append(validator.getStartTime().format(DateTimeFormatter.ISO_DATE_TIME));
-                result.append("'");
-                result.append(System.lineSeparator());
-                result.append("  endtime: '");
-                result.append(validator.getStartTime().format(DateTimeFormatter.ISO_DATE_TIME));
-                result.append("'");
-                result.append(System.lineSeparator());
-                result.append("  duration: ");
-                result.append(validator.getFormattedDuration());
-            } else {
-                result.append("error");
+            var startTime = namedResult.getStartTime();
+            if (startTime != null) {
+                resultYaml.append("  starttime: '");
+                resultYaml.append(startTime.format(DateTimeFormatter.ISO_DATE_TIME));
+                resultYaml.append("'");
+                resultYaml.append(System.lineSeparator());
             }
 
-            result.append(System.lineSeparator());
-            result.append("  log: ");
-            result.append(System.lineSeparator());
-            result.append("   - '");
-            result.append(resultFile);
-            result.append(".log'");
-            result.append(System.lineSeparator());
-            result.append("   - '");
-            result.append(resultFile);
-            result.append(".html'");
-            result.append(System.lineSeparator());
+            var endTime = namedResult.getEndTime();
+            if (endTime != null) {
+                resultYaml.append("  endtime: '");
+                resultYaml.append(endTime.format(DateTimeFormatter.ISO_DATE_TIME));
+                resultYaml.append("'");
+                resultYaml.append(System.lineSeparator());
+            }
+
+            if (startTime != null && endTime != null) {
+                resultYaml.append("  duration: ");
+                resultYaml.append(getFormattedDuration(startTime, endTime));
+                resultYaml.append(System.lineSeparator());
+            }
+
+            resultYaml.append("  log: ");
+            resultYaml.append(System.lineSeparator());
+            resultYaml.append("   - '");
+            resultYaml.append(resultFile);
+            resultYaml.append(".log'");
+            resultYaml.append(System.lineSeparator());
+            resultYaml.append("   - '");
+            resultYaml.append(resultFile);
+            resultYaml.append(".html'");
+            resultYaml.append(System.lineSeparator());
 
             try (var os = Files.newOutputStream(TMT_TEST_DATA.resolve("results.yaml"),
                     StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
-                os.write(result.toString().getBytes(StandardCharsets.UTF_8));
+                os.write(resultYaml.toString().getBytes(StandardCharsets.UTF_8));
             }
         }
     }

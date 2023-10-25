@@ -1,6 +1,5 @@
 package org.fedoraproject.javapackages.validator;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -15,9 +14,9 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.text.MessageFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -162,7 +161,7 @@ public class Main {
         }
     }
 
-    static <T> int tryReadArgs(Map<String, Optional<String[]>> result, String[] args, int pos) {
+    static int tryReadArgs(Map<String, Optional<String[]>> result, String[] args, int pos) {
         var origPos = pos;
         var vArgs = Optional.<String[]>empty();
 
@@ -291,7 +290,7 @@ public class Main {
             System.lineSeparator() + Decorated.struct(v.getClass().getCanonicalName())
         ).collect(Collectors.joining())));
 
-        return Collections.unmodifiableList(validators);
+        return validators;
     }
 
     List<Validator> select(List<Validator> validators) throws Exception {
@@ -308,29 +307,11 @@ public class Main {
             return result.toString();
         }).collect(Collectors.joining())));
 
-        var result = new ArrayList<Validator>();
-
-        if (parameters.validatorArgs.isEmpty()) {
-            result.addAll(validators);
-        } else {
+        if (!parameters.validatorArgs.isEmpty()) {
+            validators = new ArrayList<Validator>();
             for (var validator : validators) {
-                var args = parameters.validatorArgs.get(validator.getClass().getCanonicalName());
-                if (args != null) {
-                    if (args.isPresent()) {
-                        try {
-                            validator.arguments(args.get());
-                        } catch (Exception ex) {
-                            var stackTrace = new ByteArrayOutputStream();
-                            ex.printStackTrace(new PrintStream(stackTrace, false, StandardCharsets.UTF_8));
-                            validator.error("An exception occured during arugment processing in {0}:{1}{2}",
-                                    Decorated.struct(validator.getClass().getCanonicalName()),
-                                    Decorated.plain(System.lineSeparator()),
-                                    Decorated.plain(new String(stackTrace.toByteArray(), StandardCharsets.UTF_8)));
-                            continue;
-                        }
-                    }
-
-                    result.add(validator);
+                if (parameters.validatorArgs.containsKey(validator.getClass().getCanonicalName())) {
+                    validators.add(validator);
                 }
             }
         }
@@ -346,21 +327,11 @@ public class Main {
             throw new RuntimeException("The following arguments were not listed as available Validator services: " + notFoundValidators);
         }
 
-        return result;
-    }
-
-    private final List<Validator> privselect(List<Validator> validators) throws Exception {
-        validators = select(validators);
-
-        logger.debug("Selected validators:{0}", Decorated.plain(validators.stream().map(v ->
-            System.lineSeparator() + Decorated.struct(v.getClass().getCanonicalName())
-        ).collect(Collectors.joining())));
-
         return validators;
     }
 
     @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
-    List<Validator> execute(List<Validator> validators) throws Exception {
+    List<NamedResult> execute(List<Validator> validators) throws Exception {
         var rpms = new ArrayList<RpmFile>();
         parameters.argUrls.parallelStream().forEach(url -> {
             RpmFile rpm;
@@ -374,28 +345,39 @@ public class Main {
             }
         });
         Iterators.addAll(rpms, new ArgFileIterator(parameters.argPaths));
-        validators.parallelStream().forEach(validator -> validator.pubvalidate(rpms));
-
-        return validators;
+        return validators.parallelStream().map(validator -> {
+            try {
+                var startTime = LocalDateTime.now();
+                var result = validator.validate(rpms, parameters.validatorArgs.get(validator.getClass().getCanonicalName()).orElse(null));
+                var endTime = LocalDateTime.now();
+                return new NamedResult(result, validator.getTestName(), startTime, endTime);
+            } catch (Exception ex) {
+                var result = new DefaultResult();
+                var logEntry = Common.logException(ex);
+                result.error(logEntry.pattern(), logEntry.objects());
+                return new NamedResult(result, validator.getTestName());
+            }
+        }).toList();
     }
 
-    protected static final String decorated(Validator.LogEntry entry) {
-        return "[" + entry.kind().getDecoratedText() + "] " + entry.toString(Main.DECORATOR);
+    protected static final String decorated(LogEntry entry) {
+        return "[" + entry.kind().getDecoratedText() + "] " + MessageFormat.format(entry.pattern(),
+                Stream.of(entry.objects()).map(a -> Main.getDecorator().decorate(a)).toArray());
     }
 
     @SuppressFBWarnings({"DM_EXIT"})
-    void report(List<Validator> validators) throws Exception {
+    void report(List<NamedResult> results) throws Exception {
         int passMessages = 0;
-        for (Validator validator : validators) {
-            for (var p : validator.getMessages()) {
-                if (!LogEvent.fail.equals(p.kind()) && !LogEvent.error.equals(p.kind())) {
-                    if (LogEvent.debug.equals(p.kind())) {
-                        getDebugOutputStream().println(decorated(p));
+        for (var result : results) {
+            for (var logEntry : result) {
+                if (!LogEvent.fail.equals(logEntry.kind()) && !LogEvent.error.equals(logEntry.kind())) {
+                    if (LogEvent.debug.equals(logEntry.kind())) {
+                        getDebugOutputStream().println(decorated(logEntry));
                     } else {
-                        System.out.println(decorated(p));
+                        System.out.println(decorated(logEntry));
                     }
 
-                    if (LogEvent.pass.equals(p.kind())) {
+                    if (LogEvent.pass.equals(logEntry.kind())) {
                         ++passMessages;
                     }
                 }
@@ -403,20 +385,20 @@ public class Main {
         }
 
         int failMessages = 0;
-        for (Validator validator : validators) {
-            for (var p : validator.getMessages()) {
-                if (LogEvent.fail.equals(p.kind())) {
-                    System.out.println(decorated(p));
+        for (var result : results) {
+            for (var logEntry : result) {
+                if (LogEvent.fail.equals(logEntry.kind())) {
+                    System.out.println(decorated(logEntry));
                     ++failMessages;
                 }
             }
         }
 
         int errorMessages = 0;
-        for (var validator : validators) {
-            for (var p : validator.getMessages()) {
-                if (LogEvent.error.equals(p.kind())) {
-                    System.out.println(decorated(p));
+        for (var result : results) {
+            for (var logEntry : result) {
+                if (LogEvent.error.equals(logEntry.kind())) {
+                    System.out.println(decorated(logEntry));
                     ++errorMessages;
                 }
             }
@@ -444,9 +426,13 @@ public class Main {
 
     void run(String[] args) throws Exception {
         parseArguments(args);
-        var tests = discover();
-        execute(privselect(tests));
-        report(tests);
+        var validators = select(discover());
+
+        logger.debug("Selected validators:{0}", Decorated.plain(validators.stream().map(v ->
+            System.lineSeparator() + Decorated.struct(v.getClass().getCanonicalName())
+        ).collect(Collectors.joining())));
+
+        report(execute(validators));
     }
 
     public static void main(String[] args) throws Exception {

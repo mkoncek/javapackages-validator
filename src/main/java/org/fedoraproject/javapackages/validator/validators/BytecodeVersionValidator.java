@@ -5,15 +5,21 @@ import java.util.Map;
 
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.TmtTest;
 
-@TmtTest("/java/bytecode_version")
 public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
-    private short min = Short.MIN_VALUE;
-    private short max = Short.MAX_VALUE;
-
     @Override
-    public void arguments(String[] args) {
+    public String getTestName() {
+        return "/java/bytecode-version";
+    }
+
+    private static record Limits(short min, short max) {
+    }
+
+    public Limits readLimits() {
+        var args = getArgs();
+        if (args == null) {
+            throw new IllegalArgumentException("No arguments provided");
+        }
         if (args.length != 1) {
             throw new IllegalArgumentException("Wrong number of arguments, expected 1");
         }
@@ -21,6 +27,9 @@ public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
         var arg = args[0];
 
         var pos = arg.indexOf(':');
+
+        short min = Short.MIN_VALUE;
+        short max = Short.MAX_VALUE;
 
         if (pos == -1) {
             var num = Short.parseShort(arg);
@@ -39,32 +48,34 @@ public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
             }
         }
 
-        debug("Limits: {0}:{1}", Decorated.plain(min), Decorated.plain(max));
+        return new Limits(min, max);
     }
 
     @Override
     public void validate(RpmFile rpm, Path jarPath, Map<Path, Short> classVersions) {
+        var limits = readLimits();
+        debug("Limits: {0}:{1}", Decorated.plain(limits.min()), Decorated.plain(limits.max()));
         for (var entry : classVersions.entrySet()) {
             boolean failed = false;
 
-            if (entry.getValue() < min) {
+            if (entry.getValue() < limits.min()) {
                 failed = true;
                 fail("{0}: {1}: {2}: bytecode version: {3} is smaller than {4}",
                         Decorated.rpm(rpm),
                         Decorated.custom(jarPath, DECORATION_JAR),
                         Decorated.struct(entry.getKey()),
                         Decorated.actual(entry.getValue()),
-                        Decorated.expected(min));
+                        Decorated.expected(limits.min()));
             }
 
-            if (max < entry.getValue()) {
+            if (limits.max() < entry.getValue()) {
                 failed = true;
                 fail("{0}: {1}: {2}: bytecode version: {3} is larger than {4}",
                         Decorated.rpm(rpm),
                         Decorated.custom(jarPath, DECORATION_JAR),
                         Decorated.struct(entry.getKey()),
                         Decorated.actual(entry.getValue()),
-                        Decorated.expected(max));
+                        Decorated.expected(limits.max()));
             }
 
             if (!failed) {

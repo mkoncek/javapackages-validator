@@ -14,9 +14,9 @@ import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.Validator;
+import org.fedoraproject.javapackages.validator.DefaultValidator;
 
-public abstract class DuplicateFileValidator extends Validator {
+public abstract class DuplicateFileValidator extends DefaultValidator {
     @Override
     public void validate(Iterable<RpmFile> rpms) throws Exception {
         // The union of file paths present in all RPM files mapped to the RPM file names they are present in
@@ -73,7 +73,7 @@ public abstract class DuplicateFileValidator extends Validator {
 
     public abstract void validate(Path path, Collection<? extends RpmInfo> providerRpms) throws Exception;
 
-    public static abstract class DuplicateFileValidatorDefault extends DuplicateFileValidator {
+    public static abstract class DefaultDuplicateFileValidator extends DuplicateFileValidator {
         @Override
         public void validate(Path path, Collection<? extends RpmInfo> providerRpms) throws Exception {
             Decorated decoratedFile = Decorated.actual(path);

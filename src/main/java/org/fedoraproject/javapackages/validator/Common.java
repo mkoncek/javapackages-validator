@@ -1,6 +1,8 @@
 package org.fedoraproject.javapackages.validator;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,5 +51,13 @@ public class Common {
         }
 
         return result;
+    }
+
+    public static LogEntry logException(Exception ex) {
+        var stackTrace = new ByteArrayOutputStream();
+        ex.printStackTrace(new PrintStream(stackTrace, false, StandardCharsets.UTF_8));
+        return LogEntry.error("An exception occured:{0}{1}",
+                Decorated.plain(System.lineSeparator()),
+                Decorated.plain(new String(stackTrace.toByteArray(), StandardCharsets.UTF_8)));
     }
 }

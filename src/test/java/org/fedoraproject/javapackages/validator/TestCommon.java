@@ -27,16 +27,22 @@ public class TestCommon {
         return result;
     }
 
-    public static void assertInfo(Validator validator) {
+    public static void assertInfo(DefaultValidator validator) {
         assertEquals(TestResult.info, validator.getResult(), "expected result: INFO");
     }
 
-    public static void assertPass(Validator validator) {
+    public static void assertPass(DefaultValidator validator) {
         assertEquals(TestResult.pass, validator.getResult(), "expected result: PASS");
     }
 
-    public static void assertFailOne(Validator validator) {
+    public static void assertFailOne(DefaultValidator validator) {
         assertEquals(TestResult.fail, validator.getResult(), "expected result: FAIL");
-        assertEquals(1, validator.getMessages().stream().filter(p -> LogEvent.fail.equals(p.kind())).count());
+        int count = 0;
+        for (var entry : validator) {
+            if (LogEvent.fail.equals(entry.kind())) {
+                ++count;
+            }
+        }
+        assertEquals(1, count);
     }
 }

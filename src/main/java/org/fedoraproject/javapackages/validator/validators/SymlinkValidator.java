@@ -24,13 +24,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
 public class SymlinkValidator extends ElementwiseValidator {
-    private Path envroot = Paths.get("/");
-
     @Override
-    public void arguments(String[] args) {
-        if (args.length > 0 && args[0].equals("-e")) {
-            envroot = Paths.get(args[1]);
-        }
+    public String getTestName() {
+        return "/symlinks";
     }
 
     public SymlinkValidator() {
@@ -39,6 +35,12 @@ public class SymlinkValidator extends ElementwiseValidator {
 
     @Override
     public void validate(RpmFile rpm) throws Exception {
+        var envroot = Paths.get("/");
+        var args = getArgs();
+        if (args != null && args.length == 2 && args[0].equals("-e")) {
+            envroot = Paths.get(args[1]);
+        }
+
         for (var entry : Common.rpmFilesAndSymlinks(rpm).entrySet()) {
             Path link = Common.getEntryPath(entry.getKey());
             Path target = entry.getValue();

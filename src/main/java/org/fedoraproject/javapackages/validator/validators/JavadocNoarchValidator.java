@@ -2,10 +2,13 @@ package org.fedoraproject.javapackages.validator.validators;
 
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.TmtTest;
 
-@TmtTest("/java/javadoc_noarch")
 public class JavadocNoarchValidator extends ElementwiseValidator {
+    @Override
+    public String getTestName() {
+        return "/java/javadoc_noarch";
+    }
+
     public JavadocNoarchValidator() {
         super(rpm -> rpm.isBinaryPackage() && rpm.getName().equals(rpm.getPackageName() + "-javadoc"));
     }
