@@ -34,10 +34,10 @@ public class AnsiDecorator implements TextDecorator {
     }
 
     @Override
-    public String decorate(Object object, Decoration... decorations) {
+    public String decorate(Decorated decorated) {
         Decoration color = null;
 
-        for (var decoration : decorations) {
+        for (var decoration : decorated.getDecorations()) {
             if (decoration != Decoration.bold && decoration != Decoration.underline) {
                 if (color != null) {
                     throw new IllegalArgumentException("Multiple colors specified");
@@ -53,7 +53,7 @@ public class AnsiDecorator implements TextDecorator {
 
         StringBuilder result = new StringBuilder("\033[");
 
-        for (var decoration : decorations) {
+        for (var decoration : decorated.getDecorations()) {
             switch (decoration) {
             case bold:
             case underline:
@@ -87,7 +87,7 @@ public class AnsiDecorator implements TextDecorator {
             break;
         }
 
-        result.append(Objects.toString(object));
+        result.append(Objects.toString(decorated.getObject()));
         result.append("\033[0m");
 
         return result.toString();

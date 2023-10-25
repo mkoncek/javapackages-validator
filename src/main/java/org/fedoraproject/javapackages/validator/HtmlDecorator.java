@@ -36,10 +36,10 @@ public class HtmlDecorator implements TextDecorator {
     }
 
     @Override
-    public String decorate(Object object, Decoration... decorations) {
+    public String decorate(Decorated decorated) {
         Decoration color = null;
 
-        for (var decoration : decorations) {
+        for (var decoration : decorated.getDecorations()) {
             if (decoration != Decoration.bold && decoration != Decoration.underline) {
                 if (color != null) {
                     throw new IllegalArgumentException("Multiple colors specified");
@@ -55,7 +55,7 @@ public class HtmlDecorator implements TextDecorator {
 
         var result = new StringBuilder("<text style=\"");
 
-        for (var decoration : decorations) {
+        for (var decoration : decorated.getDecorations()) {
             switch (decoration) {
             case bold:
             case underline:
@@ -90,7 +90,7 @@ public class HtmlDecorator implements TextDecorator {
         }
 
         result.append("\">");
-        result.append(StringEscapeUtils.escapeHtml4(Objects.toString(object)).replace(System.lineSeparator(), "<br>"));
+        result.append(StringEscapeUtils.escapeHtml4(Objects.toString(decorated.getObject())).replace(System.lineSeparator(), "<br>"));
         result.append("</text>");
 
         return result.toString();

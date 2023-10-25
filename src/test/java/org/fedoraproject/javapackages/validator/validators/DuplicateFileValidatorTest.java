@@ -10,7 +10,7 @@ import java.util.Collection;
 
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.TestCommon;
-import org.fedoraproject.javapackages.validator.validators.DuplicateFileValidator.DuplicateFileValidatorDefault;
+import org.fedoraproject.javapackages.validator.validators.DuplicateFileValidator.DefaultDuplicateFileValidator;
 import org.junit.jupiter.api.Test;
 
 public class DuplicateFileValidatorTest {
@@ -19,7 +19,7 @@ public class DuplicateFileValidatorTest {
 
     @Test
     void testIllegalDuplicateFile() throws Exception {
-        var validator = new DuplicateFileValidatorDefault() {
+        var validator = new DefaultDuplicateFileValidator() {
             @Override
             public boolean allowedDuplicateFile(Path path, Collection<? extends RpmInfo> providerRpms) throws IOException {
                 return false;
@@ -31,7 +31,7 @@ public class DuplicateFileValidatorTest {
 
     @Test
     void testAllowedDuplicateFile() throws Exception {
-        var validator = new DuplicateFileValidatorDefault() {
+        var validator = new DefaultDuplicateFileValidator() {
             @Override
             public boolean allowedDuplicateFile(Path path, Collection<? extends RpmInfo> providerRpms) throws IOException {
                 return true;

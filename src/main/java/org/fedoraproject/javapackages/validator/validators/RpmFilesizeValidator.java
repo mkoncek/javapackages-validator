@@ -24,5 +24,5 @@ public abstract class RpmFilesizeValidator extends ElementwiseValidator {
         }
     }
 
-    public abstract boolean allowedFilesize(RpmInfo rpm, long sizeBytes);
+    public abstract boolean allowedFilesize(RpmInfo rpm, long sizeBytes) throws Exception;
 }

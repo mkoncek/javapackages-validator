@@ -5,9 +5,9 @@ import java.util.function.Predicate;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.Validator;
+import org.fedoraproject.javapackages.validator.DefaultValidator;
 
-public abstract class ElementwiseValidator extends Validator {
+public abstract class ElementwiseValidator extends DefaultValidator {
     private Predicate<RpmInfo> filter;
 
     protected ElementwiseValidator() {

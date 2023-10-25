@@ -10,7 +10,7 @@ import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 
 public abstract class FilesValidator extends ElementwiseValidator {
-    public abstract boolean allowedFile(RpmInfo rpm, Path path);
+    public abstract boolean allowedFile(RpmInfo rpm, Path path) throws Exception;
 
     @Override
     public void validate(RpmFile rpm) throws Exception {

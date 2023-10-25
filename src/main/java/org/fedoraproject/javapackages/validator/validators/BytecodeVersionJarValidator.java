@@ -15,7 +15,7 @@ import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.TestResult;
 
-public class BytecodeVersionJarValidator extends JarValidator {
+public abstract class BytecodeVersionJarValidator extends JarValidator {
     @Override
     public void acceptJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
         var jarPath = Paths.get(rpmEntry.getName().substring(1));

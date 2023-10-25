@@ -5,10 +5,13 @@ import java.util.Collections;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.TmtTest;
 
-@TmtTest("/java/exclusive_arch")
 public class JavaExclusiveArchValidator extends ElementwiseValidator {
+    @Override
+    public String getTestName() {
+        return "/java/exclusive_arch";
+    }
+
     /**
      * The expanded value of `rpm -E '%{java_arches}'` as of 18. 8. 2022 on Fedora 37
      */

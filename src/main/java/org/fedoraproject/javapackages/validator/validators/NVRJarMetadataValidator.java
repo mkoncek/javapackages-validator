@@ -13,12 +13,15 @@ import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
+import org.fedoraproject.javapackages.validator.DefaultValidator;
 import org.fedoraproject.javapackages.validator.RpmJarConsumer;
-import org.fedoraproject.javapackages.validator.TmtTest;
-import org.fedoraproject.javapackages.validator.Validator;
 
-@TmtTest("/java/nvr-jar-metadata")
-public class NVRMetadataValidator extends Validator {
+public class NVRJarMetadataValidator extends DefaultValidator {
+    @Override
+    public String getTestName() {
+        return "/java/nvr-jar-metadata";
+    }
+
     private static interface Entry {
         String name();
         String valueOf(RpmFile rpm);
@@ -110,7 +113,7 @@ public class NVRMetadataValidator extends Validator {
 
     private Map<String, RpmEntry> rpms;
 
-    public NVRMetadataValidator() {
+    public NVRJarMetadataValidator() {
         this.rpms = new TreeMap<>();
     }
 
