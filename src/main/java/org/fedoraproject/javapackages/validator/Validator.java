@@ -1,5 +1,7 @@
 package org.fedoraproject.javapackages.validator;
 
+import java.util.List;
+
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 
 public interface Validator {
@@ -17,5 +19,5 @@ public interface Validator {
      * @param args optional arguments passed to the validator, may be null.
      * @return the result of the validation.
      */
-    Result validate(Iterable<RpmFile> rpms, String[] args);
+    Result validate(Iterable<RpmFile> rpms, List<String> args);
 }

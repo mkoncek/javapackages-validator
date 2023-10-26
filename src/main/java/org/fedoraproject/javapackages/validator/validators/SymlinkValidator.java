@@ -37,8 +37,8 @@ public class SymlinkValidator extends ElementwiseValidator {
     public void validate(RpmFile rpm) throws Exception {
         var envroot = Paths.get("/");
         var args = getArgs();
-        if (args != null && args.length == 2 && args[0].equals("-e")) {
-            envroot = Paths.get(args[1]);
+        if (args != null && args.size() == 2 && args.get(0).equals("-e")) {
+            envroot = Paths.get(args.get(1));
         }
 
         for (var entry : Common.rpmFilesAndSymlinks(rpm).entrySet()) {

@@ -16,7 +16,6 @@ import java.nio.file.attribute.FileTime;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -161,9 +160,9 @@ public class Main {
         }
     }
 
-    static int tryReadArgs(Map<String, Optional<String[]>> result, String[] args, int pos) {
+    static int tryReadArgs(Map<String, Optional<List<String>>> result, String[] args, int pos) {
         var origPos = pos;
-        var vArgs = Optional.<String[]>empty();
+        var vArgs = Optional.<List<String>>empty();
 
         if (pos + 1 < args.length && args[pos + 1].equals("[")) {
             pos += 2;
@@ -177,7 +176,11 @@ public class Main {
                 }
             }
 
-            vArgs = Optional.of(Arrays.copyOfRange(args, begin, pos));
+            var argsList = new ArrayList<String>(pos - begin);
+            for (int i = begin; i != pos; ++i) {
+                argsList.add(args[i]);
+            }
+            vArgs = Optional.of(argsList);
         }
 
         result.put(args[origPos], vArgs);
@@ -203,7 +206,7 @@ public class Main {
         Path classPath = null;
         List<String> argPaths = new ArrayList<>(0);
         List<URL> argUrls = new ArrayList<>(0);
-        Map<String, Optional<String[]>> validatorArgs = new LinkedHashMap<>();
+        Map<String, Optional<List<String>>> validatorArgs = new LinkedHashMap<>();
     }
 
     @SuppressFBWarnings({"DM_EXIT"})
