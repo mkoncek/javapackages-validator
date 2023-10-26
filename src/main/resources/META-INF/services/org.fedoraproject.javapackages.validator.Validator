@@ -1,6 +1,6 @@
-org.fedoraproject.javapackages.validator.validators.AttributeProvidesValidator
-org.fedoraproject.javapackages.validator.validators.BytecodeVersionValidator
-org.fedoraproject.javapackages.validator.validators.JavadocNoarchValidator
-org.fedoraproject.javapackages.validator.validators.JavaExclusiveArchValidator
-org.fedoraproject.javapackages.validator.validators.MavenMetadataValidator
-org.fedoraproject.javapackages.validator.validators.NVRJarMetadataValidator
+org.fedoraproject.javapackages.validator.validators.java.attributes.Provides
+org.fedoraproject.javapackages.validator.validators.java.Bytecode_version
+org.fedoraproject.javapackages.validator.validators.java.Javadoc_noarch
+org.fedoraproject.javapackages.validator.validators.java.Exclusive_arch
+org.fedoraproject.javapackages.validator.validators.java.Maven_metadata
+org.fedoraproject.javapackages.validator.validators.java.Nvr_jar_metadata

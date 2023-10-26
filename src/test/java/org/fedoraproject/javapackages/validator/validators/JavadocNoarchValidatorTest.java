@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.fedoraproject.javapackages.validator.TestCommon;
+import org.fedoraproject.javapackages.validator.validators.java.Javadoc_noarch;
 import org.junit.jupiter.api.Test;
 
 public class JavadocNoarchValidatorTest {
@@ -18,28 +19,28 @@ public class JavadocNoarchValidatorTest {
 
     @Test
     void testIllegalArchfulJavadoc() throws Exception {
-        var validator = new JavadocNoarchValidator();
+        var validator = new Javadoc_noarch();
         validator.validate(TestCommon.fromPaths(ARCH_ARCH_RPM));
         assertFailOne(validator);
     }
 
     @Test
     void testAllowedNoarchJavadocArchfulPackage() throws Exception {
-        var validator = new JavadocNoarchValidator();
+        var validator = new Javadoc_noarch();
         validator.validate(TestCommon.fromPaths(ARCH_NOARCH_RPM));
         assertPass(validator);
     }
 
     @Test
     void testAllowedNoarchJavadocNoarchPackage() throws Exception {
-        var validator = new JavadocNoarchValidator();
+        var validator = new Javadoc_noarch();
         validator.validate(TestCommon.fromPaths(NOARCH_NOARCH_RPM));
         assertPass(validator);
     }
 
     @Test
     void testIgnoreNonJavadoc() throws Exception {
-        var validator = new JavadocNoarchValidator();
+        var validator = new Javadoc_noarch();
         validator.validate(TestCommon.fromPaths(NON_JAVADOC_RPM));
         assertInfo(validator);
     }

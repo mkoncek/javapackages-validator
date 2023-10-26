@@ -23,13 +23,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Ignores source rpms.
  */
 @SuppressFBWarnings({"DMI_HARDCODED_ABSOLUTE_FILENAME"})
-public class SymlinkValidator extends ElementwiseValidator {
-    @Override
-    public String getTestName() {
-        return "/symlinks";
-    }
-
-    public SymlinkValidator() {
+public class Symlink extends ElementwiseValidator {
+    public Symlink() {
         super(RpmInfo::isBinaryPackage);
     }
 

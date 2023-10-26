@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator.validators;
+package org.fedoraproject.javapackages.validator.validators.java;
 
 import java.io.ByteArrayInputStream;
 import java.nio.file.Paths;
@@ -15,13 +15,9 @@ import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.DefaultValidator;
 import org.fedoraproject.javapackages.validator.RpmJarConsumer;
+import org.fedoraproject.javapackages.validator.validators.JarValidator;
 
-public class NVRJarMetadataValidator extends DefaultValidator {
-    @Override
-    public String getTestName() {
-        return "/java/nvr-jar-metadata";
-    }
-
+public class Nvr_jar_metadata extends DefaultValidator {
     private static interface Entry {
         String name();
         String valueOf(RpmFile rpm);
@@ -113,7 +109,7 @@ public class NVRJarMetadataValidator extends DefaultValidator {
 
     private Map<String, RpmEntry> rpms;
 
-    public NVRJarMetadataValidator() {
+    public Nvr_jar_metadata() {
         this.rpms = new TreeMap<>();
     }
 
