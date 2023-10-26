@@ -15,14 +15,14 @@ public class SymlinkValidatorTest {
 
     @Test
     void testDanglingSymlink() throws Exception {
-        var validator = new Symlink();
+        var validator = new SymlinkValidator();
         validator.validate(TestCommon.fromPaths(DANGLING_SYMLINK_RPM));
         assertFailOne(validator);
     }
 
     @Test
     void testValidSymlink() throws Exception {
-        var validator = new Symlink();
+        var validator = new SymlinkValidator();
         validator.validate(TestCommon.fromPaths(VALID_SYMLINK_RPM));
         assertPass(validator);
     }

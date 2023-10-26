@@ -1,14 +1,18 @@
-package org.fedoraproject.javapackages.validator.validators.java.attributes;
+package org.fedoraproject.javapackages.validator.validators;
 
 import org.fedoraproject.javadeptools.rpm.Reldep;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.TestResult;
-import org.fedoraproject.javapackages.validator.validators.ElementwiseValidator;
 
-public class Requires extends ElementwiseValidator {
-    public Requires() {
+public class AttributeRequiresValidator extends ElementwiseValidator {
+    @Override
+    public String getTestName() {
+        return "/java/attributes/requires";
+    }
+
+    public AttributeRequiresValidator() {
         super(RpmInfo::isBinaryPackage);
     }
 

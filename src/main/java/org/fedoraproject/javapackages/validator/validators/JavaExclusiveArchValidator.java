@@ -1,19 +1,23 @@
-package org.fedoraproject.javapackages.validator.validators.java;
+package org.fedoraproject.javapackages.validator.validators;
 
 import java.util.Collections;
 
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.validators.ElementwiseValidator;
 
-public class Exclusive_arch extends ElementwiseValidator {
+public class JavaExclusiveArchValidator extends ElementwiseValidator {
+    @Override
+    public String getTestName() {
+        return "/java/exclusive_arch";
+    }
+
     /**
      * The expanded value of `rpm -E '%{java_arches}'` as of 18. 8. 2022 on Fedora 37
      */
     private static final String JAVA_ARCHES = "aarch64 ppc64le s390x x86_64";
 
-    public Exclusive_arch() {
+    public JavaExclusiveArchValidator() {
         super(RpmInfo::isSourcePackage);
     }
 
