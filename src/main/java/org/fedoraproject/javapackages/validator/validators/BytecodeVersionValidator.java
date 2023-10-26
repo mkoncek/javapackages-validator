@@ -20,12 +20,11 @@ public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
         if (args == null) {
             throw new IllegalArgumentException("No arguments provided");
         }
-        if (args.length != 1) {
+        if (args.size() != 1) {
             throw new IllegalArgumentException("Wrong number of arguments, expected 1");
         }
 
-        var arg = args[0];
-
+        var arg = args.get(0);
         var pos = arg.indexOf(':');
 
         short min = Short.MIN_VALUE;

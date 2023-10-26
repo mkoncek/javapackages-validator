@@ -150,9 +150,9 @@ public class MainTmt extends Main {
                 Validator validator;
 
                 if (key.startsWith("/") && (validator = validatorTests.get(key)) != null) {
-                    String[] args;
+                    List<String> args;
                     try {
-                        args = ((List<?>) entry.getValue()).toArray(String[]::new);
+                        args = ((List<?>) entry.getValue()).stream().map(o -> String.class.cast(o)).toList();
                     } catch (ClassCastException ex) {
                         var result = notExecuted.computeIfAbsent(validator.getTestName(), k -> new DefaultResult());
                         result.error("{0}", Decorated.plain("Wrong format of validator arguments " +

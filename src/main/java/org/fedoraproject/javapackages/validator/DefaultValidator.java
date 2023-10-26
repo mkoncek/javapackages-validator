@@ -1,11 +1,13 @@
 package org.fedoraproject.javapackages.validator;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 public abstract class DefaultValidator extends DefaultResult implements Validator {
-    private String[] args = null;
+    private List<String> args = null;
 
     @Override
     public String getTestName() {
@@ -18,9 +20,10 @@ public abstract class DefaultValidator extends DefaultResult implements Validato
     }
 
     @Override
-    @SuppressFBWarnings({"EI_EXPOSE_REP2"})
-    public Result validate(Iterable<RpmFile> rpms, String[] args) {
-        this.args = args;
+    public Result validate(Iterable<RpmFile> rpms, List<String> args) {
+        if (args != null) {
+            this.args = new ArrayList<>(args);
+        }
         try {
             validate(rpms);
         } catch (Exception ex) {
@@ -31,8 +34,11 @@ public abstract class DefaultValidator extends DefaultResult implements Validato
         return this;
     }
 
-    protected String[] getArgs() {
-        return args;
+    protected List<String> getArgs() {
+        if (args != null) {
+            return Collections.unmodifiableList(args);
+        }
+        return null;
     }
 
     public abstract void validate(Iterable<RpmFile> rpms) throws Exception;
