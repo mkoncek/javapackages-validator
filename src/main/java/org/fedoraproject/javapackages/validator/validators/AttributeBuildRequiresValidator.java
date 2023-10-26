@@ -2,6 +2,7 @@ package org.fedoraproject.javapackages.validator.validators;
 
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
+import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
 
 public class AttributeBuildRequiresValidator extends ElementwiseValidator {
     @Override

@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator.validators;
+package org.fedoraproject.javapackages.validator.helpers;
 
 import java.util.function.Predicate;
 

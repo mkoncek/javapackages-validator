@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Decorated;
+import org.fedoraproject.javapackages.validator.helpers.BytecodeVersionJarValidator;
 
 public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
     @Override

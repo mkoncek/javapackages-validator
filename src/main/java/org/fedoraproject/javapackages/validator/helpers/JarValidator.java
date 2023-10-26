@@ -1,10 +1,9 @@
-package org.fedoraproject.javapackages.validator.validators;
+package org.fedoraproject.javapackages.validator.helpers;
 
 import java.util.function.Predicate;
 
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
-import org.fedoraproject.javapackages.validator.RpmJarConsumer;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 public abstract class JarValidator extends ElementwiseValidator implements RpmJarConsumer {

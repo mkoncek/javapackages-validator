@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import org.easymock.EasyMock;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.TestCommon;
+import org.fedoraproject.javapackages.validator.helpers.RpmFilesizeValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

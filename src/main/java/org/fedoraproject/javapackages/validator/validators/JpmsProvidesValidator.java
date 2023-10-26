@@ -16,6 +16,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
+import org.fedoraproject.javapackages.validator.helpers.JarValidator;
 
 public class JpmsProvidesValidator extends JarValidator {
     @Override

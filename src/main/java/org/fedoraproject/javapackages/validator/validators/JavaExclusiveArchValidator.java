@@ -5,6 +5,7 @@ import java.util.Collections;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
+import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
 
 public class JavaExclusiveArchValidator extends ElementwiseValidator {
     @Override
