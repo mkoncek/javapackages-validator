@@ -3,12 +3,7 @@ package org.fedoraproject.javapackages.validator.validators;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Decorated;
 
-public class NoBootstrapValidator extends ElementwiseValidator {
-    @Override
-    public String getTestName() {
-        return "/no-bootstrap";
-    }
-
+public class No_bootstrap extends ElementwiseValidator {
     @Override
     public void validate(RpmFile rpm) throws Exception {
         Decorated suffix = Decorated.actual("~bootstrap");

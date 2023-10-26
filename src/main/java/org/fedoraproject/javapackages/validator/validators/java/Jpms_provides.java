@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator.validators;
+package org.fedoraproject.javapackages.validator.validators.java;
 
 import java.io.ByteArrayInputStream;
 import java.lang.module.ModuleDescriptor;
@@ -16,13 +16,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
+import org.fedoraproject.javapackages.validator.validators.JarValidator;
 
-public class JpmsProvidesValidator extends JarValidator {
-    @Override
-    public String getTestName() {
-        return "/java/jpms-provides";
-    }
-
+public class Jpms_provides extends JarValidator {
     private Map<String, String> jarModuleNames = new TreeMap<>();
 
     private static Pattern VERSIONS_PATTERN = Pattern.compile("META-INF/versions/\\d+/module-info\\.class");

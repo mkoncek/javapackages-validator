@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.fedoraproject.javapackages.validator.TestCommon;
+import org.fedoraproject.javapackages.validator.validators.java.Exclusive_arch;
 import org.junit.jupiter.api.Test;
 
 public class JavaExclusiveArchValidatorTest {
@@ -17,28 +18,28 @@ public class JavaExclusiveArchValidatorTest {
 
     @Test
     public void testAllowedExclusiveArchArchful() throws Exception {
-        var validator = new JavaExclusiveArchValidator();
+        var validator = new Exclusive_arch();
         validator.validate(TestCommon.fromPaths(EA_ARCHFUL));
         assertPass(validator);
     }
 
     @Test
     public void testAllowedExclusiveArchNoarch() throws Exception {
-        var validator = new JavaExclusiveArchValidator();
+        var validator = new Exclusive_arch();
         validator.validate(TestCommon.fromPaths(EA_NOARCH));
         assertPass(validator);
     }
 
     @Test
     public void testExclusiveArchMissingNoarch() throws Exception {
-        var validator = new JavaExclusiveArchValidator();
+        var validator = new Exclusive_arch();
         validator.validate(TestCommon.fromPaths(EA_ARCHFUL_MISSING));
         assertFailOne(validator);
     }
 
     @Test
     public void testIllegalExclusiveArchAdditionalNoarch() throws Exception {
-        var validator = new JavaExclusiveArchValidator();
+        var validator = new Exclusive_arch();
         validator.validate(TestCommon.fromPaths(EA_ARCHFUL_NOARCH));
         assertFailOne(validator);
     }
