@@ -1,13 +1,17 @@
-package org.fedoraproject.javapackages.validator.validators.java;
+package org.fedoraproject.javapackages.validator.validators;
 
 import java.nio.file.Path;
 import java.util.Map;
 
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.validators.BytecodeVersionJarValidator;
 
-public class Bytecode_version extends BytecodeVersionJarValidator {
+public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
+    @Override
+    public String getTestName() {
+        return "/java/bytecode-version";
+    }
+
     private static record Limits(short min, short max) {
     }
 
