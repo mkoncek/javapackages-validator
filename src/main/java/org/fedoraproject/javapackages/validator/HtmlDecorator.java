@@ -5,7 +5,7 @@ import java.util.Objects;
 
 import org.apache.commons.text.StringEscapeUtils;
 
-public class HtmlDecorator implements TextDecorator {
+class HtmlDecorator implements TextDecorator {
     public static final HtmlDecorator INSTANCE = new HtmlDecorator();
 
     private HtmlDecorator() {

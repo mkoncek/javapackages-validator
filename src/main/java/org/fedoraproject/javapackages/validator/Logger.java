@@ -4,7 +4,7 @@ import java.io.PrintStream;
 import java.text.MessageFormat;
 import java.util.EnumMap;
 
-public class Logger {
+class Logger {
     private EnumMap<LogEvent, PrintStream> streams = new EnumMap<>(LogEvent.class);
 
     public Logger() {

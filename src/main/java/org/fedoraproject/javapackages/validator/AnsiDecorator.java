@@ -3,7 +3,7 @@ package org.fedoraproject.javapackages.validator;
 import java.util.EnumMap;
 import java.util.Objects;
 
-public class AnsiDecorator implements TextDecorator {
+class AnsiDecorator implements TextDecorator {
     public static final AnsiDecorator INSTANCE = new AnsiDecorator();
 
     private AnsiDecorator() {
