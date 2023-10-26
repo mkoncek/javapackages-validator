@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator.validators;
+package org.fedoraproject.javapackages.validator.helpers;
 
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;

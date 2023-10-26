@@ -14,7 +14,8 @@ import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.DefaultValidator;
-import org.fedoraproject.javapackages.validator.RpmJarConsumer;
+import org.fedoraproject.javapackages.validator.helpers.JarValidator;
+import org.fedoraproject.javapackages.validator.helpers.RpmJarConsumer;
 
 public class NVRJarMetadataValidator extends DefaultValidator {
     @Override

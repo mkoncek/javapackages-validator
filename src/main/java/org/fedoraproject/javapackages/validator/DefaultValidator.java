@@ -10,16 +10,6 @@ public abstract class DefaultValidator extends DefaultResult implements Validato
     private List<String> args = null;
 
     @Override
-    public String getTestName() {
-        var fqn = getClass().getCanonicalName();
-        var prefix = "org.fedoraproject.javapackages.validator.validators.";
-        if (fqn != null && fqn.startsWith(prefix)) {
-            return "/" + fqn.substring(prefix.length()).replace('.', '/');
-        }
-        return null;
-    }
-
-    @Override
     public Result validate(Iterable<RpmFile> rpms, List<String> args) {
         if (args != null) {
             this.args = new ArrayList<>(args);

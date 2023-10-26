@@ -1,10 +1,11 @@
-package org.fedoraproject.javapackages.validator;
+package org.fedoraproject.javapackages.validator.helpers;
 
 import java.util.function.Consumer;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
+import org.fedoraproject.javapackages.validator.Common;
 
 public interface RpmJarConsumer extends Consumer<RpmFile> {
     @Override

@@ -10,6 +10,7 @@ import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
+import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

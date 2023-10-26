@@ -5,6 +5,7 @@ import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.TestResult;
+import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
 
 public class AttributeProvidesValidator extends ElementwiseValidator {
     @Override
