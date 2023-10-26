@@ -13,7 +13,7 @@ import java.util.Iterator;
 
 import org.fedoraproject.javadeptools.rpm.RpmFile;
 
-public class ArgFileIterator implements Iterator<RpmFile> {
+class ArgFileIterator implements Iterator<RpmFile> {
     private Iterator<String> argIterator;
     private Iterator<Path> pathIterator = null;
 
