@@ -1,5 +1,7 @@
 package org.fedoraproject.javapackages.validator;
 
+import java.util.List;
+
 public interface ValidatorFactory {
-	Validator getValidatorFor(String testName);
+	List<Validator> getValidators();
 }
