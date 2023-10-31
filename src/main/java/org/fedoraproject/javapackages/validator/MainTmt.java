@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.IterableUtils;
@@ -27,7 +26,6 @@ import org.yaml.snakeyaml.Yaml;
 public class MainTmt extends Main {
     private Path TMT_TEST_DATA = null;
     private Path TMT_TREE = null;
-    private Map<String, DefaultResult> notExecuted = new TreeMap<>();
     private Map<String, List<LogEntry>> additionalLogs = new TreeMap<>();
 
     private static String getenv(String key) {
@@ -82,43 +80,8 @@ public class MainTmt extends Main {
     }
 
     @Override
-    List<Validator> select(List<Validator> validators) throws Exception {
-        var validatorTests = new TreeMap<String, Validator>();
-        validators = new ArrayList<>(validators);
-        validators.sort((lhs, rhs) -> lhs.getTestName().compareTo(rhs.getTestName()));
-        validators = super.select(validators);
-
-        for (var validator : validators) {
-            var testName = validator.getTestName();
-
-            logger.debug("Test {0} is implemented by {1}",
-                    Decorated.actual(testName),
-                    Decorated.struct(validator.getClass().getCanonicalName()));
-
-            {
-                Function<Validator, LogEntry> duplicate = v -> {
-                    return LogEntry.error("Test is implemented by multiple validators: {0}",
-                            Decorated.struct(v.getClass().getCanonicalName()));
-                };
-
-                var present = notExecuted.get(testName);
-                if (present != null) {
-                    present.addLog(duplicate.apply(validator));
-                } else {
-                    var previousValidator = validatorTests.put(testName, validator);
-                    var result = new DefaultResult();
-                    result.error();
-                    result.addLog(duplicate.apply(previousValidator));
-                    result.addLog(duplicate.apply(validatorTests.remove(testName)));
-                    notExecuted.put(testName, result);
-                }
-            }
-        }
-
-        for (var result : notExecuted.keySet()) {
-            logger.debug("Test {0} is implemented by multiple validators",
-                    Decorated.actual(result));
-        }
+    Map<String, Validator> select(Map<String, Validator> validators) throws Exception {
+        var validatorTests = super.select(validators);
 
         var optConfigFile = Optional.<Path>of(TMT_TREE.resolve("plans").resolve("javapackages-validator.yaml"));
         if (!Files.isRegularFile(optConfigFile.get())) {
@@ -154,7 +117,7 @@ public class MainTmt extends Main {
                     try {
                         args = ((List<?>) entry.getValue()).stream().map(o -> String.class.cast(o)).toList();
                     } catch (ClassCastException ex) {
-                        var result = notExecuted.computeIfAbsent(validator.getTestName(), k -> new DefaultResult());
+                        var result = this.reports.computeIfAbsent(validator.getTestName(), k -> new DefaultResult());
                         result.error("{0}", Decorated.plain("Wrong format of validator arguments " +
                                 "in configuration Yaml file, must be a list of strings"));
                         continue;
@@ -173,14 +136,14 @@ public class MainTmt extends Main {
             if (exclude != null) {
                 exclusions = exclude.stream().map(pattern -> Pattern.compile(String.class.cast(pattern))).toList();
                 logger.debug("Found exclusion patterns: {0}", Decorated.list(exclusions));
-                for (var validator : validators) {
+                for (var entry : validators.entrySet()) {
                     for (var exclusionPattern : exclusions) {
-                        if (exclusionPattern.matcher(validator.getTestName()).matches()) {
+                        if (exclusionPattern.matcher(entry.getKey()).matches()) {
                             var message = LogEntry.info("Exclusion pattern {0} matches test {1}",
                                     Decorated.actual(exclusionPattern),
-                                    Decorated.struct(validator.getTestName()));
+                                    Decorated.struct(entry.getKey()));
                             logger.debug(message.pattern(), message.objects());
-                            var result = notExecuted.computeIfAbsent(validator.getTestName(), k -> new DefaultResult());
+                            var result = this.reports.computeIfAbsent(entry.getKey(), k -> new DefaultResult());
                             result.info(message.pattern(), message.objects());
                             break;
                         }
@@ -189,7 +152,9 @@ public class MainTmt extends Main {
             }
         }
 
-        validators.removeIf(validator -> notExecuted.containsKey(validator.getTestName()));
+        for (var exclusion : this.reports.keySet()) {
+            validators.remove(exclusion);
+        }
 
         return validators;
     }
@@ -212,7 +177,7 @@ public class MainTmt extends Main {
 
         Files.createDirectories(TMT_TEST_DATA.resolve("results"));
 
-        var testResults = IterableUtils.chainedIterable(results, notExecuted.entrySet().stream().map(e -> new NamedResult(e.getValue(), e.getKey())).toList());
+        var testResults = IterableUtils.chainedIterable(results, this.reports.entrySet().stream().map(e -> new NamedResult(e.getValue(), e.getKey())).toList());
 
         for (var namedResult : testResults) {
             var resultFile = "results/";

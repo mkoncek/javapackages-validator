@@ -16,6 +16,7 @@ import java.nio.file.attribute.FileTime;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,12 +24,17 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.tools.ToolProvider;
 
+import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.compress.utils.Iterators;
 import org.apache.commons.io.FileUtils;
 import org.fedoraproject.javadeptools.rpm.RpmFile;
@@ -42,6 +48,7 @@ public class Main {
 
     protected Parameters parameters;
     protected Logger logger;
+    protected Map<String, DefaultResult> reports = new TreeMap<>();
 
     public static TextDecorator getDecorator() {
         return DECORATOR;
@@ -54,6 +61,7 @@ public class Main {
 
     static record Flag(String... options) {
         static final Flag SOURCE_PATH = new Flag("-sp", "--source-path");
+        static final Flag OUTPUT_DIRECTORY = new Flag("-d");
         static final Flag CLASS_PATH = new Flag("-cp", "--class-path");
 
         static final Flag FILE = new Flag("-f", "--file");
@@ -73,20 +81,21 @@ public class Main {
         }
 
         static final Flag[] ALL_FLAGS = new Flag[] {
-            SOURCE_PATH, CLASS_PATH, FILE, URL, HELP, COLOR, DEBUG,
+            SOURCE_PATH, OUTPUT_DIRECTORY, FILE, URL, HELP, COLOR, DEBUG,
         };
     }
 
     static void printHelp() {
-        System.out.println("Usage: Main [optional flags] <validator class name> [validator flags] <-f|-u RPM files or directories to test>...");
+        System.out.println("Usage: Main [optional flags] <validator factory name | test name>... [test arguments] <-f | -u RPM files or directories to test>...");
         System.out.println("    " + Flag.HELP + " - Print help message");
         System.out.println();
         System.out.println("Options for specifying validators:");
         System.out.println("    " + Flag.SOURCE_PATH + " - File path of a source file");
+        System.out.println("    " + Flag.OUTPUT_DIRECTORY + " - Output directory for the sources");
         System.out.println("    " + Flag.CLASS_PATH + " - Additional class path entry");
         System.out.println();
-        System.out.println("Validator arguments can be immediately followed by space-separated square parentheses");
-        System.out.println("the contents of which will be passed as arguments to the validator.");
+        System.out.println("Test names can be immediately followed by space-separated square parentheses");
+        System.out.println("the contents of which will be passed as arguments to the test.");
         System.out.println();
         System.out.println("Options for specifying tested RPM files, can be specified multiple times:");
         System.out.println("    " + Flag.FILE + " - File path of an .rpm file");
@@ -111,33 +120,40 @@ public class Main {
     	}
     }
 
-    public static void compileFiles(Path sourcePath, Path classPath, Iterable<String> compilerOptions, Logger logger) throws IOException {
+    public static void compileFiles(Path sourcePath, Path outputDirectory, List<Path> classPaths,
+            Iterable<String> compilerOptions, Logger logger) throws IOException {
         var sourceMtime = getRecursiveFileTime(sourcePath, (p, a) -> true).get();
-
-        if (Files.isSymbolicLink(classPath)) {
-            classPath = Files.readSymbolicLink(classPath);
-        } else {
-            Files.createDirectories(classPath);
+        for (var classPath : classPaths) {
+            var classMtime = getRecursiveFileTime(classPath, (p, a) -> true).get();
+            if (sourceMtime.compareTo(classMtime) < 0) {
+                sourceMtime = classMtime;
+            }
         }
 
-        var classMtime = getRecursiveFileTime(classPath, (p, a) -> !a.isDirectory());
-        var classDMtime = getRecursiveFileTime(classPath, (p, a) -> a.isDirectory()).get();
+        if (Files.isSymbolicLink(outputDirectory)) {
+            outputDirectory = Files.readSymbolicLink(outputDirectory);
+        } else {
+            Files.createDirectories(outputDirectory);
+        }
+
+        var targetMtime = getRecursiveFileTime(outputDirectory, (p, a) -> !a.isDirectory());
+        var targetDMtime = getRecursiveFileTime(outputDirectory, (p, a) -> a.isDirectory()).get();
 
         boolean recompile = false;
 
-        if (classMtime.isEmpty()) {
+        if (targetMtime.isEmpty()) {
             recompile = true;
-            logger.debug("No class files are present on the specified class path");
-        } else if (sourceMtime.compareTo(classMtime.get()) > 0) {
+            logger.debug("No class files are present on the specified output directory");
+        } else if (sourceMtime.compareTo(targetMtime.get()) > 0) {
             recompile = true;
-            logger.debug("Source path is more up-to-date than the specified class path");
-        } else if (classDMtime.compareTo(classMtime.get()) > 0) {
+            logger.debug("Source path is more up-to-date than the specified output directory");
+        } else if (targetDMtime.compareTo(targetMtime.get()) > 0) {
             recompile = true;
-            logger.debug("Class path has possibly been modified");
+            logger.debug("Output directory has possibly been modified");
         }
 
         if (recompile) {
-            FileUtils.cleanDirectory(classPath.toFile());
+            FileUtils.cleanDirectory(outputDirectory.toFile());
             var javac = ToolProvider.getSystemJavaCompiler();
             var fileManager = javac.getStandardFileManager(null, Locale.ROOT, StandardCharsets.UTF_8);
 
@@ -147,6 +163,11 @@ public class Main {
             var compilationUnits = fileManager.getJavaFileObjectsFromPaths(sourceFiles);
 
             logger.debug("Compiling source files: {0}", Decorated.list(sourceFiles));
+
+            if (!classPaths.isEmpty()) {
+                compilerOptions = IterableUtils.chainedIterable(compilerOptions, List.of("-cp",
+                        classPaths.stream().map(Path::toString).collect(Collectors.joining(":"))));
+            }
 
             try {
                 if (!javac.getTask(null, fileManager, null, compilerOptions, null, compilationUnits).call()) {
@@ -203,9 +224,11 @@ public class Main {
 
     protected static class Parameters {
         Path sourcePath = null;
-        Path classPath = null;
+        Path outputDir = null;
+        List<Path> classPaths = new ArrayList<>(0);
         List<String> argPaths = new ArrayList<>(0);
         List<URL> argUrls = new ArrayList<>(0);
+        Set<String> factories = new TreeSet<String>();
         Map<String, Optional<List<String>>> validatorArgs = new LinkedHashMap<>();
     }
 
@@ -243,7 +266,11 @@ public class Main {
             }
 
             if (lastFlag == null) {
-                i = tryReadArgs(parameters.validatorArgs, args, i);
+                if (args[i].startsWith("/")) {
+                    i = tryReadArgs(parameters.validatorArgs, args, i);
+                } else {
+                    parameters.factories.add(args[i]);
+                }
             } else if (lastFlag == Flag.COLOR) {
                 DECORATOR = AnsiDecorator.INSTANCE;
                 --i;
@@ -252,8 +279,10 @@ public class Main {
                 --i;
             } else if (lastFlag == Flag.SOURCE_PATH) {
                 parameters.sourcePath = resolveRelativePathCommon(args[i]);
+            } else if (lastFlag == Flag.OUTPUT_DIRECTORY) {
+                parameters.outputDir = resolveRelativePathCommon(args[i]);
             } else if (lastFlag == Flag.CLASS_PATH) {
-                parameters.classPath = resolveRelativePathCommon(args[i]);
+                parameters.classPaths.add(resolveRelativePathCommon(args[i]));
             } else if (lastFlag == Flag.FILE) {
                 parameters.argPaths.add(args[i]);
             } else if (lastFlag == Flag.URL) {
@@ -264,21 +293,31 @@ public class Main {
         logger = new Logger();
 
         logger.debug("Source path: {0}", Decorated.plain(parameters.sourcePath));
-        logger.debug("Class path: {0}", Decorated.plain(parameters.classPath));
+        logger.debug("Output directory: {0}", Decorated.plain(parameters.outputDir));
+        logger.debug("Class path: {0}", Decorated.list(parameters.classPaths));
         logger.debug("Path arguments: {0}", Decorated.list(parameters.argPaths));
         logger.debug("URL arguments: {0}", Decorated.list(parameters.argUrls));
     }
 
-    private List<Validator> discover() throws Exception {
-        if (parameters.sourcePath != null && parameters.classPath == null) {
+    private Map<String, Validator> discover() throws Exception {
+        if (parameters.sourcePath != null && parameters.outputDir == null) {
             throw new RuntimeException("If source path is specified then class path needs to be specified too");
         }
 
-        if (parameters.classPath != null) {
-            compileFiles(parameters.sourcePath, parameters.classPath, List.of("--enable-preview", "--release", "21", "-d", parameters.classPath.toString()), logger);
-            var serviceOutFile = Files.createDirectories(parameters.classPath.resolve("META-INF").resolve("services")).resolve(Validator.class.getCanonicalName());
+        if (parameters.outputDir != null) {
+            var compilerArgs = new ArrayList<String>();
+            compilerArgs.add("--enable-preview");
+            compilerArgs.add("--release");
+            compilerArgs.add("21");
+            compilerArgs.add("-d");
+            compilerArgs.add(parameters.outputDir.toString());
+
+            compileFiles(parameters.sourcePath, parameters.outputDir, parameters.classPaths, compilerArgs, logger);
+            var serviceOutFile = Files.createDirectories(parameters.outputDir
+                    .resolve("META-INF").resolve("services")).resolve(ValidatorFactory.class.getCanonicalName());
             try (var os = Files.newOutputStream(serviceOutFile)) {
-                for (var serviceFile : Files.find(parameters.sourcePath, Integer.MAX_VALUE, (p, a) -> !a.isDirectory() && p.getFileName().equals(Paths.get(Validator.class.getCanonicalName()))).toList()) {
+                for (var serviceFile : Files.find(parameters.sourcePath, Integer.MAX_VALUE,
+                        (p, a) -> !a.isDirectory() && p.getFileName().equals(Paths.get(ValidatorFactory.class.getCanonicalName()))).toList()) {
                     try (var is = Files.newInputStream(serviceFile)) {
                         is.transferTo(os);
                     }
@@ -286,17 +325,70 @@ public class Main {
             }
         }
 
-        var classLoader = new URLClassLoader(parameters.classPath == null ? new URL[] {} : new URL[] {parameters.classPath.toUri().toURL()});
-        var validators = ServiceLoader.<Validator>load(Validator.class, classLoader).stream().map(ServiceLoader.Provider::get).toList();
+        var classPaths = new ArrayList<URL>();
+        if (parameters.outputDir != null) {
+            classPaths.add(parameters.outputDir.toUri().toURL());
+        }
+        for (var classPath : parameters.classPaths) {
+            classPaths.add(classPath.toUri().toURL());
+        }
+        var classLoader = new URLClassLoader(classPaths.toArray(URL[]::new));
+        var validators = new ArrayList<Validator>();
 
-        logger.debug("Available validator services:{0}", Decorated.plain(validators.stream().map(v ->
-            System.lineSeparator() + Decorated.struct(v.getClass().getCanonicalName())
+        logger.debug("Factory arguments: {0}", Decorated.list(parameters.factories.stream().toList()));
+
+        ServiceLoader.<ValidatorFactory>load(ValidatorFactory.class, classLoader).stream().forEach(provider -> {
+            var factory = provider.get();
+            if (parameters.factories.isEmpty() || parameters.factories.contains(factory.getClass().getName())) {
+                validators.addAll(factory.getValidators());
+            } else {
+                logger.debug("Ignoring factory {0} as it is not listed as an argument", Decorated.struct(factory.getClass().getName()));
+            }
+        });
+        var validatorTests = new TreeMap<String, Validator>();
+
+        for (var validator : validators) {
+            var testName = validator.getTestName();
+
+            logger.debug("Test {0} is implemented by {1}",
+                    Decorated.actual(testName),
+                    Decorated.struct(validator.getClass().getName()));
+
+            {
+                Function<Validator, LogEntry> duplicate = v -> {
+                    return LogEntry.error("Test is implemented by multiple validators: {0}",
+                            Decorated.struct(v.getClass().getName()));
+                };
+
+                var present = reports.get(testName);
+                if (present != null) {
+                    present.addLog(duplicate.apply(validator));
+                } else {
+                    var previousValidator = validatorTests.put(testName, validator);
+                    if (previousValidator != null) {
+                        var result = new DefaultResult();
+                        result.error();
+                        result.addLog(duplicate.apply(previousValidator));
+                        result.addLog(duplicate.apply(validatorTests.remove(testName)));
+                        reports.put(testName, result);
+                    }
+                }
+            }
+        }
+
+        for (var testName : reports.keySet()) {
+            logger.debug("Test {0} is implemented by multiple validators",
+                    Decorated.actual(testName));
+        }
+
+        logger.debug("Available tests:{0}", Decorated.plain(validators.stream().map(v ->
+            System.lineSeparator() + Decorated.struct(v.getTestName())
         ).collect(Collectors.joining())));
 
-        return validators;
+        return validatorTests;
     }
 
-    List<Validator> select(List<Validator> validators) throws Exception {
+    Map<String, Validator> select(Map<String, Validator> validators) throws Exception {
         logger.debug("Main arguments: {0}", Decorated.plain(parameters.validatorArgs.entrySet().stream().map(e -> {
             var result = new StringBuilder();
             result.append(System.lineSeparator());
@@ -311,30 +403,30 @@ public class Main {
         }).collect(Collectors.joining())));
 
         if (!parameters.validatorArgs.isEmpty()) {
-            validators = new ArrayList<Validator>();
-            for (var validator : validators) {
-                if (parameters.validatorArgs.containsKey(validator.getClass().getCanonicalName())) {
-                    validators.add(validator);
+            var it = validators.keySet().iterator();
+            while (it.hasNext()) {
+                if (!parameters.validatorArgs.containsKey(it.next())) {
+                    it.remove();
                 }
             }
         }
 
         var notFoundValidators = new ArrayList<String>(0);
-        for (var validator : parameters.validatorArgs.keySet()) {
-            if (validators.stream().filter(v -> validator.equals(v.getClass().getCanonicalName())).findFirst().isEmpty()) {
-                notFoundValidators.add(validator);
+        for (var testNameArg : parameters.validatorArgs.keySet()) {
+            if (validators.keySet().stream().filter(testName -> testNameArg.equals(testName)).findFirst().isEmpty()) {
+                notFoundValidators.add(testNameArg);
             }
         }
 
         if (!notFoundValidators.isEmpty()) {
-            throw new RuntimeException("The following arguments were not listed as available Validator services: " + notFoundValidators);
+            throw new RuntimeException("The following arguments were not found as available tests: " + notFoundValidators);
         }
 
         return validators;
     }
 
     @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
-    List<NamedResult> execute(List<Validator> validators) throws Exception {
+    List<NamedResult> execute(Collection<Validator> validators) throws Exception {
         var rpms = new ArrayList<RpmFile>();
         parameters.argUrls.parallelStream().forEach(url -> {
             RpmFile rpm;
@@ -351,7 +443,7 @@ public class Main {
         return validators.parallelStream().map(validator -> {
             try {
                 var startTime = LocalDateTime.now();
-                var result = validator.validate(rpms, parameters.validatorArgs.get(validator.getClass().getCanonicalName()).orElse(null));
+                var result = validator.validate(rpms, parameters.validatorArgs.getOrDefault(validator.getTestName(), Optional.empty()).orElse(null));
                 var endTime = LocalDateTime.now();
                 return new NamedResult(result, validator.getTestName(), startTime, endTime);
             } catch (Exception ex) {
@@ -410,13 +502,13 @@ public class Main {
         int exitCode = 0;
         if (failMessages == 0 && errorMessages == 0) {
             if (passMessages > 0) {
-                System.err.println(MessageFormat.format("Summary: all checks {0}", Decorated.custom("passed", Decoration.green, Decoration.bold)));
+                System.err.println(MessageFormat.format("Summary: all tests {0}", Decorated.custom("passed", Decoration.green, Decoration.bold)));
             } else {
                 System.err.println("Summary: no output available");
             }
         } else if (errorMessages == 0) {
             System.err.println(MessageFormat.format("Summary: {0} {1}", Decorated.plain(failMessages), Decorated.custom(
-                    "failed check" + (failMessages == 1 ? "" : "s"), Decoration.red, Decoration.bold)));
+                    "failed tests" + (failMessages == 1 ? "" : "s"), Decoration.red, Decoration.bold)));
             exitCode = 1;
         } else if (failMessages == 0) {
             System.err.println(MessageFormat.format("Summary: {0} {1} occured", Decorated.plain(errorMessages), Decorated.custom(
@@ -431,11 +523,11 @@ public class Main {
         parseArguments(args);
         var validators = select(discover());
 
-        logger.debug("Selected validators:{0}", Decorated.plain(validators.stream().map(v ->
-            System.lineSeparator() + Decorated.struct(v.getClass().getCanonicalName())
+        logger.debug("Selected validators:{0}", Decorated.plain(validators.keySet().stream().map(
+                testName -> System.lineSeparator() + Decorated.struct(testName)
         ).collect(Collectors.joining())));
 
-        report(execute(validators));
+        report(execute(validators.values()));
     }
 
     public static void main(String[] args) throws Exception {

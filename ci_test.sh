@@ -48,7 +48,7 @@ execute() {
            run --id "${run_id}" \
                -e TEST_ARTIFACTS="${test_artifacts_dir}/rpms/${component}/rpms" \
                -e JP_VALIDATOR_IMAGE="${jp_validator_image}" \
-               -e JP_VALIDATOR_CLASSPATH="/tmp/jpv-classes" \
+               -e JP_VALIDATOR_OUTPUT_DIR="/tmp/jpv-classes" \
            provision --how local \
            execute --how tmt --no-progress-bar
         then
