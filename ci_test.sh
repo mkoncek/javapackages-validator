@@ -44,7 +44,7 @@ execute() {
         fi
 
         # Execute tests
-        if tmt -q \
+        if tmt -vvv \
            run --id "${run_id}" \
                -e TEST_ARTIFACTS="${test_artifacts_dir}/rpms/${component}/rpms" \
                -e JP_VALIDATOR_IMAGE="${jp_validator_image}" \
