@@ -19,7 +19,7 @@ public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
     public Limits readLimits() {
         var args = getArgs();
         if (args == null) {
-            throw new IllegalArgumentException("No arguments provided");
+            return null;
         }
         if (args.size() != 1) {
             throw new IllegalArgumentException("Wrong number of arguments, expected 1");
@@ -52,13 +52,18 @@ public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
     }
 
     @Override
-    public void validate(RpmFile rpm, Path jarPath, Map<Path, Short> classVersions) {
+    public void validate(RpmFile rpm, Path jarPath, Map<Path, Version> classVersions) {
         var limits = readLimits();
+        if (limits == null) {
+            super.validate(rpm, jarPath, classVersions);
+            return;
+        }
+
         debug("Limits: {0}:{1}", Decorated.plain(limits.min()), Decorated.plain(limits.max()));
         for (var entry : classVersions.entrySet()) {
             boolean failed = false;
 
-            if (entry.getValue() < limits.min()) {
+            if (entry.getValue().major() < limits.min()) {
                 failed = true;
                 fail("{0}: {1}: {2}: bytecode version: {3} is smaller than {4}",
                         Decorated.rpm(rpm),
@@ -68,7 +73,7 @@ public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
                         Decorated.expected(limits.min()));
             }
 
-            if (limits.max() < entry.getValue()) {
+            if (limits.max() < entry.getValue().major()) {
                 failed = true;
                 fail("{0}: {1}: {2}: bytecode version: {3} is larger than {4}",
                         Decorated.rpm(rpm),

@@ -16,18 +16,24 @@ import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.TestResult;
 
 public abstract class BytecodeVersionJarValidator extends JarValidator {
+    public static record Version(short major, short minor) {
+        @Override
+        public String toString() {
+            return String.valueOf(major) + "." + String.valueOf(minor);
+        }
+    }
+
     @Override
     public void acceptJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
         var jarPath = Paths.get(rpmEntry.getName().substring(1));
-        var classVersions = new TreeMap<Path, Short>();
+        var classVersions = new TreeMap<Path, Version>();
 
         try (var jarStream = new JarArchiveInputStream(new ByteArrayInputStream(content))) {
             for (JarArchiveEntry jarEntry; ((jarEntry = jarStream.getNextJarEntry()) != null);) {
                 var classPath = Paths.get(jarEntry.getName());
 
                 if (classPath.toString().endsWith(".class")) {
-                    // Read 6-th and 7-th bytes which indicate the .class bytecode version
-                    if (jarStream.skip(6) != 6) {
+                    if (jarStream.skip(4) != 4) {
                         throw Common.INCOMPLETE_READ;
                     }
 
@@ -39,9 +45,15 @@ public abstract class BytecodeVersionJarValidator extends JarValidator {
                         throw Common.INCOMPLETE_READ;
                     }
 
-                    var version = versionBuffer.getShort();
+                    var minorVersion = versionBuffer.getShort();
+                    versionBuffer.clear();
+                    if (jarStream.read(versionBuffer.array()) != versionBuffer.capacity()) {
+                        throw Common.INCOMPLETE_READ;
+                    }
 
-                    classVersions.put(classPath, Short.valueOf(version));
+                    var majorVersion = versionBuffer.getShort();
+
+                    classVersions.put(classPath, new Version(majorVersion, minorVersion));
                 }
             }
         }
@@ -52,11 +64,11 @@ public abstract class BytecodeVersionJarValidator extends JarValidator {
             pass("{0}: {1}: found bytecode versions: {2}",
                     Decorated.rpm(rpm),
                     Decorated.custom(jarPath, DECORATION_JAR),
-                    Decorated.list(classVersions.values().stream().sorted().distinct().toList()));
+                    Decorated.list(classVersions.values().stream().distinct().toList()));
         }
     }
 
-    public void validate(RpmFile rpm, Path jarPath, Map<Path, Short> classVersions) {
+    public void validate(RpmFile rpm, Path jarPath, Map<Path, Version> classVersions) {
         for (var entry : classVersions.entrySet()) {
             info("{0}: {1}: {2}: bytecode version: {3}",
                     Decorated.rpm(rpm),
