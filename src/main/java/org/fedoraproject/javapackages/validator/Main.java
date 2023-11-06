@@ -290,6 +290,16 @@ public class Main {
             }
         }
 
+        var validatorPath = Paths.get(MainTmt.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        parameters.classPaths.add(validatorPath);
+        var parent = validatorPath.getParent();
+        if (parent != null) {
+            Files.find(parent.resolve("dependency"), 1, (path, attributes) -> {
+                var filename = path.getFileName().toString();
+                return attributes.isRegularFile() && filename.startsWith("java-deptools-native") && filename.endsWith(".jar");
+            }).forEach(parameters.classPaths::add);
+        }
+
         logger = new Logger();
 
         logger.debug("Source path: {0}", Decorated.plain(parameters.sourcePath));
@@ -301,7 +311,7 @@ public class Main {
 
     private Map<String, Validator> discover() throws Exception {
         if (parameters.sourcePath != null && parameters.outputDir == null) {
-            throw new RuntimeException("If source path is specified then class path needs to be specified too");
+            throw new RuntimeException("If source path is specified then the output directory needs to be specified too");
         }
 
         if (parameters.outputDir != null) {
