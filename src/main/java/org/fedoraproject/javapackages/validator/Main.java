@@ -81,7 +81,7 @@ public class Main {
         }
 
         static final Flag[] ALL_FLAGS = new Flag[] {
-            SOURCE_PATH, OUTPUT_DIRECTORY, FILE, URL, HELP, COLOR, DEBUG,
+            SOURCE_PATH, OUTPUT_DIRECTORY, CLASS_PATH, FILE, URL, HELP, COLOR, DEBUG,
         };
     }
 
