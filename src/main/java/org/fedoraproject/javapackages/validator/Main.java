@@ -456,8 +456,10 @@ public class Main {
             }
         });
         Iterators.addAll(rpms, new ArgFileIterator(parameters.argPaths));
+        var oldClassLoader = Thread.currentThread().getContextClassLoader();
         return validators.parallelStream().map(validator -> {
             try {
+                Thread.currentThread().setContextClassLoader(validator.getClass().getClassLoader());
                 var startTime = LocalDateTime.now();
                 var result = validator.validate(rpms, parameters.validatorArgs
                         .getOrDefault(validator.getTestName(), Optional.empty()).orElse(null));
@@ -468,6 +470,8 @@ public class Main {
                 var logEntry = Common.logException(ex);
                 result.error(logEntry.pattern(), logEntry.objects());
                 return new NamedResult(result, validator.getTestName());
+            } finally {
+                Thread.currentThread().setContextClassLoader(oldClassLoader);
             }
         }).toList();
     }
