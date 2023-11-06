@@ -347,7 +347,9 @@ public class Main {
         logger.debug("Factory arguments: {0}", Decorated.list(parameters.factories.stream().toList()));
 
         var oldClassLoader = Thread.currentThread().getContextClassLoader();
-        try (var classLoader = new URLClassLoader(classPaths.toArray(URL[]::new))) {
+        try {
+            // Do not close the cloassloaders, they are used later
+            var classLoader = new URLClassLoader(classPaths.toArray(URL[]::new));
             Thread.currentThread().setContextClassLoader(classLoader);
             ServiceLoader.<ValidatorFactory>load(ValidatorFactory.class, classLoader).stream().forEach(provider -> {
                 var factory = provider.get();
@@ -457,7 +459,7 @@ public class Main {
         });
         Iterators.addAll(rpms, new ArgFileIterator(parameters.argPaths));
         var oldClassLoader = Thread.currentThread().getContextClassLoader();
-        return validators.parallelStream().map(validator -> {
+        var resultList = validators.parallelStream().map(validator -> {
             try {
                 Thread.currentThread().setContextClassLoader(validator.getClass().getClassLoader());
                 var startTime = LocalDateTime.now();
@@ -474,6 +476,14 @@ public class Main {
                 Thread.currentThread().setContextClassLoader(oldClassLoader);
             }
         }).toList();
+
+        for (var validator : validators) {
+            if (validator.getClass().getClassLoader() instanceof AutoCloseable ac) {
+                ac.close();
+            }
+        }
+
+        return resultList;
     }
 
     protected static final String decoratedObjects(LogEntry entry, TextDecorator decorator) {
