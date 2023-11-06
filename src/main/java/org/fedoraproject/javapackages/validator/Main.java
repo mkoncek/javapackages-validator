@@ -342,19 +342,25 @@ public class Main {
         for (var classPath : parameters.classPaths) {
             classPaths.add(classPath.toUri().toURL());
         }
-        var classLoader = new URLClassLoader(classPaths.toArray(URL[]::new));
         var validators = new ArrayList<Validator>();
 
         logger.debug("Factory arguments: {0}", Decorated.list(parameters.factories.stream().toList()));
 
-        ServiceLoader.<ValidatorFactory>load(ValidatorFactory.class, classLoader).stream().forEach(provider -> {
-            var factory = provider.get();
-            if (parameters.factories.isEmpty() || parameters.factories.contains(factory.getClass().getName())) {
-                validators.addAll(factory.getValidators());
-            } else {
-                logger.debug("Ignoring factory {0} as it is not listed as an argument", Decorated.struct(factory.getClass().getName()));
-            }
-        });
+        var oldClassLoader = Thread.currentThread().getContextClassLoader();
+        try (var classLoader = new URLClassLoader(classPaths.toArray(URL[]::new))) {
+            Thread.currentThread().setContextClassLoader(classLoader);
+            ServiceLoader.<ValidatorFactory>load(ValidatorFactory.class, classLoader).stream().forEach(provider -> {
+                var factory = provider.get();
+                if (parameters.factories.isEmpty() || parameters.factories.contains(factory.getClass().getName())) {
+                    validators.addAll(factory.getValidators());
+                } else {
+                    logger.debug("Ignoring factory {0} as it is not listed as an argument", Decorated.struct(factory.getClass().getName()));
+                }
+            });
+        } finally {
+            Thread.currentThread().setContextClassLoader(oldClassLoader);
+        }
+
         var validatorTests = new TreeMap<String, Validator>();
 
         for (var validator : validators) {
