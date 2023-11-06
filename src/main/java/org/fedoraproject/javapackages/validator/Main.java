@@ -443,7 +443,8 @@ public class Main {
         return validators.parallelStream().map(validator -> {
             try {
                 var startTime = LocalDateTime.now();
-                var result = validator.validate(rpms, parameters.validatorArgs.getOrDefault(validator.getTestName(), Optional.empty()).orElse(null));
+                var result = validator.validate(rpms, parameters.validatorArgs
+                        .getOrDefault(validator.getTestName(), Optional.empty()).orElse(null));
                 var endTime = LocalDateTime.now();
                 return new NamedResult(result, validator.getTestName(), startTime, endTime);
             } catch (Exception ex) {
@@ -455,9 +456,13 @@ public class Main {
         }).toList();
     }
 
+    protected static final String decoratedObjects(LogEntry entry, TextDecorator decorator) {
+        return MessageFormat.format(entry.pattern(), Stream.of(entry.objects())
+                .map(a -> decorator.decorate(a)).toArray());
+    }
+
     protected static final String decorated(LogEntry entry) {
-        return "[" + entry.kind().getDecoratedText() + "] " + MessageFormat.format(entry.pattern(),
-                Stream.of(entry.objects()).map(a -> Main.getDecorator().decorate(a)).toArray());
+        return "[" + entry.kind().getDecoratedText() + "] " + decoratedObjects(entry, Main.getDecorator());
     }
 
     @SuppressFBWarnings({"DM_EXIT"})

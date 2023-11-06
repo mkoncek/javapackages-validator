@@ -68,7 +68,7 @@ public class MainTmt extends Main {
         public void printRow(LogEntry entry) {
             println("  <tr class=\"" + entry.kind() + "\">");
             println("    <td style=\"text-align:center;\">" + HtmlDecorator.INSTANCE.decorate(entry.kind().getDecoratedText()) + "</td>");
-            println("    <td>" + HtmlDecorator.INSTANCE.decorate(entry.kind().getDecoratedText()) + "</td>");
+            println("    <td>" + Main.decoratedObjects(entry, HtmlDecorator.INSTANCE) + "</td>");
             println("  </tr>");
         }
 
@@ -177,7 +177,8 @@ public class MainTmt extends Main {
 
         Files.createDirectories(TMT_TEST_DATA.resolve("results"));
 
-        var testResults = IterableUtils.chainedIterable(results, this.reports.entrySet().stream().map(e -> new NamedResult(e.getValue(), e.getKey())).toList());
+        var testResults = IterableUtils.chainedIterable(results, this.reports.entrySet().stream()
+                .map(e -> new NamedResult(e.getValue(), e.getKey())).toList());
 
         for (var namedResult : testResults) {
             var resultFile = "results/";
