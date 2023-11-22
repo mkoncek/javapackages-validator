@@ -3,9 +3,10 @@ package org.fedoraproject.javapackages.validator.validators;
 import java.nio.file.Path;
 import java.util.Map;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.helpers.BytecodeVersionJarValidator;
+
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
     @Override
@@ -52,7 +53,7 @@ public class BytecodeVersionValidator extends BytecodeVersionJarValidator {
     }
 
     @Override
-    public void validate(RpmFile rpm, Path jarPath, Map<Path, Version> classVersions) {
+    public void validate(RpmPackage rpm, Path jarPath, Map<Path, Version> classVersions) {
         var limits = readLimits();
         if (limits == null) {
             super.validate(rpm, jarPath, classVersions);

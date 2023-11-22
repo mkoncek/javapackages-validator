@@ -2,10 +2,11 @@ package org.fedoraproject.javapackages.validator.helpers;
 
 import java.util.function.Predicate;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.DefaultValidator;
+
+import io.kojan.javadeptools.rpm.RpmInfo;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public abstract class ElementwiseValidator extends DefaultValidator {
     private Predicate<RpmInfo> filter;
@@ -20,7 +21,7 @@ public abstract class ElementwiseValidator extends DefaultValidator {
     }
 
     @Override
-    public void validate(Iterable<RpmFile> rpms) throws Exception {
+    public void validate(Iterable<RpmPackage> rpms) throws Exception {
         for (var rpm : rpms) {
             if (filter.test(rpm.getInfo())) {
                 validate(rpm);
@@ -32,5 +33,5 @@ public abstract class ElementwiseValidator extends DefaultValidator {
         }
     }
 
-    public abstract void validate(RpmFile rpm) throws Exception;
+    public abstract void validate(RpmPackage rpm) throws Exception;
 }

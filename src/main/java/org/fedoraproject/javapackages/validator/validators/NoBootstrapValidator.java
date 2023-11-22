@@ -1,8 +1,9 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
+
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public class NoBootstrapValidator extends ElementwiseValidator {
     @Override
@@ -11,7 +12,7 @@ public class NoBootstrapValidator extends ElementwiseValidator {
     }
 
     @Override
-    public void validate(RpmFile rpm) throws Exception {
+    public void validate(RpmPackage rpm) throws Exception {
         Decorated suffix = Decorated.actual("~bootstrap");
         if (rpm.getInfo().getRelease().endsWith("~bootstrap")) {
             fail("{0}: Release ends with a {1} suffix", Decorated.rpm(rpm), suffix);

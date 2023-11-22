@@ -3,14 +3,15 @@ package org.fedoraproject.javapackages.validator.helpers;
 import java.util.function.Consumer;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
-import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
-import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Common;
 
-public interface RpmJarConsumer extends Consumer<RpmFile> {
+import io.kojan.javadeptools.rpm.RpmArchiveInputStream;
+import io.kojan.javadeptools.rpm.RpmPackage;
+
+public interface RpmJarConsumer extends Consumer<RpmPackage> {
     @Override
-    default void accept(RpmFile rpm) {
-        try (var is = new RpmArchiveInputStream(rpm)) {
+    default void accept(RpmPackage rpm) {
+        try (var is = new RpmArchiveInputStream(rpm.getPath())) {
             for (CpioArchiveEntry rpmEntry; ((rpmEntry = is.getNextEntry()) != null);) {
                 if (!rpmEntry.isSymbolicLink() && rpmEntry.getName().endsWith(".jar")) {
                     var content = new byte[(int) rpmEntry.getSize()];
@@ -27,5 +28,5 @@ public interface RpmJarConsumer extends Consumer<RpmFile> {
         }
     }
 
-    void acceptJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception;
+    void acceptJarEntry(RpmPackage rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception;
 }

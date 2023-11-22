@@ -13,10 +13,11 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.lang3.tuple.Pair;
-import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.helpers.JarValidator;
+
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public class JpmsProvidesValidator extends JarValidator {
     @Override
@@ -29,7 +30,7 @@ public class JpmsProvidesValidator extends JarValidator {
     private static Pattern VERSIONS_PATTERN = Pattern.compile("META-INF/versions/\\d+/module-info\\.class");
 
     @Override
-    public void acceptJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
+    public void acceptJarEntry(RpmPackage rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
         var moduleNames = new ArrayList<Pair<String, String>>();
         var rpmEntryString = Common.getEntryPath(rpmEntry).toString();
 
@@ -76,7 +77,7 @@ public class JpmsProvidesValidator extends JarValidator {
     }
 
     @Override
-    public void validate(RpmFile rpm) throws Exception {
+    public void validate(RpmPackage rpm) throws Exception {
         var providedModuleNames = new TreeSet<String>();
 
         for (var reldep : rpm.getInfo().getProvides()) {

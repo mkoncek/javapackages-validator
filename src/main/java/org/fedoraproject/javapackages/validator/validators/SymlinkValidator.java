@@ -4,15 +4,16 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Predicate;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.kojan.javadeptools.rpm.RpmInfo;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 /**
  * Validator which resolves symbolic link targets against files present
@@ -31,11 +32,11 @@ public class SymlinkValidator extends ElementwiseValidator {
     }
 
     public SymlinkValidator() {
-        super(RpmInfo::isBinaryPackage);
+        super(Predicate.not(RpmInfo::isSourcePackage));
     }
 
     @Override
-    public void validate(RpmFile rpm) throws Exception {
+    public void validate(RpmPackage rpm) throws Exception {
         var envroot = Paths.get("/");
         var args = getArgs();
         if (args != null && args.size() == 2 && args.get(0).equals("-e")) {

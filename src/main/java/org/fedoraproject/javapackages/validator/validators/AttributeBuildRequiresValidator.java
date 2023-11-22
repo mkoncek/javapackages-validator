@@ -1,8 +1,9 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
+
+import io.kojan.javadeptools.rpm.RpmInfo;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public class AttributeBuildRequiresValidator extends ElementwiseValidator {
     @Override
@@ -15,7 +16,7 @@ public class AttributeBuildRequiresValidator extends ElementwiseValidator {
     }
 
     @Override
-    public void validate(RpmFile rpm) throws Exception {
+    public void validate(RpmPackage rpm) throws Exception {
         // TODO
     }
 }

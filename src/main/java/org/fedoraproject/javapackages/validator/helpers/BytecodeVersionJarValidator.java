@@ -10,10 +10,11 @@ import java.util.TreeMap;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
-import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.TestResult;
+
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public abstract class BytecodeVersionJarValidator extends JarValidator {
     public static record Version(short major, short minor) {
@@ -24,7 +25,7 @@ public abstract class BytecodeVersionJarValidator extends JarValidator {
     }
 
     @Override
-    public void acceptJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
+    public void acceptJarEntry(RpmPackage rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
         var jarPath = Paths.get(rpmEntry.getName().substring(1));
         var classVersions = new TreeMap<Path, Version>();
 
@@ -68,7 +69,7 @@ public abstract class BytecodeVersionJarValidator extends JarValidator {
         }
     }
 
-    public void validate(RpmFile rpm, Path jarPath, Map<Path, Version> classVersions) {
+    public void validate(RpmPackage rpm, Path jarPath, Map<Path, Version> classVersions) {
         for (var entry : classVersions.entrySet()) {
             info("{0}: {1}: {2}: bytecode version: {3}",
                     Decorated.rpm(rpm),

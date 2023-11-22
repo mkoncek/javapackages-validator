@@ -1,11 +1,14 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import org.fedoraproject.javadeptools.rpm.Reldep;
-import org.fedoraproject.javadeptools.rpm.RpmFile;
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
+import java.util.function.Predicate;
+
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.TestResult;
 import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
+
+import io.kojan.javadeptools.rpm.RpmDependency;
+import io.kojan.javadeptools.rpm.RpmInfo;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public class AttributeRequiresValidator extends ElementwiseValidator {
     @Override
@@ -14,17 +17,17 @@ public class AttributeRequiresValidator extends ElementwiseValidator {
     }
 
     public AttributeRequiresValidator() {
-        super(RpmInfo::isBinaryPackage);
+        super(Predicate.not(RpmInfo::isSourcePackage));
     }
 
     @Override
-    public void validate(RpmFile rpm) throws Exception {
+    public void validate(RpmPackage rpm) throws Exception {
         boolean jpFilesystem = false;
 
-        for (Reldep require : rpm.getInfo().getRequires()) {
+        for (RpmDependency require : rpm.getInfo().getRequires()) {
             jpFilesystem |= require.getName().equals("javapackages-filesystem");
             if (require.getName().startsWith("mvn(") && require.getName().endsWith(")")) {
-                if (require.getVersion() != null && require.getVersion().chars().noneMatch(Character::isDigit)) {
+                if (require.getVersion().getVersion().chars().noneMatch(Character::isDigit)) {
                     fail("{0}: The required version of field {1} does not contain a number",
                             Decorated.rpm(rpm), Decorated.actual(require));
                 }

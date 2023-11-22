@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
+import io.kojan.javadeptools.rpm.RpmPackage;
+
 
 public abstract class DefaultValidator extends DefaultResult implements Validator {
     private List<String> args = null;
 
     @Override
-    public Result validate(Iterable<RpmFile> rpms, List<String> args) {
+    public Result validate(Iterable<RpmPackage> rpms, List<String> args) {
         if (args != null) {
             this.args = new ArrayList<>(args);
         }
@@ -31,5 +32,5 @@ public abstract class DefaultValidator extends DefaultResult implements Validato
         return null;
     }
 
-    public abstract void validate(Iterable<RpmFile> rpms) throws Exception;
+    public abstract void validate(Iterable<RpmPackage> rpms) throws Exception;
 }

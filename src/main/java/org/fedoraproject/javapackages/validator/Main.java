@@ -3,7 +3,6 @@ package org.fedoraproject.javapackages.validator;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
@@ -37,10 +36,10 @@ import javax.tools.ToolProvider;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.compress.utils.Iterators;
 import org.apache.commons.io.FileUtils;
-import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public class Main {
     static TextDecorator DECORATOR = TextDecorator.NO_DECORATOR;
@@ -65,7 +64,7 @@ public class Main {
         static final Flag CLASS_PATH = new Flag("-cp", "--class-path");
 
         static final Flag FILE = new Flag("-f", "--file");
-        static final Flag URL = new Flag("-u", "--url");
+        // static final Flag URL = new Flag("-u", "--url");
 
         static final Flag HELP = new Flag("-h", "--help");
         static final Flag COLOR = new Flag("-r", "--color");
@@ -81,7 +80,7 @@ public class Main {
         }
 
         static final Flag[] ALL_FLAGS = new Flag[] {
-            SOURCE_PATH, OUTPUT_DIRECTORY, CLASS_PATH, FILE, URL, HELP, COLOR, DEBUG,
+            SOURCE_PATH, OUTPUT_DIRECTORY, CLASS_PATH, FILE, /*URL,*/ HELP, COLOR, DEBUG,
         };
     }
 
@@ -99,7 +98,7 @@ public class Main {
         System.out.println();
         System.out.println("Options for specifying tested RPM files, can be specified multiple times:");
         System.out.println("    " + Flag.FILE + " - File path of an .rpm file");
-        System.out.println("    " + Flag.URL + " - URL of an .rpm file");
+        // System.out.println("    " + Flag.URL + " - URL of an .rpm file");
         System.out.println();
         System.out.println("Optional flags:");
         System.out.println("    " + Flag.DEBUG + " - Display debugging output");
@@ -226,8 +225,7 @@ public class Main {
         Path sourcePath = null;
         Path outputDir = null;
         List<Path> classPaths = new ArrayList<>(0);
-        List<String> argPaths = new ArrayList<>(0);
-        List<URL> argUrls = new ArrayList<>(0);
+        List<Path> argPaths = new ArrayList<>(0);
         Set<String> factories = new TreeSet<String>();
         Map<String, Optional<List<String>>> validatorArgs = new LinkedHashMap<>();
     }
@@ -284,9 +282,7 @@ public class Main {
             } else if (lastFlag == Flag.CLASS_PATH) {
                 parameters.classPaths.add(resolveRelativePathCommon(args[i]));
             } else if (lastFlag == Flag.FILE) {
-                parameters.argPaths.add(args[i]);
-            } else if (lastFlag == Flag.URL) {
-                parameters.argUrls.add(new URI(args[i]).toURL());
+                parameters.argPaths.add(Paths.get(args[i]));
             }
         }
 
@@ -306,7 +302,7 @@ public class Main {
         logger.debug("Output directory: {0}", Decorated.plain(parameters.outputDir));
         logger.debug("Class path: {0}", Decorated.list(parameters.classPaths));
         logger.debug("Path arguments: {0}", Decorated.list(parameters.argPaths));
-        logger.debug("URL arguments: {0}", Decorated.list(parameters.argUrls));
+        // logger.debug("URL arguments: {0}", Decorated.list(parameters.argUrls));
     }
 
     private Map<String, Validator> discover() throws Exception {
@@ -445,11 +441,11 @@ public class Main {
 
     @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
     List<NamedResult> execute(Collection<Validator> validators) throws Exception {
-        var rpms = new ArrayList<RpmFile>();
-        parameters.argUrls.parallelStream().forEach(url -> {
-            RpmFile rpm;
+        var rpms = new ArrayList<RpmPackage>();
+        parameters.argPaths.parallelStream().forEach(path -> {
+            RpmPackage rpm;
             try {
-                rpm = RpmFile.from(url);
+                rpm = new RpmPackage(path);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }

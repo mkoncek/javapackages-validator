@@ -2,15 +2,16 @@ package org.fedoraproject.javapackages.validator.helpers;
 
 import java.util.function.Predicate;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
+
+import io.kojan.javadeptools.rpm.RpmInfo;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public abstract class JarValidator extends ElementwiseValidator implements RpmJarConsumer {
     public static final Decoration DECORATION_JAR = Decoration.bright_blue;
 
     protected JarValidator() {
-        super(RpmInfo::isBinaryPackage);
+        super(Predicate.not(RpmInfo::isSourcePackage));
     }
 
     protected JarValidator(Predicate<RpmInfo> filter) {
@@ -18,7 +19,7 @@ public abstract class JarValidator extends ElementwiseValidator implements RpmJa
     }
 
     @Override
-    public void validate(RpmFile rpm) throws Exception {
+    public void validate(RpmPackage rpm) throws Exception {
         accept(rpm);
     }
 }

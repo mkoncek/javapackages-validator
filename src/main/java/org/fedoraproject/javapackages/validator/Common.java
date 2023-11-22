@@ -10,10 +10,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
-import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
-import org.fedoraproject.javadeptools.rpm.RpmFile;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.kojan.javadeptools.rpm.RpmArchiveInputStream;
+import io.kojan.javadeptools.rpm.RpmInfo;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public class Common {
     public static final IOException INCOMPLETE_READ = new IOException("Incomplete read in RPM stream");
@@ -23,16 +24,32 @@ public class Common {
         return Paths.get("/").resolve(Paths.get("/").relativize(Paths.get("/").resolve(Paths.get(entry.getName()))));
     }
 
+    public static String getPackageName(RpmInfo rpm) {
+        if (rpm.isSourcePackage()) {
+            return rpm.getName();
+        } else {
+            String result = rpm.getSourceRPM();
+            result = result.substring(0, result.lastIndexOf('-'));
+            result = result.substring(0, result.lastIndexOf('-'));
+
+            if (result.isEmpty()) {
+                throw new RuntimeException("Could not read package name for source RPM: " + rpm.getSourceRPM());
+            }
+
+            return result;
+        }
+    }
+
     /**
      * @param rpmPath The rpm file to inspect.
      * @return A map of file paths mapped to either the target of the symlink
      * or null, if the file path is not a symlink.
      * @throws IOException
      */
-    public static SortedMap<CpioArchiveEntry, Path> rpmFilesAndSymlinks(RpmFile rpm) throws IOException {
+    public static SortedMap<CpioArchiveEntry, Path> rpmFilesAndSymlinks(RpmPackage rpm) throws IOException {
         var result = new TreeMap<CpioArchiveEntry, Path>((lhs, rhs) -> lhs.getName().compareTo(rhs.getName()));
 
-        try (var is = new RpmArchiveInputStream(rpm)) {
+        try (var is = new RpmArchiveInputStream(rpm.getPath())) {
             for (CpioArchiveEntry rpmEntry; (rpmEntry = is.getNextEntry()) != null;) {
                 Path target = null;
 

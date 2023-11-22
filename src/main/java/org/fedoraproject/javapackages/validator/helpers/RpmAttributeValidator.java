@@ -4,9 +4,10 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.function.Predicate;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
+
+import io.kojan.javadeptools.rpm.RpmInfo;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public abstract class RpmAttributeValidator extends ElementwiseValidator {
     private final String attributeName;
@@ -23,7 +24,7 @@ public abstract class RpmAttributeValidator extends ElementwiseValidator {
     public abstract boolean allowedAttribute(RpmInfo rpm, String value);
 
     @Override
-    public void validate(RpmFile rpm) throws Exception {
+    public void validate(RpmPackage rpm) throws Exception {
         try {
             Method getter = RpmInfo.class.getMethod("get" + attributeName);
 
