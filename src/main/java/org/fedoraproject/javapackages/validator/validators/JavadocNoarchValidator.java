@@ -1,8 +1,10 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
+import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
+
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public class JavadocNoarchValidator extends ElementwiseValidator {
     @Override
@@ -11,11 +13,11 @@ public class JavadocNoarchValidator extends ElementwiseValidator {
     }
 
     public JavadocNoarchValidator() {
-        super(rpm -> rpm.isBinaryPackage() && rpm.getName().equals(rpm.getPackageName() + "-javadoc"));
+        super(rpm -> !rpm.isSourcePackage() && rpm.getName().equals(Common.getPackageName(rpm) + "-javadoc"));
     }
 
     @Override
-    public void validate(RpmFile rpm) throws Exception {
+    public void validate(RpmPackage rpm) throws Exception {
         if (!rpm.getInfo().getArch().equals("noarch")) {
             fail("{0} is a javadoc package but its architecture is {1}",
                     Decorated.rpm(rpm),

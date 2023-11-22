@@ -10,15 +10,16 @@ import java.util.TreeMap;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.lang3.tuple.Pair;
-import org.fedoraproject.javadeptools.rpm.RpmFile;
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.DefaultValidator;
 
+import io.kojan.javadeptools.rpm.RpmInfo;
+import io.kojan.javadeptools.rpm.RpmPackage;
+
 public abstract class DuplicateFileValidator extends DefaultValidator {
     @Override
-    public void validate(Iterable<RpmFile> rpms) throws Exception {
+    public void validate(Iterable<RpmPackage> rpms) throws Exception {
         // The union of file paths present in all RPM files mapped to the RPM file names they are present in
         var files = new TreeMap<String, ArrayList<Pair<CpioArchiveEntry, Path>>>();
 
@@ -26,7 +27,7 @@ public abstract class DuplicateFileValidator extends DefaultValidator {
             if (!rpm.getInfo().isSourcePackage()) {
                 for (var pair : Common.rpmFilesAndSymlinks(rpm).entrySet()) {
                     files.computeIfAbsent(Common.getEntryPath(pair.getKey()).toString(), key -> new ArrayList<>())
-                        .add(Pair.of(pair.getKey(), Paths.get(rpm.getURL().getPath())));
+                        .add(Pair.of(pair.getKey(), rpm.getPath()));
                 }
             }
         }
@@ -35,7 +36,7 @@ public abstract class DuplicateFileValidator extends DefaultValidator {
             if (entry.getValue().size() > 1) {
                 var providers = new ArrayList<RpmInfo>(entry.getValue().size());
                 for (var providerPair : entry.getValue()) {
-                    providers.add(new RpmInfo(providerPair.getValue()));
+                    providers.add(new RpmPackage(providerPair.getValue()).getInfo());
                 }
                 var okDifferentArchs = new Boolean[] {true};
                 // If all providers are of different architecture (with the

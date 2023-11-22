@@ -6,20 +6,21 @@ import static org.fedoraproject.javapackages.validator.TestCommon.assertPass;
 import java.nio.file.Paths;
 
 import org.easymock.EasyMock;
-import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.TestCommon;
 import org.fedoraproject.javapackages.validator.helpers.RpmFilesizeValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import io.kojan.javadeptools.rpm.RpmPackage;
+
 public class RpmFilesizeValidatorTest {
-    private RpmFile rpm;
+    private RpmPackage rpm;
     private RpmFilesizeValidator validator;
 
     @BeforeEach
     public void setUp() throws Exception {
-        rpm = RpmFile.from(
+        rpm = new RpmPackage(
                 TestCommon.RPM_PATH_PREFIX.resolve(Paths.get("noarch/duplicate-file1-1-1.noarch.rpm")));
         validator = EasyMock.createStrictMock(RpmFilesizeValidator.class);
     }

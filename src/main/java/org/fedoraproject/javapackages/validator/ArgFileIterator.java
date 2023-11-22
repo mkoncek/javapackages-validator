@@ -6,18 +6,17 @@ import java.nio.file.FileSystemLoopException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
-class ArgFileIterator implements Iterator<RpmFile> {
-    private Iterator<String> argIterator;
+class ArgFileIterator implements Iterator<RpmPackage> {
+    private Iterator<Path> argIterator;
     private Iterator<Path> pathIterator = null;
 
-    public ArgFileIterator(Iterable<String> args) {
+    public ArgFileIterator(Iterable<Path> args) {
         this.argIterator = args.iterator();
         pathIterator = advance();
 
@@ -28,7 +27,7 @@ class ArgFileIterator implements Iterator<RpmFile> {
 
     private Iterator<Path> advance() {
         while (argIterator.hasNext()) {
-            Path argPath = Paths.get(argIterator.next()).resolve(".").toAbsolutePath().normalize();
+            Path argPath = argIterator.next().resolve(".").toAbsolutePath().normalize();
 
             try {
                 if (Files.isSymbolicLink(argPath)) {
@@ -79,9 +78,9 @@ class ArgFileIterator implements Iterator<RpmFile> {
     }
 
     @Override
-    public RpmFile next() {
+    public RpmPackage next() {
         try {
-            return RpmFile.from(pathIterator.next().toUri().toURL());
+            return new RpmPackage(pathIterator.next());
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }

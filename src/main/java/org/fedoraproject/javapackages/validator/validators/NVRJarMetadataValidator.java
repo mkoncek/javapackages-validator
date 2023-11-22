@@ -1,7 +1,6 @@
 package org.fedoraproject.javapackages.validator.validators;
 
 import java.io.ByteArrayInputStream;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -10,12 +9,13 @@ import java.util.TreeMap;
 import java.util.jar.JarInputStream;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
-import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.DefaultValidator;
 import org.fedoraproject.javapackages.validator.helpers.JarValidator;
 import org.fedoraproject.javapackages.validator.helpers.RpmJarConsumer;
+
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public class NVRJarMetadataValidator extends DefaultValidator {
     @Override
@@ -25,7 +25,7 @@ public class NVRJarMetadataValidator extends DefaultValidator {
 
     private static interface Entry {
         String name();
-        String valueOf(RpmFile rpm);
+        String valueOf(RpmPackage rpm);
     }
 
     private static class RpmName implements Entry {
@@ -34,7 +34,7 @@ public class NVRJarMetadataValidator extends DefaultValidator {
             return "Rpm-Name";
         }
         @Override
-        public String valueOf(RpmFile rpm) {
+        public String valueOf(RpmPackage rpm) {
             return rpm.getInfo().getName();
         }
     }
@@ -45,7 +45,7 @@ public class NVRJarMetadataValidator extends DefaultValidator {
             return "Rpm-Epoch";
         }
         @Override
-        public String valueOf(RpmFile rpm) {
+        public String valueOf(RpmPackage rpm) {
             return String.valueOf(Objects.requireNonNullElse(rpm.getInfo().getEpoch(), ""));
         }
     }
@@ -56,7 +56,7 @@ public class NVRJarMetadataValidator extends DefaultValidator {
             return "Rpm-Version";
         }
         @Override
-        public String valueOf(RpmFile rpm) {
+        public String valueOf(RpmPackage rpm) {
             return rpm.getInfo().getVersion();
         }
     }
@@ -67,7 +67,7 @@ public class NVRJarMetadataValidator extends DefaultValidator {
             return "Rpm-Release";
         }
         @Override
-        public String valueOf(RpmFile rpm) {
+        public String valueOf(RpmPackage rpm) {
             return rpm.getInfo().getRelease();
         }
     }
@@ -75,11 +75,11 @@ public class NVRJarMetadataValidator extends DefaultValidator {
     private static List<Entry> ENTRIES = List.of(new RpmName(), new RpmEpoch(), new RpmVersion(), new RpmRelease());
 
     private class RpmEntry implements RpmJarConsumer {
-        RpmFile sourceRpm = null;
-        List<RpmFile> binaryRpms = new ArrayList<>();
+        RpmPackage sourceRpm = null;
+        List<RpmPackage> binaryRpms = new ArrayList<>();
 
         @Override
-        public void acceptJarEntry(RpmFile rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
+        public void acceptJarEntry(RpmPackage rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
             try (var is = new JarInputStream(new ByteArrayInputStream(content))) {
                 var mf = is.getManifest();
                 var attrs = mf.getMainAttributes();
@@ -119,7 +119,7 @@ public class NVRJarMetadataValidator extends DefaultValidator {
     }
 
     @Override
-    public void validate(Iterable<RpmFile> rpms) throws Exception {
+    public void validate(Iterable<RpmPackage> rpms) throws Exception {
         for (var rpm : rpms) {
             var release = rpm.getInfo().getRelease();
             int i = 0;
@@ -130,10 +130,10 @@ public class NVRJarMetadataValidator extends DefaultValidator {
             // We only care about EL packages
             if (release.substring(i + 1).startsWith("el")) {
                 if (rpm.getInfo().isSourcePackage()) {
-                    var filename = Paths.get(rpm.getURL().getPath()).getFileName();
+                    var filename = rpm.getPath().getFileName();
                     if (filename == null) {
                         error("{0}: Could not obtain the path from URL: {1}",
-                                Decorated.rpm(rpm), Decorated.actual(rpm.getURL()));
+                                Decorated.rpm(rpm), Decorated.actual(rpm.getPath()));
                         return;
                     }
                     this.rpms.computeIfAbsent(filename.toString(), name -> new RpmEntry()).sourceRpm = rpm;

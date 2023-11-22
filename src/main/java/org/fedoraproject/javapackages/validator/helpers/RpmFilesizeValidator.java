@@ -1,18 +1,20 @@
 package org.fedoraproject.javapackages.validator.helpers;
 
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.text.NumberFormat;
 import java.util.Locale;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Decorated;
+
+import io.kojan.javadeptools.rpm.RpmInfo;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public abstract class RpmFilesizeValidator extends ElementwiseValidator {
     @Override
-    public void validate(RpmFile rpm) throws Exception {
+    public void validate(RpmPackage rpm) throws Exception {
         long filesize = 0;
-        try (var is = rpm.getContent(); var os = OutputStream.nullOutputStream()) {
+        try (var is = Files.newInputStream(rpm.getPath()); var os = OutputStream.nullOutputStream()) {
             filesize = is.transferTo(os);
         }
         Decorated formattedFilesize = Decorated.actual(NumberFormat.getInstance(Locale.ENGLISH).format(filesize));

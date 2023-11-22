@@ -3,8 +3,9 @@ package org.fedoraproject.javapackages.validator;
 import java.util.List;
 import java.util.Objects;
 
-import org.fedoraproject.javadeptools.rpm.RpmFile;
 import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
+
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public class Decorated {
     private static final Decoration DECORATION_RPM = Decoration.bright_red;
@@ -28,7 +29,7 @@ public class Decorated {
         this.decorations = decorations;
     }
 
-    public static Decorated rpm(RpmFile rpm) {
+    public static Decorated rpm(RpmPackage rpm) {
         return new Decorated(rpm, DECORATION_RPM);
     }
 

@@ -10,7 +10,7 @@ The tool is executed from command line using `java` command with the proper clas
 JVM of version 21 is required.
 
 ----
-Main [optional flags] <validator class name> [validator flags] [-f|-u RPM files or directories to test]...
+Main [optional flags] <test name> [validator flags] [-f|-u RPM files or directories to test]...
 ----
 
 [NOTE]
@@ -27,7 +27,8 @@ Optional flags::
 Options for specifying validators::
 [horizontal]
 `-sp`, `--source-path`::: Additional `.java` source file or directory.
-`-cp`, `--class-path`::: Additional class path entry or the output directory.
+`-d`::: Output directory for the compiled source files.
+`-cp`, `--class-path`::: Additional class path entry for the validators.
 [horizontal!]
 
 Options for specifying tested RPM files, can be specified multiple times::

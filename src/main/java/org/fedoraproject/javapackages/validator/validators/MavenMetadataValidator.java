@@ -4,14 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 
 import javax.xml.stream.XMLStreamException;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.lang3.tuple.Pair;
-import org.fedoraproject.javadeptools.rpm.RpmArchiveInputStream;
-import org.fedoraproject.javadeptools.rpm.RpmFile;
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
@@ -19,6 +17,9 @@ import org.fedoraproject.xmvn.metadata.PackageMetadata;
 import org.fedoraproject.xmvn.metadata.io.stax.MetadataStaxReader;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.kojan.javadeptools.rpm.RpmArchiveInputStream;
+import io.kojan.javadeptools.rpm.RpmInfo;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 /**
  * Validator which checks that maven metadata XML file references files
@@ -34,15 +35,15 @@ public class MavenMetadataValidator extends ElementwiseValidator {
     }
 
     public MavenMetadataValidator() {
-        super(RpmInfo::isBinaryPackage);
+        super(Predicate.not(RpmInfo::isSourcePackage));
     }
 
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Incorrect claim that Exception is never thrown")
     @Override
-    public void validate(RpmFile rpm) throws Exception {
+    public void validate(RpmPackage rpm) throws Exception {
         var metadataXmls = new ArrayList<Pair<CpioArchiveEntry, byte[]>>();
         var foundFiles = new TreeSet<String>();
-        try (var is = new RpmArchiveInputStream(rpm)) {
+        try (var is = new RpmArchiveInputStream(rpm.getPath())) {
             for (CpioArchiveEntry rpmEntry; (rpmEntry = is.getNextEntry()) != null;) {
                 foundFiles.add(Common.getEntryPath(rpmEntry).toString());
                 if (rpmEntry.getName().startsWith("./usr/share/maven-metadata/") && rpmEntry.getName().endsWith(".xml")) {

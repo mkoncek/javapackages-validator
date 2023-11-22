@@ -8,10 +8,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
 import org.fedoraproject.javapackages.validator.TestCommon;
 import org.fedoraproject.javapackages.validator.helpers.DuplicateFileValidator.DefaultDuplicateFileValidator;
 import org.junit.jupiter.api.Test;
+
+import io.kojan.javadeptools.rpm.RpmInfo;
 
 public class DuplicateFileValidatorTest {
     private static final Path DUPLICATE_FILE1_RPM = TestCommon.RPM_PATH_PREFIX.resolve(Paths.get("noarch/duplicate-file1-1-1.noarch.rpm"));

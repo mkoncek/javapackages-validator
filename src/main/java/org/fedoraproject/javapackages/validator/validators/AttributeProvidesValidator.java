@@ -1,11 +1,14 @@
 package org.fedoraproject.javapackages.validator.validators;
 
-import org.fedoraproject.javadeptools.rpm.Reldep;
-import org.fedoraproject.javadeptools.rpm.RpmFile;
-import org.fedoraproject.javadeptools.rpm.RpmInfo;
+import java.util.function.Predicate;
+
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.TestResult;
 import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
+
+import io.kojan.javadeptools.rpm.RpmDependency;
+import io.kojan.javadeptools.rpm.RpmInfo;
+import io.kojan.javadeptools.rpm.RpmPackage;
 
 public class AttributeProvidesValidator extends ElementwiseValidator {
     @Override
@@ -14,17 +17,17 @@ public class AttributeProvidesValidator extends ElementwiseValidator {
     }
 
     public AttributeProvidesValidator() {
-        super(RpmInfo::isBinaryPackage);
+        super(Predicate.not(RpmInfo::isSourcePackage));
     }
 
     @Override
-    public void validate(RpmFile rpm) throws Exception {
-        for (Reldep provide : rpm.getInfo().getProvides()) {
+    public void validate(RpmPackage rpm) throws Exception {
+        for (RpmDependency provide : rpm.getInfo().getProvides()) {
             if (provide.getName().startsWith("mvn(") && provide.getName().endsWith(")")) {
-                if (provide.getVersion() == null) {
+                if (provide.getVersion().getVersion().isEmpty()) {
                     fail("{0}: Provide field {1} does not contain version",
                             Decorated.rpm(rpm), Decorated.actual(provide));
-                } else if (provide.getVersion().chars().noneMatch(Character::isDigit)) {
+                } else if (provide.getVersion().getVersion().chars().noneMatch(Character::isDigit)) {
                     fail("{0}: The provided version of field {1} does not contain a number",
                             Decorated.rpm(rpm), Decorated.actual(provide));
                 }
