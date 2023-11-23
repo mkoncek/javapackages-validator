@@ -21,6 +21,9 @@ import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.IterableUtils;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
+import org.fedoraproject.javapackages.validator.spi.LogEntry;
+import org.fedoraproject.javapackages.validator.spi.Validator;
 import org.yaml.snakeyaml.Yaml;
 
 public class MainTmt extends Main {
@@ -67,7 +70,7 @@ public class MainTmt extends Main {
 
         public void printRow(LogEntry entry) {
             println("  <tr class=\"" + entry.kind() + "\">");
-            println("    <td style=\"text-align:center;\">" + HtmlDecorator.INSTANCE.decorate(entry.kind().getDecoratedText()) + "</td>");
+            println("    <td style=\"text-align:center;\">" + HtmlDecorator.INSTANCE.decorate(entry.kind().getDecorated()) + "</td>");
             println("    <td>" + Main.decoratedObjects(entry, HtmlDecorator.INSTANCE) + "</td>");
             println("  </tr>");
         }
@@ -135,7 +138,7 @@ public class MainTmt extends Main {
             List<?> exclude = List.class.cast(configuration.get("exclude-tests-matching"));
             if (exclude != null) {
                 exclusions = exclude.stream().map(pattern -> Pattern.compile(String.class.cast(pattern))).toList();
-                logger.debug("Found exclusion patterns: {0}", Decorated.list(exclusions));
+                logger.debug("Found exclusion patterns: {0}", Decorated.plain(exclusions));
                 for (var entry : validators.entrySet()) {
                     for (var exclusionPattern : exclusions) {
                         if (exclusionPattern.matcher(entry.getKey()).matches()) {

@@ -2,6 +2,8 @@ package org.fedoraproject.javapackages.validator;
 
 import java.util.List;
 
+import org.fedoraproject.javapackages.validator.spi.Validator;
+import org.fedoraproject.javapackages.validator.spi.ValidatorFactory;
 import org.fedoraproject.javapackages.validator.validators.AttributeProvidesValidator;
 import org.fedoraproject.javapackages.validator.validators.BytecodeVersionValidator;
 import org.fedoraproject.javapackages.validator.validators.JavaExclusiveArchValidator;

@@ -11,8 +11,8 @@ import java.util.jar.JarInputStream;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javapackages.validator.Common;
-import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.TestResult;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
+import org.fedoraproject.javapackages.validator.spi.TestResult;
 
 import io.kojan.javadeptools.rpm.RpmPackage;
 
@@ -65,7 +65,7 @@ public abstract class BytecodeVersionJarValidator extends JarValidator {
             pass("{0}: {1}: found bytecode versions: {2}",
                     Decorated.rpm(rpm),
                     Decorated.custom(jarPath, DECORATION_JAR),
-                    Decorated.list(classVersions.values().stream().distinct().toList()));
+                    Decorated.actual(classVersions.values().stream().distinct().toList()));
         }
     }
 

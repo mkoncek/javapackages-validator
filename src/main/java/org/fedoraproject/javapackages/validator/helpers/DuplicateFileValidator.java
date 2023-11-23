@@ -11,8 +11,8 @@ import java.util.TreeMap;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javapackages.validator.Common;
-import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.DefaultValidator;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
 
 import io.kojan.javadeptools.rpm.RpmInfo;
 import io.kojan.javadeptools.rpm.RpmPackage;
@@ -53,7 +53,7 @@ public abstract class DuplicateFileValidator extends DefaultValidator {
                 boolean okDirectory = entry.getValue().stream().map(Pair::getKey).allMatch(CpioArchiveEntry::isDirectory);
 
                 Decorated decoratedFile = Decorated.actual(entry.getKey());
-                Decorated decoratedProviders = Decorated.list(entry.getValue().stream().map(p -> p.getValue().getFileName()).toList());
+                Decorated decoratedProviders = Decorated.actual(entry.getValue().stream().map(p -> p.getValue().getFileName()).toList());
 
                 if (okDifferentArchs[0]) {
                     pass("File {0} provided by RPMs of unique architectures: {1}",
@@ -78,7 +78,7 @@ public abstract class DuplicateFileValidator extends DefaultValidator {
         @Override
         public void validate(Path path, Collection<? extends RpmInfo> providerRpms) throws Exception {
             Decorated decoratedFile = Decorated.actual(path);
-            Decorated decoratedProviders = Decorated.list(List.copyOf(providerRpms));
+            Decorated decoratedProviders = Decorated.actual(List.copyOf(providerRpms));
 
             if (allowedDuplicateFile(path, Collections.unmodifiableCollection(providerRpms))) {
                 pass("Allowed duplicate file {0} provided by multiple RPMs: {1}",

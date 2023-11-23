@@ -8,6 +8,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+import org.fedoraproject.javapackages.validator.spi.LogEvent;
+import org.fedoraproject.javapackages.validator.spi.TestResult;
+
 import io.kojan.javadeptools.rpm.RpmPackage;
 
 

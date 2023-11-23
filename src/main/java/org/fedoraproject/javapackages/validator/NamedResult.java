@@ -3,6 +3,10 @@ package org.fedoraproject.javapackages.validator;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 
+import org.fedoraproject.javapackages.validator.spi.LogEntry;
+import org.fedoraproject.javapackages.validator.spi.Result;
+import org.fedoraproject.javapackages.validator.spi.TestResult;
+
 class NamedResult implements Result {
     private Result delegate;
     private String testName;

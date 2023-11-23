@@ -36,7 +36,12 @@ import javax.tools.ToolProvider;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.compress.utils.Iterators;
 import org.apache.commons.io.FileUtils;
-import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
+import org.fedoraproject.javapackages.validator.spi.Decoration;
+import org.fedoraproject.javapackages.validator.spi.LogEntry;
+import org.fedoraproject.javapackages.validator.spi.LogEvent;
+import org.fedoraproject.javapackages.validator.spi.Validator;
+import org.fedoraproject.javapackages.validator.spi.ValidatorFactory;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.kojan.javadeptools.rpm.RpmPackage;
@@ -161,7 +166,7 @@ public class Main {
             ).toList();
             var compilationUnits = fileManager.getJavaFileObjectsFromPaths(sourceFiles);
 
-            logger.debug("Compiling source files: {0}", Decorated.list(sourceFiles));
+            logger.debug("Compiling source files: {0}", Decorated.plain(sourceFiles));
 
             if (!classPaths.isEmpty()) {
                 compilerOptions = IterableUtils.chainedIterable(compilerOptions, List.of("-cp",
@@ -300,8 +305,8 @@ public class Main {
 
         logger.debug("Source path: {0}", Decorated.plain(parameters.sourcePath));
         logger.debug("Output directory: {0}", Decorated.plain(parameters.outputDir));
-        logger.debug("Class path: {0}", Decorated.list(parameters.classPaths));
-        logger.debug("Path arguments: {0}", Decorated.list(parameters.argPaths));
+        logger.debug("Class path: {0}", Decorated.plain(parameters.classPaths));
+        logger.debug("Path arguments: {0}", Decorated.plain(parameters.argPaths));
         // logger.debug("URL arguments: {0}", Decorated.list(parameters.argUrls));
     }
 
@@ -340,7 +345,7 @@ public class Main {
         }
         var validators = new ArrayList<Validator>();
 
-        logger.debug("Factory arguments: {0}", Decorated.list(parameters.factories.stream().toList()));
+        logger.debug("Factory arguments: {0}", Decorated.plain(parameters.factories.stream().toList()));
 
         var oldClassLoader = Thread.currentThread().getContextClassLoader();
         try {
@@ -406,12 +411,12 @@ public class Main {
         logger.debug("Main arguments: {0}", Decorated.plain(parameters.validatorArgs.entrySet().stream().map(e -> {
             var result = new StringBuilder();
             result.append(System.lineSeparator());
-            result.append(Decorated.custom(e.getKey(), Decoration.bright_green).toString());
+            result.append(Decorated.custom(e.getKey(), new Decoration(Decoration.Color.green, Decoration.Modifier.bright)).toString());
             if (e.getValue().isPresent()) {
                 var args = e.getValue().get();
-                result.append(Decorated.custom(" [ ", Decoration.bright_blue).toString());
-                result.append(Stream.of(args).map(a -> Decorated.custom(a, Decoration.cyan).toString()).collect(Collectors.joining(" ")));
-                result.append(Decorated.custom(" ]", Decoration.bright_blue).toString());
+                result.append(Decorated.custom(" [ ", new Decoration(Decoration.Color.blue, Decoration.Modifier.bright)).toString());
+                result.append(Stream.of(args).map(a -> Decorated.custom(a, new Decoration(Decoration.Color.cyan)).toString()).collect(Collectors.joining(" ")));
+                result.append(Decorated.custom(" ]", new Decoration(Decoration.Color.blue, Decoration.Modifier.bright)).toString());
             }
             return result.toString();
         }).collect(Collectors.joining())));
@@ -442,7 +447,8 @@ public class Main {
     @SuppressFBWarnings({"DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"})
     List<NamedResult> execute(Collection<Validator> validators) throws Exception {
         var rpms = new ArrayList<RpmPackage>();
-        parameters.argPaths.parallelStream().forEach(path -> {
+        /*
+        parameters.argUrls.parallelStream().forEach(path -> {
             RpmPackage rpm;
             try {
                 rpm = new RpmPackage(path);
@@ -453,6 +459,7 @@ public class Main {
                 rpms.add(rpm);
             }
         });
+        */
         Iterators.addAll(rpms, new ArgFileIterator(parameters.argPaths));
         var oldClassLoader = Thread.currentThread().getContextClassLoader();
         var resultList = validators.parallelStream().map(validator -> {
@@ -488,7 +495,7 @@ public class Main {
     }
 
     protected static final String decorated(LogEntry entry) {
-        return "[" + entry.kind().getDecoratedText() + "] " + decoratedObjects(entry, Main.getDecorator());
+        return "[" + entry.kind().getDecorated() + "] " + decoratedObjects(entry, Main.getDecorator());
     }
 
     @SuppressFBWarnings({"DM_EXIT"})
@@ -530,20 +537,23 @@ public class Main {
             }
         }
 
+        var bold_red = new Decoration(Decoration.Color.red, Decoration.Modifier.bold);
+
         int exitCode = 0;
         if (failMessages == 0 && errorMessages == 0) {
             if (passMessages > 0) {
-                System.err.println(MessageFormat.format("Summary: all tests {0}", Decorated.custom("passed", Decoration.green, Decoration.bold)));
+                System.err.println(MessageFormat.format("Summary: all tests {0}",
+                        Decorated.custom("passed", new Decoration(Decoration.Color.green, Decoration.Modifier.bold))));
             } else {
                 System.err.println("Summary: no output available");
             }
         } else if (errorMessages == 0) {
             System.err.println(MessageFormat.format("Summary: {0} {1}", Decorated.plain(failMessages), Decorated.custom(
-                    "failed tests" + (failMessages == 1 ? "" : "s"), Decoration.red, Decoration.bold)));
+                    "failed tests" + (failMessages == 1 ? "" : "s"), bold_red)));
             exitCode = 1;
         } else if (failMessages == 0) {
             System.err.println(MessageFormat.format("Summary: {0} {1} occured", Decorated.plain(errorMessages), Decorated.custom(
-                    "error" + (errorMessages == 1 ? "" : "s"), Decoration.red, Decoration.bold)));
+                    "error" + (errorMessages == 1 ? "" : "s"), bold_red)));
             exitCode = 2;
         }
 

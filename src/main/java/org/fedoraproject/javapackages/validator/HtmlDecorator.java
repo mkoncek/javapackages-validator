@@ -1,9 +1,10 @@
 package org.fedoraproject.javapackages.validator;
 
-import java.util.EnumMap;
 import java.util.Objects;
 
 import org.apache.commons.text.StringEscapeUtils;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
+import org.fedoraproject.javapackages.validator.spi.Decoration;
 
 class HtmlDecorator implements TextDecorator {
     public static final HtmlDecorator INSTANCE = new HtmlDecorator();
@@ -12,82 +13,47 @@ class HtmlDecorator implements TextDecorator {
         super();
     }
 
-    private static final EnumMap<Decoration, String> DECORATIONS = new EnumMap<>(Decoration.class);
-    static {
-        DECORATIONS.put(Decoration.bold, "font-weight:bold;");
-        DECORATIONS.put(Decoration.underline, "text-decoration:underline;");
-        DECORATIONS.put(Decoration.black, "color:black;");
-        DECORATIONS.put(Decoration.red, "color:darkred;");
-        DECORATIONS.put(Decoration.green, "color:darkgreen;");
-        DECORATIONS.put(Decoration.yellow, "color:gold;");
-        DECORATIONS.put(Decoration.blue, "color:darkblue;");
-        DECORATIONS.put(Decoration.magenta, "color:darkmagenta;");
-        DECORATIONS.put(Decoration.cyan, "color:darkcyan;");
-        DECORATIONS.put(Decoration.white, "color:ghostwhite;");
+    private static String basic(Decoration.Color color) {
+        return switch (color) {
+            case black -> "color:black;";
+            case red -> "color:darkred;";
+            case green -> "color:darkgreen;";
+            case yellow -> "color:gold;";
+            case blue -> "color:darkblue;";
+            case magenta -> "color:darkmagenta;";
+            case cyan -> "color:darkcyan;";
+            case white -> "color:ghostwhite;";
+        };
+    }
 
-        DECORATIONS.put(Decoration.bright_black, "color:darkgrey;");
-        DECORATIONS.put(Decoration.bright_red, "color:red;");
-        DECORATIONS.put(Decoration.bright_green, "color:green;");
-        DECORATIONS.put(Decoration.bright_yellow, "color:goldenrod;");
-        DECORATIONS.put(Decoration.bright_blue, "color:blue;");
-        DECORATIONS.put(Decoration.bright_magenta, "color:magenta;");
-        DECORATIONS.put(Decoration.bright_cyan, "color:#00e5ff;");
-        DECORATIONS.put(Decoration.bright_white, "color:white;");
+    private static String bright(Decoration.Color color) {
+        return switch (color) {
+            case black -> "color:darkgrey;";
+            case red -> "color:red;";
+            case green -> "color:green;";
+            case yellow -> "color:goldenrod;";
+            case blue -> "color:blue;";
+            case magenta -> "color:magenta;";
+            case cyan -> "color:#00e5ff;";
+            case white -> "color:white;";
+        };
     }
 
     @Override
     public String decorate(Decorated decorated) {
-        Decoration color = null;
-
-        for (var decoration : decorated.getDecorations()) {
-            if (decoration != Decoration.bold && decoration != Decoration.underline) {
-                if (color != null) {
-                    throw new IllegalArgumentException("Multiple colors specified");
-                } else {
-                    color = decoration;
-                }
-            }
-        }
-
-        if (color == null) {
-            color = Decoration.black;
-        }
-
         var result = new StringBuilder("<text style=\"");
+        var color = decorated.getDecoration().color().orElse(Decoration.Color.black);
+        var colorString = basic(color);
 
-        for (var decoration : decorated.getDecorations()) {
-            switch (decoration) {
-            case bold:
-            case underline:
-                result.append(DECORATIONS.get(decoration));
-                break;
-            default:
-                continue;
+        for (var modifier : decorated.getDecoration().modifiers()) {
+            switch (modifier) {
+                case bold -> {result.append("font-weight:bold;");}
+                case underline -> {result.append("text-decoration:underline;");}
+                case bright -> {colorString = bright(color);}
             }
         }
 
-        switch (color) {
-        case black:
-        case red:
-        case green:
-        case yellow:
-        case blue:
-        case magenta:
-        case cyan:
-        case white:
-        case bright_black:
-        case bright_red:
-        case bright_green:
-        case bright_yellow:
-        case bright_blue:
-        case bright_magenta:
-        case bright_cyan:
-        case bright_white:
-            result.append(DECORATIONS.get(color));
-            break;
-        default:
-            break;
-        }
+        result.append(colorString);
 
         result.append("\">");
         result.append(StringEscapeUtils.escapeHtml4(Objects.toString(decorated.getObject())).replace(System.lineSeparator(), "<br>"));

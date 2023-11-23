@@ -10,10 +10,10 @@ import java.util.jar.JarInputStream;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.fedoraproject.javapackages.validator.Common;
-import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.DefaultValidator;
 import org.fedoraproject.javapackages.validator.helpers.JarValidator;
 import org.fedoraproject.javapackages.validator.helpers.RpmJarConsumer;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
 
 import io.kojan.javadeptools.rpm.RpmPackage;
 
