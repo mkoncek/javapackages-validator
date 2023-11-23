@@ -3,8 +3,8 @@ package org.fedoraproject.javapackages.validator.validators;
 import java.nio.file.Path;
 import java.util.Map;
 
-import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.helpers.BytecodeVersionJarValidator;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
 
 import io.kojan.javadeptools.rpm.RpmPackage;
 

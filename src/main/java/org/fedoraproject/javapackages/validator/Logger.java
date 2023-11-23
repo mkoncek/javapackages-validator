@@ -4,6 +4,9 @@ import java.io.PrintStream;
 import java.text.MessageFormat;
 import java.util.EnumMap;
 
+import org.fedoraproject.javapackages.validator.spi.Decorated;
+import org.fedoraproject.javapackages.validator.spi.LogEvent;
+
 class Logger {
     private EnumMap<LogEvent, PrintStream> streams = new EnumMap<>(LogEvent.class);
 
@@ -17,7 +20,7 @@ class Logger {
     }
 
     private void log(LogEvent logEvent, String pattern, Decorated... arguments) {
-        streams.get(logEvent).append("[" + logEvent.getDecoratedText() + "] ").println(MessageFormat.format(pattern, (Object[]) arguments));
+        streams.get(logEvent).append("[" + logEvent.getDecorated() + "] ").println(MessageFormat.format(pattern, (Object[]) arguments));
     }
 
     public void debug(String pattern, Decorated... arguments) {

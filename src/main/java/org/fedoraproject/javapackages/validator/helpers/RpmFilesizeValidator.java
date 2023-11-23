@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.text.NumberFormat;
 import java.util.Locale;
 
-import org.fedoraproject.javapackages.validator.Decorated;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
 
 import io.kojan.javadeptools.rpm.RpmInfo;
 import io.kojan.javadeptools.rpm.RpmPackage;

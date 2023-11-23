@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.fedoraproject.javapackages.validator.spi.Decorated;
+import org.fedoraproject.javapackages.validator.spi.LogEntry;
+import org.fedoraproject.javapackages.validator.spi.Result;
+import org.fedoraproject.javapackages.validator.spi.TestResult;
+
 public class DefaultResult implements Result {
     private List<LogEntry> log = new ArrayList<>();
     private TestResult result = TestResult.info;

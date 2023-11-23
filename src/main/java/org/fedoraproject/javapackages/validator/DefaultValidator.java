@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.fedoraproject.javapackages.validator.spi.Result;
+import org.fedoraproject.javapackages.validator.spi.Validator;
+
 import io.kojan.javadeptools.rpm.RpmPackage;
 
 

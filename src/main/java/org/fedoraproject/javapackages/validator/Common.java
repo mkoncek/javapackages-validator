@@ -10,6 +10,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
+import org.fedoraproject.javapackages.validator.spi.LogEntry;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.kojan.javadeptools.rpm.RpmArchiveInputStream;

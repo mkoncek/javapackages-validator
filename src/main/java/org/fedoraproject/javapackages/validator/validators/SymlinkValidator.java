@@ -7,9 +7,9 @@ import java.nio.file.Paths;
 import java.util.function.Predicate;
 
 import org.fedoraproject.javapackages.validator.Common;
-import org.fedoraproject.javapackages.validator.Decorated;
-import org.fedoraproject.javapackages.validator.TextDecorator.Decoration;
 import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
+import org.fedoraproject.javapackages.validator.spi.Decoration;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.kojan.javadeptools.rpm.RpmInfo;
@@ -55,16 +55,16 @@ public class SymlinkValidator extends ElementwiseValidator {
                 if (Files.exists(target, LinkOption.NOFOLLOW_LINKS)) {
                     pass("{0}: Link {1} points to {2} (normalized as {3}) exists as {4}",
                             Decorated.rpm(rpm),
-                            Decorated.custom(link, Decoration.bright_cyan),
-                            Decorated.custom(target, Decoration.bright_magenta),
-                            Decorated.custom(target.normalize(), Decoration.magenta),
+                            Decorated.custom(link, new Decoration(Decoration.Color.cyan, Decoration.Modifier.bright)),
+                            Decorated.custom(target, new Decoration(Decoration.Color.magenta, Decoration.Modifier.bright)),
+                            Decorated.custom(target.normalize(), new Decoration(Decoration.Color.magenta)),
                             Decorated.outer(target));
                 } else {
                     fail("{0}: Link {1} points to {2} (normalized as {3}) does not exist as {4}",
                             Decorated.rpm(rpm),
-                            Decorated.custom(link, Decoration.bright_cyan),
-                            Decorated.custom(target, Decoration.bright_magenta),
-                            Decorated.custom(target.normalize(), Decoration.magenta),
+                            Decorated.custom(link, new Decoration(Decoration.Color.cyan, Decoration.Modifier.bright)),
+                            Decorated.custom(target, new Decoration(Decoration.Color.magenta, Decoration.Modifier.bright)),
+                            Decorated.custom(target.normalize(), new Decoration(Decoration.Color.magenta)),
                             Decorated.outer(target));
                 }
             }

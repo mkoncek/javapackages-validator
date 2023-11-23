@@ -2,18 +2,10 @@ package org.fedoraproject.javapackages.validator;
 
 import java.util.Objects;
 
+import org.fedoraproject.javapackages.validator.spi.Decorated;
+
 public interface TextDecorator {
     public static final TextDecorator NO_DECORATOR = (decorated) -> Objects.toString(decorated.getObject());
-
-    public enum Decoration {
-        bold, underline,
-
-        black, red, green, yellow, blue, magenta, cyan, white,
-
-        bright_black, bright_red, bright_green, bright_yellow,
-        bright_blue, bright_magenta, bright_cyan, bright_white,
-        ;
-    }
 
     /**
      * @param object The object to decorate.

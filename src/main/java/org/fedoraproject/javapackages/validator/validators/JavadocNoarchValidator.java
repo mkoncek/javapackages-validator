@@ -1,8 +1,8 @@
 package org.fedoraproject.javapackages.validator.validators;
 
 import org.fedoraproject.javapackages.validator.Common;
-import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
 
 import io.kojan.javadeptools.rpm.RpmPackage;
 

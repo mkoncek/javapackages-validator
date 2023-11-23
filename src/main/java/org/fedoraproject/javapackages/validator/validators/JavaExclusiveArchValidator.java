@@ -2,8 +2,8 @@ package org.fedoraproject.javapackages.validator.validators;
 
 import java.util.Collections;
 
-import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
 
 import io.kojan.javadeptools.rpm.RpmInfo;
 import io.kojan.javadeptools.rpm.RpmPackage;
@@ -26,7 +26,7 @@ public class JavaExclusiveArchValidator extends ElementwiseValidator {
     @Override
     public void validate(RpmPackage rpm) throws Exception {
         var buildArchs = rpm.getInfo().getBuildArchs();
-        debug("{0}: Build archs: {1}", Decorated.rpm(rpm), Decorated.list(buildArchs));
+        debug("{0}: Build archs: {1}", Decorated.rpm(rpm), Decorated.actual(buildArchs));
         boolean noarch = buildArchs.equals(Collections.singletonList("noarch"));
 
         String expected = noarch ? JAVA_ARCHES + " noarch" : JAVA_ARCHES;

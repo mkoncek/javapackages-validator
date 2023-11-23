@@ -14,8 +14,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.lang3.tuple.Pair;
 import org.fedoraproject.javapackages.validator.Common;
-import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.helpers.JarValidator;
+import org.fedoraproject.javapackages.validator.spi.Decorated;
 
 import io.kojan.javadeptools.rpm.RpmPackage;
 
@@ -113,7 +113,7 @@ public class JpmsProvidesValidator extends JarValidator {
         if (ok) {
             pass("{0}: found module names exactly match provided JPMS fields, {1}",
                     Decorated.rpm(rpm),
-                    Decorated.list(providedModuleNames.stream().toList()));
+                    Decorated.actual(providedModuleNames.stream().toList()));
         }
     }
 }
