@@ -6,10 +6,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
-import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.Decorated;
 import org.fedoraproject.javapackages.validator.TestResult;
@@ -29,8 +29,8 @@ public abstract class BytecodeVersionJarValidator extends JarValidator {
         var jarPath = Paths.get(rpmEntry.getName().substring(1));
         var classVersions = new TreeMap<Path, Version>();
 
-        try (var jarStream = new JarArchiveInputStream(new ByteArrayInputStream(content))) {
-            for (JarArchiveEntry jarEntry; ((jarEntry = jarStream.getNextJarEntry()) != null);) {
+        try (var jarStream = new JarInputStream(new ByteArrayInputStream(content))) {
+            for (JarEntry jarEntry; ((jarEntry = jarStream.getNextJarEntry()) != null);) {
                 var classPath = Paths.get(jarEntry.getName());
 
                 if (classPath.toString().endsWith(".class")) {
