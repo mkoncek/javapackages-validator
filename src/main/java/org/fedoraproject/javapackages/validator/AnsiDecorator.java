@@ -1,6 +1,8 @@
 package org.fedoraproject.javapackages.validator;
 
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.fedoraproject.javapackages.validator.spi.Decorated;
 
@@ -24,17 +26,21 @@ class AnsiDecorator implements TextDecorator {
             case magenta -> 35;
             case cyan -> 36;
             case white -> 37;
-        }).orElse(37);
+        });
 
+        var modifiers = new ArrayList<String>(4);
         for (var modifier : decorated.getDecoration().modifiers()) {
             switch (modifier) {
-                case bold -> {result.append("1;");}
-                case underline -> {result.append("4;");}
-                case bright -> {colorCode += 60;}
+                case bold -> {modifiers.add("1");}
+                case underline -> {modifiers.add("4");}
+                case bright -> {colorCode = colorCode.map(color -> color + 60);}
             }
         }
 
-        result.append(colorCode.toString());
+        colorCode.ifPresent(color -> {
+            modifiers.add(color.toString());
+        });
+        result.append(modifiers.stream().collect(Collectors.joining(";")));
         result.append("m");
 
         result.append(Objects.toString(decorated.getObject()));
