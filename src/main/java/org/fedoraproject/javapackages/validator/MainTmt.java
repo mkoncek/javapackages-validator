@@ -1,6 +1,7 @@
 package org.fedoraproject.javapackages.validator;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -45,27 +46,11 @@ public class MainTmt extends Main {
     }
 
     private static class HtmlTablePrintStream extends PrintStream {
-        public HtmlTablePrintStream(OutputStream os) {
+        public HtmlTablePrintStream(OutputStream os) throws IOException {
             super(os, false, StandardCharsets.UTF_8);
-            super.print("""
-<!DOCTYPE html>
-<html>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
-<script src="../filter.js"></script>
-<link rel="stylesheet" href="../style.css">
-<table>
-<tr>
-    <th>Filter:</th>
-    <th><input type="checkbox" class="filter_checkbox" id="checkbox_debug" value="debug"><label for="checkbox_debug">Debug</label></th>
-    <th><input type="checkbox" class="filter_checkbox" id="checkbox_info" value="info"><label for="checkbox_info">Info</label></th>
-    <th><input type="checkbox" class="filter_checkbox" id="checkbox_pass" value="pass"><label for="checkbox_pass">Pass</label></th>
-    <th><input type="checkbox" class="filter_checkbox" id="checkbox_fail" value="fail"><label for="checkbox_fail">Fail</label></th>
-    <th><input type="checkbox" class="filter_checkbox" id="checkbox_error" value="error"><label for="checkbox_error">Error</label></th>
-</tr>
-</table>
-
-<table>
-""");
+            try (var is = MainTmt.class.getResourceAsStream("/tmt_html/header.html")) {
+                is.transferTo(super.out);
+            }
         }
 
         public void printRow(LogEntry entry) {
@@ -214,7 +199,7 @@ public class MainTmt extends Main {
 
             var startTime = namedResult.getStartTime();
             if (startTime != null) {
-                resultYaml.append("  starttime: '");
+                resultYaml.append("  start-time: '");
                 resultYaml.append(startTime.format(DateTimeFormatter.ISO_DATE_TIME));
                 resultYaml.append("'");
                 resultYaml.append(System.lineSeparator());
@@ -222,7 +207,7 @@ public class MainTmt extends Main {
 
             var endTime = namedResult.getEndTime();
             if (endTime != null) {
-                resultYaml.append("  endtime: '");
+                resultYaml.append("  end-time: '");
                 resultYaml.append(endTime.format(DateTimeFormatter.ISO_DATE_TIME));
                 resultYaml.append("'");
                 resultYaml.append(System.lineSeparator());

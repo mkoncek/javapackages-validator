@@ -11,7 +11,7 @@ import org.fedoraproject.javapackages.validator.spi.TestResult;
 
 public class DefaultResult implements Result {
     private List<LogEntry> log = new ArrayList<>();
-    private TestResult result = TestResult.info;
+    private TestResult result = TestResult.skip;
 
     @Override
     public TestResult getResult() {
@@ -37,13 +37,13 @@ public class DefaultResult implements Result {
         addLog(LogEntry.debug(pattern, arguments));
     }
 
-    public void info() {
-        addResult(TestResult.info);
+    public void skip() {
+        addResult(TestResult.skip);
     }
 
-    public void info(String pattern, Decorated... arguments) {
-        info();
-        addLog(LogEntry.info(pattern, arguments));
+    public void skip(String pattern, Decorated... arguments) {
+        skip();
+        addLog(LogEntry.skip(pattern, arguments));
     }
 
     public void pass() {
@@ -53,6 +53,24 @@ public class DefaultResult implements Result {
     public void pass(String pattern, Decorated... arguments) {
         pass();
         addLog(LogEntry.pass(pattern, arguments));
+    }
+
+    public void info() {
+        addResult(TestResult.info);
+    }
+
+    public void info(String pattern, Decorated... arguments) {
+        info();
+        addLog(LogEntry.info(pattern, arguments));
+    }
+
+    public void warn() {
+        addResult(TestResult.warn);
+    }
+
+    public void warn(String pattern, Decorated... arguments) {
+        warn();
+        addLog(LogEntry.warn(pattern, arguments));
     }
 
     public void fail() {
