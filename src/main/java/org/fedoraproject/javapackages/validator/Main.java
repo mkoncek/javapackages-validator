@@ -124,6 +124,15 @@ public class Main {
     	}
     }
 
+    protected static Object decorate(Decorated decorated) {
+        return new Object() {
+            @Override
+            public String toString() {
+                return Main.getDecorator().decorate(decorated);
+            }
+        };
+    }
+
     public static void compileFiles(Path sourcePath, Path outputDirectory, List<Path> classPaths,
             Iterable<String> compilerOptions, Logger logger) throws IOException {
         var sourceMtime = getRecursiveFileTime(sourcePath, (p, a) -> true).get();
@@ -401,7 +410,7 @@ public class Main {
         }
 
         logger.debug("Available tests:{0}", Decorated.plain(validators.stream().map(v ->
-            System.lineSeparator() + Decorated.struct(v.getTestName())
+            System.lineSeparator() + decorate(Decorated.struct(v.getTestName()))
         ).collect(Collectors.joining())));
 
         return validatorTests;
@@ -411,12 +420,12 @@ public class Main {
         logger.debug("Main arguments: {0}", Decorated.plain(parameters.validatorArgs.entrySet().stream().map(e -> {
             var result = new StringBuilder();
             result.append(System.lineSeparator());
-            result.append(Decorated.custom(e.getKey(), new Decoration(Decoration.Color.green, Decoration.Modifier.bright)).toString());
+            result.append(decorate(Decorated.custom(e.getKey(), new Decoration(Decoration.Color.green, Decoration.Modifier.bright))).toString());
             if (e.getValue().isPresent()) {
                 var args = e.getValue().get();
-                result.append(Decorated.custom(" [ ", new Decoration(Decoration.Color.blue, Decoration.Modifier.bright)).toString());
-                result.append(Stream.of(args).map(a -> Decorated.custom(a, new Decoration(Decoration.Color.cyan)).toString()).collect(Collectors.joining(" ")));
-                result.append(Decorated.custom(" ]", new Decoration(Decoration.Color.blue, Decoration.Modifier.bright)).toString());
+                result.append(decorate(Decorated.custom(" [ ", new Decoration(Decoration.Color.blue, Decoration.Modifier.bright))).toString());
+                result.append(Stream.of(args).map(a -> decorate(Decorated.custom(a, new Decoration(Decoration.Color.cyan))).toString()).collect(Collectors.joining(" ")));
+                result.append(decorate(Decorated.custom(" ]", new Decoration(Decoration.Color.blue, Decoration.Modifier.bright))).toString());
             }
             return result.toString();
         }).collect(Collectors.joining())));
@@ -495,7 +504,7 @@ public class Main {
     }
 
     protected static final String decorated(LogEntry entry) {
-        return "[" + entry.kind().getDecorated() + "] " + decoratedObjects(entry, Main.getDecorator());
+        return "[" + decorate(entry.kind().getDecorated()) + "] " + decoratedObjects(entry, Main.getDecorator());
     }
 
     @SuppressFBWarnings({"DM_EXIT"})
@@ -543,17 +552,19 @@ public class Main {
         if (failMessages == 0 && errorMessages == 0) {
             if (passMessages > 0) {
                 System.err.println(MessageFormat.format("Summary: all tests {0}",
-                        Decorated.custom("passed", new Decoration(Decoration.Color.green, Decoration.Modifier.bold))));
+                        decorate(Decorated.custom("passed", new Decoration(Decoration.Color.green, Decoration.Modifier.bold)))));
             } else {
                 System.err.println("Summary: no output available");
             }
         } else if (errorMessages == 0) {
-            System.err.println(MessageFormat.format("Summary: {0} {1}", Decorated.plain(failMessages), Decorated.custom(
-                    "failed tests" + (failMessages == 1 ? "" : "s"), bold_red)));
+            System.err.println(MessageFormat.format("Summary: {0} {1}",
+                    decorate(Decorated.plain(failMessages)), decorate(Decorated.custom(
+                    "failed tests" + (failMessages == 1 ? "" : "s"), bold_red))));
             exitCode = 1;
         } else if (failMessages == 0) {
-            System.err.println(MessageFormat.format("Summary: {0} {1} occured", Decorated.plain(errorMessages), Decorated.custom(
-                    "error" + (errorMessages == 1 ? "" : "s"), bold_red)));
+            System.err.println(MessageFormat.format("Summary: {0} {1} occured",
+                    decorate(Decorated.plain(errorMessages)), decorate(Decorated.custom(
+                    "error" + (errorMessages == 1 ? "" : "s"), bold_red))));
             exitCode = 2;
         }
 
@@ -565,7 +576,7 @@ public class Main {
         var validators = select(discover());
 
         logger.debug("Selected validators:{0}", Decorated.plain(validators.keySet().stream().map(
-                testName -> System.lineSeparator() + Decorated.struct(testName)
+                testName -> System.lineSeparator() + decorate(Decorated.struct(testName))
         ).collect(Collectors.joining())));
 
         report(execute(validators.values()));
