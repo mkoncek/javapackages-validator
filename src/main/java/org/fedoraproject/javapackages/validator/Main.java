@@ -477,8 +477,8 @@ public class Main {
         });
         */
         Iterators.addAll(rpms, new ArgFileIterator(parameters.argPaths));
-        var oldClassLoader = Thread.currentThread().getContextClassLoader();
         var resultList = validators.parallelStream().map(validator -> {
+            var oldClassLoader = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(validator.getClass().getClassLoader());
                 var startTime = LocalDateTime.now();
