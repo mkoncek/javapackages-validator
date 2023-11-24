@@ -1,5 +1,7 @@
 package org.fedoraproject.javapackages.validator;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -333,14 +335,19 @@ public class Main {
             compilerArgs.add(parameters.outputDir.toString());
 
             compileFiles(parameters.sourcePath, parameters.outputDir, parameters.classPaths, compilerArgs, logger);
-            var serviceOutFile = Files.createDirectories(parameters.outputDir
-                    .resolve("META-INF").resolve("services")).resolve(ValidatorFactory.class.getCanonicalName());
-            try (var os = Files.newOutputStream(serviceOutFile)) {
-                for (var serviceFile : Files.find(parameters.sourcePath, Integer.MAX_VALUE,
-                        (p, a) -> !a.isDirectory() && p.getFileName().equals(Paths.get(ValidatorFactory.class.getCanonicalName()))).toList()) {
-                    try (var is = Files.newInputStream(serviceFile)) {
-                        is.transferTo(os);
-                    }
+
+            var serviceContent = new ByteArrayOutputStream(0);
+            for (var serviceFile : Files.find(parameters.sourcePath, Integer.MAX_VALUE,
+                    (p, a) -> !a.isDirectory() && p.getFileName().equals(Paths.get(ValidatorFactory.class.getCanonicalName()))).toList()) {
+                try (var is = Files.newInputStream(serviceFile)) {
+                    is.transferTo(serviceContent);
+                }
+            }
+            if (serviceContent.size() != 0) {
+                var serviceOutFile = Files.createDirectories(parameters.outputDir
+                        .resolve("META-INF").resolve("services")).resolve(ValidatorFactory.class.getCanonicalName());
+                try (var os = Files.newOutputStream(serviceOutFile)) {
+                    new ByteArrayInputStream(serviceContent.toByteArray()).transferTo(os);
                 }
             }
         }
