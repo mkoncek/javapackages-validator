@@ -1,8 +1,8 @@
 package org.fedoraproject.javapackages.validator.validators;
 
 import static org.fedoraproject.javapackages.validator.TestCommon.assertFailOne;
-import static org.fedoraproject.javapackages.validator.TestCommon.assertInfo;
 import static org.fedoraproject.javapackages.validator.TestCommon.assertPass;
+import static org.fedoraproject.javapackages.validator.TestCommon.assertSkip;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,6 +41,6 @@ public class JavadocNoarchValidatorTest {
     void testIgnoreNonJavadoc() throws Exception {
         var validator = new JavadocNoarchValidator();
         validator.validate(TestCommon.fromPaths(NON_JAVADOC_RPM));
-        assertInfo(validator);
+        assertSkip(validator);
     }
 }

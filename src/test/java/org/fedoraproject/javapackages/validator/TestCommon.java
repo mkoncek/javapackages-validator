@@ -31,12 +31,16 @@ public class TestCommon {
         return result;
     }
 
-    public static void assertInfo(DefaultValidator validator) {
-        assertEquals(TestResult.info, validator.getResult(), "expected result: INFO");
+    public static void assertSkip(DefaultValidator validator) {
+        assertEquals(TestResult.skip, validator.getResult(), "expected result: SKIP");
     }
 
     public static void assertPass(DefaultValidator validator) {
         assertEquals(TestResult.pass, validator.getResult(), "expected result: PASS");
+    }
+
+    public static void assertInfo(DefaultValidator validator) {
+        assertEquals(TestResult.info, validator.getResult(), "expected result: INFO");
     }
 
     public static void assertFailOne(DefaultValidator validator) {
