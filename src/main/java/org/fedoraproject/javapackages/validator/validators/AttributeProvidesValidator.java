@@ -2,9 +2,9 @@ package org.fedoraproject.javapackages.validator.validators;
 
 import java.util.function.Predicate;
 
-import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
 import org.fedoraproject.javapackages.validator.spi.Decorated;
 import org.fedoraproject.javapackages.validator.spi.TestResult;
+import org.fedoraproject.javapackages.validator.util.ElementwiseValidator;
 
 import io.kojan.javadeptools.rpm.RpmDependency;
 import io.kojan.javadeptools.rpm.RpmInfo;

@@ -1,8 +1,7 @@
-package org.fedoraproject.javapackages.validator.helpers;
+package org.fedoraproject.javapackages.validator.util;
 
 import java.util.function.Predicate;
 
-import org.fedoraproject.javapackages.validator.DefaultValidator;
 import org.fedoraproject.javapackages.validator.spi.Decorated;
 
 import io.kojan.javadeptools.rpm.RpmInfo;

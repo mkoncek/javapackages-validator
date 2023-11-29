@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator.helpers;
+package org.fedoraproject.javapackages.validator.util;
 
 import java.lang.reflect.Method;
 import java.util.List;

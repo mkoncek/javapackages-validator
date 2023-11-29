@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator;
+package org.fedoraproject.javapackages.validator.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,7 +8,6 @@ import org.fedoraproject.javapackages.validator.spi.Result;
 import org.fedoraproject.javapackages.validator.spi.Validator;
 
 import io.kojan.javadeptools.rpm.RpmPackage;
-
 
 public abstract class DefaultValidator extends DefaultResult implements Validator {
     private List<String> args = null;
@@ -22,7 +21,7 @@ public abstract class DefaultValidator extends DefaultResult implements Validato
             validate(rpms);
         } catch (Exception ex) {
             error();
-            addLog(Common.logException(ex));
+            addLog(logException(ex));
         }
 
         return this;

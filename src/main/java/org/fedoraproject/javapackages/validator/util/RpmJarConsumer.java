@@ -1,9 +1,8 @@
-package org.fedoraproject.javapackages.validator.helpers;
+package org.fedoraproject.javapackages.validator.util;
 
 import java.util.function.Consumer;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
-import org.fedoraproject.javapackages.validator.Common;
 
 import io.kojan.javadeptools.rpm.RpmArchiveInputStream;
 import io.kojan.javadeptools.rpm.RpmPackage;

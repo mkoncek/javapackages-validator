@@ -6,10 +6,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Predicate;
 
-import org.fedoraproject.javapackages.validator.Common;
-import org.fedoraproject.javapackages.validator.helpers.ElementwiseValidator;
 import org.fedoraproject.javapackages.validator.spi.Decorated;
 import org.fedoraproject.javapackages.validator.spi.Decoration;
+import org.fedoraproject.javapackages.validator.util.Common;
+import org.fedoraproject.javapackages.validator.util.ElementwiseValidator;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.kojan.javadeptools.rpm.RpmInfo;

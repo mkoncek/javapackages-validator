@@ -7,7 +7,7 @@ import java.util.TreeMap;
 
 import javax.tools.JavaFileObject;
 
-public class InMemoryClassLoader extends ClassLoader {
+public final class InMemoryClassLoader extends ClassLoader {
     private Map<String, Class<?>> classes = new TreeMap<>();
 
     public InMemoryClassLoader(Map<String, ? extends JavaFileObject> classes, ClassLoader parent) {

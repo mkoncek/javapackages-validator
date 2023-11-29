@@ -13,9 +13,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.lang3.tuple.Pair;
-import org.fedoraproject.javapackages.validator.Common;
-import org.fedoraproject.javapackages.validator.helpers.JarValidator;
 import org.fedoraproject.javapackages.validator.spi.Decorated;
+import org.fedoraproject.javapackages.validator.util.Common;
+import org.fedoraproject.javapackages.validator.util.JarValidator;
 
 import io.kojan.javadeptools.rpm.RpmPackage;
 
