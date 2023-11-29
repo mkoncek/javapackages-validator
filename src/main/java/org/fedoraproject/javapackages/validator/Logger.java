@@ -13,7 +13,6 @@ class Logger {
 
     public Logger() {
         setStream(LogEvent.debug, Main.getDebugOutputStream());
-        setStream(LogEvent.info, System.err);
     }
 
     public void setStream(LogEvent logEvent, PrintStream stream) {
@@ -28,9 +27,5 @@ class Logger {
 
     public void debug(String pattern, Decorated... arguments) {
         log(LogEvent.debug, pattern, arguments);
-    }
-
-    public void info(String pattern, Decorated... arguments) {
-        log(LogEvent.info, pattern, arguments);
     }
 }

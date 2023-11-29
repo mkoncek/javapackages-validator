@@ -1,9 +1,8 @@
-package org.fedoraproject.javapackages.validator.helpers;
+package org.fedoraproject.javapackages.validator.util;
 
 import java.nio.file.Path;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
-import org.fedoraproject.javapackages.validator.Common;
 import org.fedoraproject.javapackages.validator.spi.Decorated;
 
 import io.kojan.javadeptools.rpm.RpmArchiveInputStream;

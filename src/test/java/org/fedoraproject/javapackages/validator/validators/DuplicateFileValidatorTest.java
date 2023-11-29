@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 
 import org.fedoraproject.javapackages.validator.TestCommon;
-import org.fedoraproject.javapackages.validator.helpers.DuplicateFileValidator.DefaultDuplicateFileValidator;
+import org.fedoraproject.javapackages.validator.util.DuplicateFileValidator.DefaultDuplicateFileValidator;
 import org.junit.jupiter.api.Test;
 
 import io.kojan.javadeptools.rpm.RpmInfo;

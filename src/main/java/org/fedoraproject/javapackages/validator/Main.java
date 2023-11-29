@@ -44,6 +44,8 @@ import org.fedoraproject.javapackages.validator.spi.LogEntry;
 import org.fedoraproject.javapackages.validator.spi.LogEvent;
 import org.fedoraproject.javapackages.validator.spi.Validator;
 import org.fedoraproject.javapackages.validator.spi.ValidatorFactory;
+import org.fedoraproject.javapackages.validator.util.DefaultResult;
+import org.fedoraproject.javapackages.validator.util.DefaultValidator;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.kojan.javadeptools.rpm.RpmPackage;
@@ -488,7 +490,7 @@ public class Main {
                 return new NamedResult(result, validator.getTestName(), startTime, endTime);
             } catch (Exception ex) {
                 var result = new DefaultResult();
-                var logEntry = Common.logException(ex);
+                var logEntry = DefaultValidator.logException(ex);
                 result.error(logEntry.pattern(), logEntry.objects());
                 return new NamedResult(result, validator.getTestName());
             } finally {

@@ -1,5 +1,8 @@
-package org.fedoraproject.javapackages.validator;
+package org.fedoraproject.javapackages.validator.util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,14 +26,22 @@ public class DefaultResult implements Result {
         return log.iterator();
     }
 
-    protected void addResult(TestResult result) {
+    public void addResult(TestResult result) {
         if (result.compareTo(getResult()) > 0) {
             this.result = result;
         }
     }
 
-    protected void addLog(LogEntry logEntry) {
+    public void addLog(LogEntry logEntry) {
         log.add(logEntry);
+    }
+
+    public static LogEntry logException(Exception ex) {
+        var stackTrace = new ByteArrayOutputStream();
+        ex.printStackTrace(new PrintStream(stackTrace, false, StandardCharsets.UTF_8));
+        return LogEntry.error("An exception occured:{0}{1}",
+                Decorated.plain(System.lineSeparator()),
+                Decorated.plain(new String(stackTrace.toByteArray(), StandardCharsets.UTF_8)));
     }
 
     public void debug(String pattern, Decorated... arguments) {

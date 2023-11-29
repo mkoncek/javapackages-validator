@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 import org.fedoraproject.javapackages.validator.spi.LogEvent;
 import org.fedoraproject.javapackages.validator.spi.TestResult;
+import org.fedoraproject.javapackages.validator.util.DefaultValidator;
 
 import io.kojan.javadeptools.rpm.RpmPackage;
 

@@ -1,4 +1,4 @@
-package org.fedoraproject.javapackages.validator.helpers;
+package org.fedoraproject.javapackages.validator.util;
 
 import java.io.OutputStream;
 import java.nio.file.Files;

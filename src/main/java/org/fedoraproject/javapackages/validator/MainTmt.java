@@ -25,6 +25,7 @@ import org.apache.commons.collections4.IterableUtils;
 import org.fedoraproject.javapackages.validator.spi.Decorated;
 import org.fedoraproject.javapackages.validator.spi.LogEntry;
 import org.fedoraproject.javapackages.validator.spi.Validator;
+import org.fedoraproject.javapackages.validator.util.DefaultResult;
 import org.yaml.snakeyaml.Yaml;
 
 public class MainTmt extends Main {
@@ -45,7 +46,7 @@ public class MainTmt extends Main {
         TMT_TREE = Paths.get(getenv("TMT_TREE"));
     }
 
-    private static class HtmlTablePrintStream extends PrintStream {
+    private static final class HtmlTablePrintStream extends PrintStream {
         public HtmlTablePrintStream(OutputStream os) throws IOException {
             super(os, false, StandardCharsets.UTF_8);
             try (var is = MainTmt.class.getResourceAsStream("/tmt_html/header.html")) {
