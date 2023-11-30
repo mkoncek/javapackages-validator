@@ -25,7 +25,7 @@ public abstract class ElementwiseValidator extends DefaultValidator {
             if (filter.test(rpm.getInfo())) {
                 validate(rpm);
             } else {
-                debug("{0} filtered out {1}",
+                skip("{0} filtered out {1}",
                         Decorated.struct(getClass().getCanonicalName()),
                         Decorated.rpm(rpm));
             }
