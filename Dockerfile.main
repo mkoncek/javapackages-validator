@@ -5,18 +5,22 @@ WORKDIR "/usr/local/src/javapackages-validator"
 
 # First fetch dependencies without having sources
 COPY "pom.xml" "/usr/local/src/javapackages-validator/"
+COPY "spi/pom.xml" "/usr/local/src/javapackages-validator/spi/"
+COPY "tool/pom.xml" "/usr/local/src/javapackages-validator/tool/"
+COPY "util/pom.xml" "/usr/local/src/javapackages-validator/util/"
 RUN mvn -B clean install
 
-COPY "src/" "/usr/local/src/javapackages-validator/src/"
+COPY "spi/" "/usr/local/src/javapackages-validator/spi/"
+COPY "tool/" "/usr/local/src/javapackages-validator/tool/"
+COPY "util/" "/usr/local/src/javapackages-validator/util/"
 RUN mvn -B clean install
 
 ################################################################################
 
 FROM docker.io/library/eclipse-temurin:21-jdk-ubi9-minimal
-RUN microdnf -y update
 RUN microdnf -y install rpm-libs
 
-COPY --from=builder "/usr/local/src/javapackages-validator/target/dependency/" "/opt/javapackages-validator/dependency/"
-COPY --from=builder "/usr/local/src/javapackages-validator/target/validator.jar" "/opt/javapackages-validator/validator.jar"
+COPY --from=builder "/usr/local/src/javapackages-validator/tool/target/dependency/" "/opt/javapackages-validator/dependency/"
+COPY --from=builder "/usr/local/src/javapackages-validator/tool/target/validator-tool.jar" "/opt/javapackages-validator/validator.jar"
 
 ENTRYPOINT ["/opt/java/openjdk/bin/java", "--enable-preview", "--enable-native-access", "ALL-UNNAMED", "-cp", "/opt/javapackages-validator/validator.jar"]

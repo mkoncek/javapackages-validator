@@ -1,0 +1,32 @@
+summary: Run javapackages-validator tests
+contact:
+  - Marian Koncek <mkoncek@redhat.com>
+environment:
+  TEST_ARTIFACTS: /var/share/test-artifacts
+  JP_VALIDATOR_IMAGE: quay.io/mkoncek/javapackages-validator
+  ENVROOT: /
+discover:
+  how: shell
+  tests:
+    - name: /javadoc_noarch
+      description: >
+        Check whether javadoc packages have architecture noarch
+      test: ./jp_validator.sh -cn org.fedoraproject.javapackages.validator.validators.JavadocNoarchValidator
+    - name: /java_exclusive_arch
+      description: >
+        Check whether java packages have the ExclusiveArch field set correctly
+        according to this change: https://fedoraproject.org/wiki/Changes/Drop_i686_JDKs
+      test: ./jp_validator.sh -cn org.fedoraproject.javapackages.validator.validators.JavaExclusiveArchValidator
+    - name: /attribute/provides
+      test: ./jp_validator.sh -cn org.fedoraproject.javapackages.validator.validators.AttributeProvidesValidator
+    - name: /attribute/requires
+      test: ./jp_validator.sh -cn org.fedoraproject.javapackages.validator.validators.AttributeRequiresValidator
+provision:
+  how: local
+prepare:
+  - how: install
+    package:
+      - bash
+      - podman
+execute:
+  how: tmt

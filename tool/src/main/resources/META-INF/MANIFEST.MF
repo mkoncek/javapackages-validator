@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Build-Jdk-Spec: 17
+Class-Path: dependency/java-deptools-native-1.0.0-SNAPSHOT.jar dependenc
+ y/xz-1.9.jar dependency/zstd-jni-1.5.2-3.jar dependency/commons-compres
+ s-1.21.jar dependency/commons-lang3-3.12.0.jar dependency/commons-io-2.
+ 11.0.jar dependency/commons-collections4-4.4.jar dependency/commons-tex
+ t-1.10.0.jar dependency/xmvn-api-3.0.0.jar
+Main-Class: org.fedoraproject.javapackages.validator.Main
+Created-By: Maven Integration for Eclipse
+
