@@ -24,7 +24,9 @@ import java.util.regex.Pattern;
 import org.apache.commons.collections4.IterableUtils;
 import org.fedoraproject.javapackages.validator.spi.Decorated;
 import org.fedoraproject.javapackages.validator.spi.LogEntry;
+import org.fedoraproject.javapackages.validator.spi.LogEvent;
 import org.fedoraproject.javapackages.validator.spi.ResultBuilder;
+import org.fedoraproject.javapackages.validator.spi.TestResult;
 import org.fedoraproject.javapackages.validator.spi.Validator;
 import org.yaml.snakeyaml.Yaml;
 
@@ -47,11 +49,47 @@ public class MainTmt extends Main {
     }
 
     private static final class HtmlTablePrintStream extends PrintStream {
-        public HtmlTablePrintStream(OutputStream os) throws IOException {
+        public HtmlTablePrintStream(OutputStream os, TestResult result) throws IOException {
             super(os, false, StandardCharsets.UTF_8);
-            try (var is = MainTmt.class.getResourceAsStream("/tmt_html/header.html")) {
-                is.transferTo(super.out);
+            var maxValue = switch (result)
+            {
+            case skip -> LogEvent.skip;
+            case pass -> LogEvent.pass;
+            case info -> LogEvent.info;
+            case warn -> LogEvent.warn;
+            case fail -> LogEvent.fail;
+            case error -> LogEvent.error;
+            };
+
+            var ps = new PrintStream(super.out, false, StandardCharsets.UTF_8);
+            ps.append("""
+<!DOCTYPE html>
+<html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+<script src="../filter.js"></script>
+<link rel="stylesheet" href="../style.css">
+<table>
+<tr>
+    <th>Filter:</th>
+""");
+            for (var event : LogEvent.values()) {
+                ps.append("    ");
+                ps.append("<th><input type=\"checkbox\" class=\"filter_checkbox");
+                if (event.compareTo(maxValue) >= 0) {
+                    ps.append(" checkbox_shown_by_default");
+                }
+                ps.append("\" id=\"checkbox_" + event + "\" value=\"" + event + "\"><label for=\"checkbox_" + event + "\">");
+                ps.append(Character.toUpperCase(event.toString().charAt(0)));
+                ps.append(event.toString().substring(1));
+                ps.append("</label></th>");
+                ps.println();
             }
+            ps.append("""
+</tr>
+</table>
+
+<table>
+""");
         }
 
         public void printRow(LogEntry entry) {
@@ -183,7 +221,7 @@ public class MainTmt extends Main {
                 }
             }
             try (var os = Files.newOutputStream(TMT_TEST_DATA.resolve(resultFile + ".html"));
-                    var ps = new HtmlTablePrintStream(os)) {
+                    var ps = new HtmlTablePrintStream(os, namedResult.getResult())) {
                 for (var entry : chainedLogs) {
                     ps.printRow(entry);
                 }
