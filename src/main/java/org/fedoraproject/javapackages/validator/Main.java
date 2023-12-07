@@ -302,10 +302,7 @@ public class Main {
         parameters.classPaths.add(validatorPath);
         var parent = validatorPath.getParent();
         if (parent != null) {
-            Files.find(parent.resolve("dependency"), 1, (path, attributes) -> {
-                var filename = path.getFileName().toString();
-                return attributes.isRegularFile() && filename.startsWith("java-deptools-native") && filename.endsWith(".jar");
-            }).forEach(parameters.classPaths::add);
+            parameters.classPaths.add(parent.resolve("dependency").resolve("*"));
         }
 
         logger = new Logger();
