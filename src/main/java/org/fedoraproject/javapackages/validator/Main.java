@@ -140,12 +140,6 @@ public class Main {
     private static void compileFiles(Path sourcePath, Path outputDirectory, List<Path> classPaths,
             Iterable<String> compilerOptions, Logger logger) throws IOException {
         var sourceMtime = getRecursiveFileTime(sourcePath, (p, a) -> true).get();
-        for (var classPath : classPaths) {
-            var classMtime = getRecursiveFileTime(classPath, (p, a) -> true).get();
-            if (sourceMtime.compareTo(classMtime) < 0) {
-                sourceMtime = classMtime;
-            }
-        }
 
         if (Files.isSymbolicLink(outputDirectory)) {
             outputDirectory = Files.readSymbolicLink(outputDirectory);
