@@ -43,9 +43,11 @@ public class MainTmt extends Main {
         return result;
     }
 
-    public MainTmt() {
-        TMT_TEST_DATA = Paths.get(getenv("TMT_TEST_DATA"));
-        TMT_TREE = Paths.get(getenv("TMT_TREE"));
+    public static Main create() {
+        var result = new MainTmt();
+        result.TMT_TEST_DATA = Paths.get(getenv("TMT_TEST_DATA"));
+        result.TMT_TREE = Paths.get(getenv("TMT_TREE"));
+        return result;
     }
 
     private static final class HtmlTablePrintStream extends PrintStream {
@@ -284,6 +286,6 @@ public class MainTmt extends Main {
     }
 
     public static void main(String[] args) throws Exception {
-        new MainTmt().run(args);
+        create().run(args);
     }
 }

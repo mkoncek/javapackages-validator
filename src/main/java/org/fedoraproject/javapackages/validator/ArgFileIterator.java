@@ -16,13 +16,16 @@ class ArgFileIterator implements Iterator<RpmPackage> {
     private Iterator<Path> argIterator;
     private Iterator<Path> pathIterator = null;
 
-    public ArgFileIterator(Iterable<Path> args) {
-        this.argIterator = args.iterator();
-        pathIterator = advance();
+    public static ArgFileIterator create(Iterable<Path> args) {
+        var result = new ArgFileIterator();
+        result.argIterator = args.iterator();
+        result.pathIterator = result.advance();
 
-        if (pathIterator == null) {
-            pathIterator = Collections.<Path>emptyList().iterator();
+        if (result.pathIterator == null) {
+            result.pathIterator = Collections.<Path>emptyList().iterator();
         }
+
+        return result;
     }
 
     private Iterator<Path> advance() {
