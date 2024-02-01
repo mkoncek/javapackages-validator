@@ -190,7 +190,10 @@ public class MainTmt extends Main {
 
     private static String getFormattedDuration(LocalDateTime startTime, LocalDateTime endTime) {
         var duration = Duration.between(startTime, endTime);
-        return String.format("%02d:%02d:%02d.%03d", duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart(), duration.toMillisPart());
+        // TODO Wait for resolution within TF
+        // return String.format("%02d:%02d:%02d.%03d", duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart(), duration.toMillisPart());
+
+        return String.format("%02d:%02d:%02d", duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart());
     }
 
     @Override
