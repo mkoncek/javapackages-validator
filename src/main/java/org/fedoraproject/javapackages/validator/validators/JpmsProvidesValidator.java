@@ -77,12 +77,14 @@ public class JpmsProvidesValidator extends JarValidator {
 
     @Override
     public void validate(RpmPackage rpm) throws Exception {
+        jarModuleNames.clear();
         var providedModuleNames = new TreeSet<String>();
 
         for (var reldep : rpm.getInfo().getProvides()) {
             var name = reldep.getName();
             if (name.startsWith("jpms(") && name.endsWith(")")) {
-                providedModuleNames.add(name.substring(5, name.length() - 1));
+                name = name.substring(5, name.length() - 1);
+                providedModuleNames.add(name);
                 debug("{0}: Provides JPMS name: {1}", Decorated.rpm(rpm), Decorated.actual(name));
             }
         }
