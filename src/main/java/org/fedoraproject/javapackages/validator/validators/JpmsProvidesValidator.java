@@ -53,7 +53,7 @@ public class JpmsProvidesValidator extends JarValidator {
         }
 
         for (var entry : moduleNames) {
-            debug("{0}: {1}: {2}: Found module name: {3}",
+            debug("{0}: {1}: {2}: found module name: {3}",
                     Decorated.rpm(rpm),
                     Decorated.outer(rpmEntryString),
                     Decorated.struct(entry.getKey()),
@@ -66,7 +66,7 @@ public class JpmsProvidesValidator extends JarValidator {
                 moduleName = entry.getValue();
                 jarModuleNames.put(rpmEntryString, moduleName);
             } else if (! moduleName.equals(entry.getValue())) {
-                fail("{0}: {1}: Differing module names: {2} and {3}",
+                fail("{0}: {1}: differing module names: {2} and {3}",
                         Decorated.rpm(rpm),
                         Decorated.outer(rpmEntryString),
                         Decorated.struct(moduleName),
@@ -85,7 +85,7 @@ public class JpmsProvidesValidator extends JarValidator {
             if (name.startsWith("jpms(") && name.endsWith(")")) {
                 name = name.substring(5, name.length() - 1);
                 providedModuleNames.add(name);
-                debug("{0}: Provides JPMS name: {1}", Decorated.rpm(rpm), Decorated.actual(name));
+                debug("{0}: provides JPMS name: {1}", Decorated.rpm(rpm), Decorated.actual(name));
             }
         }
 
@@ -95,7 +95,7 @@ public class JpmsProvidesValidator extends JarValidator {
         for (var providedModuleName : providedModuleNames) {
             if (! jarModuleNames.values().contains(providedModuleName)) {
                 ok = false;
-                fail("{0}: Module name {1} provided by this RPM was not found in any JAR file",
+                fail("{0}: module name {1} provided by this RPM was not found in any JAR file",
                         Decorated.rpm(rpm),
                         Decorated.actual(providedModuleName));
             }
@@ -104,7 +104,7 @@ public class JpmsProvidesValidator extends JarValidator {
         for (var jarModuleNameEntry : jarModuleNames.entrySet()) {
             if (! providedModuleNames.contains(jarModuleNameEntry.getValue())) {
                 ok = false;
-                fail("{0}: {1}: Module name {2} is not provided by this RPM",
+                fail("{0}: {1}: module name {2} is not provided by this RPM",
                         Decorated.rpm(rpm),
                         Decorated.outer(jarModuleNameEntry.getKey()),
                         Decorated.actual(jarModuleNameEntry.getValue()));
@@ -112,9 +112,14 @@ public class JpmsProvidesValidator extends JarValidator {
         }
 
         if (ok) {
-            pass("{0}: found module names exactly match provided JPMS fields, {1}",
-                    Decorated.rpm(rpm),
-                    Decorated.actual(providedModuleNames.stream().toList()));
+            if (providedModuleNames.isEmpty()) {
+                skip("{0}: no JPMS module names found neither as JPMS RPM Provides nor in any Jars",
+                        Decorated.rpm(rpm));
+            } else {
+                pass("{0}: found module names exactly match provided JPMS fields, {1}",
+                        Decorated.rpm(rpm),
+                        Decorated.actual(providedModuleNames.stream().toList()));
+            }
         }
     }
 }
