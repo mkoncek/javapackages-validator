@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class MainTmtTest {
-
     @TempDir
     Path tmtTree;
     @TempDir
@@ -83,7 +82,6 @@ class MainTmtTest {
 
     @Test
     void testCrashLog() throws Exception {
-
         // Corrupted empty file triggers the crash
         Files.createFile(artifactsDir.resolve("empty.rpm"));
 
@@ -163,7 +161,6 @@ class MainTmtTest {
     }
 
     @Test
-    @Disabled("https://github.com/fedora-java/javapackages-validator/issues/94")
     void testCompilationFailure() throws Exception {
         writeResource(tmtTree, "Boom.java", "package pkg; import java.util.foo.bar; class Boom{}");
         args.add("-sp");
