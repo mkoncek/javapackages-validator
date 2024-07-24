@@ -2,7 +2,6 @@ package org.fedoraproject.javapackages.validator;
 
 import java.util.Objects;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.fedoraproject.javapackages.validator.spi.Decorated;
 import org.fedoraproject.javapackages.validator.spi.Decoration;
 
@@ -23,7 +22,7 @@ class HtmlDecorator implements TextDecorator {
         }
 
         result.append("\">");
-        result.append(StringEscapeUtils.escapeHtml4(Objects.toString(decorated.getObject())).replace(System.lineSeparator(), "<br>"));
+        result.append(Objects.toString(decorated.getObject()));
         result.append("</text>");
 
         return result.toString();

@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class MainTmtTest {
-
     @TempDir
     Path tmtTree;
     @TempDir
@@ -83,7 +82,6 @@ class MainTmtTest {
 
     @Test
     void testCrashLog() throws Exception {
-
         // Corrupted empty file triggers the crash
         Files.createFile(artifactsDir.resolve("empty.rpm"));
 
@@ -96,7 +94,6 @@ class MainTmtTest {
     }
 
     @Test
-    @Disabled("https://github.com/fedora-java/javapackages-validator/issues/82")
     void testHtmlNewLine() throws Exception {
         copyResources(artifactsDir, "arg_file_iterator/dangling-symlink-1-1.noarch.rpm");
 
