@@ -5,6 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
@@ -181,8 +183,10 @@ public class Main {
             }
 
             try {
-                if (!javac.getTask(null, fileManager, null, compilerOptions, null, compilationUnits).call()) {
-                    throw new RuntimeException("Failed to compile sources");
+                var output = new StringWriter();
+                new PrintWriter(output).println("Failed to compile sources:");
+                if (!javac.getTask(output, fileManager, null, compilerOptions, null, compilationUnits).call()) {
+                    throw new RuntimeException(output.getBuffer().toString());
                 }
             } finally {
                 fileManager.close();
