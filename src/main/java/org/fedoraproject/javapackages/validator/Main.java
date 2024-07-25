@@ -445,7 +445,7 @@ public class Main {
             if (e.getValue().isPresent()) {
                 var args = e.getValue().get();
                 result.append(decorate(Decorated.custom(" [ ", new Decoration(Decoration.Color.blue, Decoration.Modifier.bright))).toString());
-                result.append(Stream.of(args).map(a -> decorate(Decorated.custom(a, new Decoration(Decoration.Color.cyan))).toString()).collect(Collectors.joining(" ")));
+                result.append(args.stream().map(a -> decorate(Decorated.custom(a, new Decoration(Decoration.Color.cyan))).toString()).collect(Collectors.joining(" ")));
                 result.append(decorate(Decorated.custom(" ]", new Decoration(Decoration.Color.blue, Decoration.Modifier.bright))).toString());
             }
             return result.toString();
