@@ -92,7 +92,7 @@ The key is a tmt test name. The value of the field must be a list of strings. It
 
 `exclude-tests-matching`::
 The value of this field is a list of strings.
-The strings must be valid https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html[Java regular expressions].
+The strings must be valid https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Pattern.html[Java regular expressions].
 If any of these patterns matches the test name of a validator, it will be skipped.
 
 .Example of `javapackages-validator.yaml` configuration file
@@ -115,7 +115,7 @@ $ mvn install
 ----
 
 == Custom validators
-A custom validator must inherit from the `org.fedoraproject.javapackages.validator.Validator` class and have its name listed in the service file on the class path of the program.
+A custom validator must inherit from the `org.fedoraproject.javapackages.validator.Validator` class and have its name listed in the https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html#deploying-service-providers-on-the-class-path-heading[service file] on the class path of the program.
 Custom validators can override functions:
 
 `void arguments(String[] args)`::
