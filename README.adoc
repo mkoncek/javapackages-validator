@@ -5,12 +5,19 @@
 _Javapackages-validator_ is a tool used to test RPM files.
 It executes checks implemented as Java classes over the set of provided RPM files.
 
+== Building
+The project is built with Maven. JDK of version 21 is required. Simply run:
+[source, shell]
+----
+$ mvn install
+----
+
 == Usage
 The tool is executed from command line using `java` command with the proper class path.
 JVM of version 21 is required.
 
 ----
-Main [optional flags] <test name> [validator flags] [-f|-u RPM files or directories to test]...
+Main [optional flags] <main arguments>... [-f|-u RPM files or directories to test]...
 ----
 
 [NOTE]
@@ -31,6 +38,12 @@ Options for specifying validators::
 `-cp`, `--class-path`::: Additional class path entry for the validators.
 [horizontal!]
 
+Main arguments::
+[horizontal]
+_test name_::: The test name of the test that shall be executed.
+_validator factory_::: A fully-qualified-name of a `ValidatorFactory` to use for test discovery.
+[horizontal!]
+
 Options for specifying tested RPM files, can be specified multiple times::
 [horizontal]
 `-f`, `--file`::: File path of an RPM file.
@@ -41,18 +54,23 @@ Options for specifying tested RPM files, can be specified multiple times::
 The parameters specifying RPM files can either be RPM file paths or directories.
 In case of directories, the tool recursively searches for RPM files found inside.
 
+=== Main arguments
+There are two types of main arguments as was shown.
+
+test name::
+The test name must start with a `/`.
+It can be immediately followed by space-separated square parentheses the contents of which will be passed as arguments to the validator.
+If no test name is provided, then all discovered tests are executed.
+
+validator factory::
+The validator factory must be present on the class or source path.
+The validator provides a built-in class +
+`org.fedoraproject.javapackages.validator.validators.DefaultValidatorFactory`.
+
 === Validator arguments
 The tool recursively finds all `.java` files present in the _source path_ directory, compiles them and places the results under the path specified as the _class path_.
 Class path may already exist and contain `.class` files, this is useful to implement <<_recompilation, caching>>.
 The entries on this class path are used to add additional validator classes to the tool.
-
-Validator arguments can be immediately followed by space-separated square parentheses the contents of which will be passed as arguments to the validator.
-
-.Example
-[source, shell]
-----
-$ Main package.name.ClassName [ arg1 arg2 'arg 3' ] -f file.rpm
-----
 
 [#_recompilation]
 ==== Recompilation
@@ -66,12 +84,20 @@ Recompilation is caused by any of these conditions:
 
 Recompilation causes the class path directory to be cleaned before the newly compiled classes are placed there.
 
-=== Service file
+=== https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html#deploying-service-providers-on-the-class-path-heading[Service file]
 The file `META-INF/services/org.fedoraproject.javapackages.validator.spi.ValidatorFactory` contains a line-separated list of validator factory class names which are available to be executed.
 This file will be copied from the source path to the class path and is expected to be present on the class path if source path is not specified.
 
 The validator main argument passed to javapackages-validator must exactly match one of the names listed in either the service file or the service file on the built-in class path.
 
+.Example
+[source, shell]
+----
+$ Main /test-no-args -f file.rpm
+$ Main package.name.CustomValidatorFactory /test-with-args [ arg1 arg2 'arg 3' ] -f file.rpm
+----
+
+[#_tmt]
 === tmt
 The tool contains another main class `MainTmt` which is intended to be invoked from within tmt tests.
 When the validator is run from the tmt entry point, it requires the environment variables `TMT_TEST_DATA` and `TMT_TREE` to be defined.
@@ -82,7 +108,7 @@ This file can be located either in the root, i.e. the value of the `TMT_TREE` va
 Every validator has an associated _test name_.
 This is the result of the virtual `getTestName` function.
 This name must be in the format of tmt tests, i.e. starting with `/`.
-Test names are used to create report files.
+Test names are used for test selection, exclusion and to create report files.
 
 ==== Configuration
 The following fields are allowed in the YAML configuration file.
@@ -107,36 +133,36 @@ exclude-tests-matching:
 The tool generates both `.log` and `.html` reports with filenames matching the validator test names.
 These files are placed in the directory `${TMT_TEST_DATA}/results`.
 
-== Building
-Project is built with Maven. Simply run:
-[source, shell]
-----
-$ mvn install
-----
-
 == Custom validators
-A custom validator must inherit from the `org.fedoraproject.javapackages.validator.Validator` class and have its name listed in the https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html#deploying-service-providers-on-the-class-path-heading[service file] on the class path of the program.
-Custom validators can override functions:
-
-`void arguments(String[] args)`::
-This is invoked during argument processing before the test execution to configure the validator from the arguments that were passed to it.
-
-`void validate(Iterable<RpmFile> rpms)`::
-This is the main function of the validator.
-The validator is executed on a collection of RPM files.
-The validator is supposed to call functions `debug`, `info`, `pass`, `fail`, `error` to provide information about its execution.
-For details, see the section <<_result_states>>.
+A custom validator must implement the `org.fedoraproject.javapackages.validator.spi.Validator` interface and have its name listed in the service file on the class path of the program.
+Custom validators must implement the following methods.
 
 `String getTestName()`::
-This is used to obtain the tmt test name. See also the `TmtTest` annotation class.
+This is used to obtain the tmt test name as explained in the <<_tmt>> section.
 
-[#_result_states]
-=== Result states
-Each validator has a single result state.
+`Result validate(Iterable<RpmPackage> rpms, List<String> args);`::
+This is the main function of the validator.
+The validator is executed on a collection of RPM files and is given a list of arguments producing a `Result`.
+
+=== Producing a result
+A `Result` is effectively a collection of log entries and a final test result.
+There is a helper class `ResultBuilder` to ease producing results.
+User code is expected to call functions `debug`, `skip`, `pass`, `info`, `warn`, `fail`, `error` and produce the final result object using the `build` function.
+These functions internally produce `LogEntry` objects with the formatted message.
+
+.Log events
+[horizontal]
+`debug`::
+This event serves to produce verbose internal information that is not visible by default and serves to ease debugging of the validators themselves.
+[horizontal!]
+
+The other log events correspond to the following result states.
+
+==== Result states
+Each `Result` has a single result state.
 The starting state is `skip`.
 The state is overriden by calling corresponding methods of the `Validator` class.
 The state listed lower in the following hierarchy overrides the previous states but not vice-versa.
-Note that `debug` is not a result state, it only serves for the validator to provide verbose info.
 
 .Result states
 [horizontal]
@@ -159,3 +185,33 @@ At least one check failed.
 `error`::
 An error occured, for example invalid input or an unexpected state.
 [horizontal!]
+
+=== Invoking custom validators
+If the user wants to run the validator on a list of separate `.java` or `class` files, they need to be passed via the `--cp` or the `--sp` flags.
+
+Examples of a custom factory and a custom service file follow.
+
+.custom validator factory `ValidatorFactoryCustom.java`
+[source, java]
+----
+package org.fedoraproject.javapackages.validator.validators.custom;
+
+import java.util.List;
+
+import org.fedoraproject.javapackages.validator.spi.Validator;
+import org.fedoraproject.javapackages.validator.spi.ValidatorFactory;
+
+public class ValidatorFactoryCustom implements ValidatorFactory {
+    @Override
+    public List<Validator> getValidators() {
+        return List.of(new Validator[] {
+                // ...
+        });
+    }
+}
+----
+
+.custom validator service file `org.fedoraproject.javapackages.validator.spi.ValidatorFactory`
+----
+org.fedoraproject.javapackages.validator.validators.custom.ValidatorFactoryCustom
+----
