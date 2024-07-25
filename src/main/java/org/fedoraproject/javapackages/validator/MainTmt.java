@@ -158,7 +158,7 @@ public class MainTmt extends Main {
                         continue;
                     }
 
-                    var previous = parameters.validatorArgs.put(validator.getClass().getCanonicalName(), Optional.of(args));
+                    var previous = parameters.validatorArgs.put(validator.getTestName(), Optional.of(args));
                     if (previous != null) {
                         additionalLogs.put(validator.getTestName(), new ArrayList<>(Collections.singletonList(
                                 LogEntry.debug("Overriding arguments for {0}", Decorated.struct(validator.getClass().getCanonicalName())))));

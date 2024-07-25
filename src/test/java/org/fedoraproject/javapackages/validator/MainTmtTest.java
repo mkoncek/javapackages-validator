@@ -118,7 +118,6 @@ class MainTmtTest {
     }
 
     @Test
-    @Disabled("https://github.com/fedora-java/javapackages-validator/issues/84")
     void testCustomConfig() throws Exception {
         copyResources(artifactsDir, "arg_file_iterator/dangling-symlink-1-1.noarch.rpm");
         writeResource(tmtTree, "javapackages-validator.yaml", //
