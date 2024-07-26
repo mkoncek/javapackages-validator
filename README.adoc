@@ -16,8 +16,9 @@ $ mvn install
 The tool is executed from command line using `java` command with the proper class path.
 JVM of version 21 is required.
 
+[subs = quotes]
 ----
-Main [optional flags] <main arguments>... [-f|-u RPM files or directories to test]...
+Main [_optional flags_] <_main arguments_>... [-f _RPM files or directories to test_]...
 ----
 
 [NOTE]
@@ -46,8 +47,7 @@ _validator factory_::: A fully-qualified-name of a `ValidatorFactory` to use for
 
 Options for specifying tested RPM files, can be specified multiple times::
 [horizontal]
-`-f`, `--file`::: File path of an RPM file.
-`-u`, `--url`::: URL of an RPM file.
+`-f`, `--file`::: File path of an RPM file or a directory.
 [horizontal!]
 
 === RPM files
@@ -84,11 +84,12 @@ Recompilation is caused by any of these conditions:
 
 Recompilation causes the class path directory to be cleaned before the newly compiled classes are placed there.
 
-=== https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html#deploying-service-providers-on-the-class-path-heading[Service file]
-The file `META-INF/services/org.fedoraproject.javapackages.validator.spi.ValidatorFactory` contains a line-separated list of validator factory class names which are available to be executed.
+=== Service file
+The file `META-INF/services/org.fedoraproject.javapackages.validator.spi.ValidatorFactory` is a standard https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html#deploying-service-providers-on-the-class-path-heading[Java service file].
+It contains a line-separated list of validator factory class names which are available to be executed.
 This file will be copied from the source path to the class path and is expected to be present on the class path if source path is not specified.
 
-The validator main argument passed to javapackages-validator must exactly match one of the names listed in either the service file or the service file on the built-in class path.
+The validator main arguments passed to `javapackages-validator` must exactly match one of the test names listed in either the service file or the service file on the built-in class path.
 
 .Example
 [source, shell]
@@ -134,8 +135,8 @@ The tool generates both `.log` and `.html` reports with filenames matching the v
 These files are placed in the directory `${TMT_TEST_DATA}/results`.
 
 == Custom validators
-A custom validator must implement the `org.fedoraproject.javapackages.validator.spi.Validator` interface and have its name listed in the service file on the class path of the program.
-Custom validators must implement the following methods.
+A custom validator must implement the `org.fedoraproject.javapackages.validator.spi.Validator` interface.
+The interface consists of the following methods.
 
 `String getTestName()`::
 This is used to obtain the tmt test name as explained in the <<_tmt>> section.
@@ -187,11 +188,11 @@ An error occured, for example invalid input or an unexpected state.
 [horizontal!]
 
 === Invoking custom validators
-If the user wants to run the validator on a list of separate `.java` or `class` files, they need to be passed via the `--cp` or the `--sp` flags.
+If the user wants to run the tool with custom validators provided as `.java` or `class` files, they need to be present on the source path or the class path.
 
 Examples of a custom factory and a custom service file follow.
 
-.custom validator factory `ValidatorFactoryCustom.java`
+.Custom validator factory `ValidatorFactoryCustom.java`
 [source, java]
 ----
 package org.fedoraproject.javapackages.validator.validators.custom;
@@ -211,7 +212,7 @@ public class ValidatorFactoryCustom implements ValidatorFactory {
 }
 ----
 
-.custom validator service file `org.fedoraproject.javapackages.validator.spi.ValidatorFactory`
+.Custom validator service file `org.fedoraproject.javapackages.validator.spi.ValidatorFactory`
 ----
 org.fedoraproject.javapackages.validator.validators.custom.ValidatorFactoryCustom
 ----
