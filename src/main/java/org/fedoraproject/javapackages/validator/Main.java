@@ -96,8 +96,11 @@ public class Main {
     }
 
     private static void printHelp() {
-        System.out.println("Usage: Main [optional flags] <validator factory name | test name>... [test arguments] <-f | -u RPM files or directories to test>...");
+        System.out.println("Usage: Main [optional flags] <validator factory name | test name>... [test arguments] <-f RPM files or directories to test>...");
+        System.out.println("Optional flags:");
         System.out.println("    " + Flag.HELP + " - Print help message");
+        System.out.println("    " + Flag.DEBUG + " - Display debugging output");
+        System.out.println("    " + Flag.COLOR + " - Display colored output");
         System.out.println();
         System.out.println("Options for specifying validators:");
         System.out.println("    " + Flag.SOURCE_PATH + " - File path of a source file");
@@ -108,12 +111,9 @@ public class Main {
         System.out.println("the contents of which will be passed as arguments to the test.");
         System.out.println();
         System.out.println("Options for specifying tested RPM files, can be specified multiple times:");
-        System.out.println("    " + Flag.FILE + " - File path of an .rpm file");
+        System.out.println("    " + Flag.FILE + " - File path of an RPM file or a directory");
         // System.out.println("    " + Flag.URL + " - URL of an .rpm file");
-        System.out.println();
-        System.out.println("Optional flags:");
-        System.out.println("    " + Flag.DEBUG + " - Display debugging output");
-        System.out.println("    " + Flag.COLOR + " - Display colored output");
+
     }
 
     private static Optional<FileTime> getRecursiveFileTime(Path path, BiPredicate<Path, BasicFileAttributes> filter) {
