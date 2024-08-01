@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.fedoraproject.javapackages.validator.TestCommon;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class NVRJarMetadataValidatorTest {
@@ -42,7 +41,6 @@ public class NVRJarMetadataValidatorTest {
     }
 
     @Test
-    @Disabled
     public void testJarOutsidesOfJavadir() throws Exception {
         var validator = new NVRJarMetadataValidator();
         validator.validate(TestCommon.fromPaths(NON_JAVADIR, NON_JAVADIR_SRC));
