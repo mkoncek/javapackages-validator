@@ -1,6 +1,7 @@
 package org.fedoraproject.javapackages.validator.validators;
 
 import java.io.ByteArrayInputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -79,34 +80,43 @@ public class NVRJarMetadataValidator extends DefaultValidator {
 
         @Override
         public void acceptJarEntry(RpmPackage rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {
-            try (var is = new JarInputStream(new ByteArrayInputStream(content))) {
-                var mf = is.getManifest();
-                var attrs = mf.getMainAttributes();
+            var jarPath = Paths.get(rpmEntry.getName());
+            var standardLocations = List.of("/usr/share/java", "/usr/lib/java");
+            if (standardLocations.stream().anyMatch(jarPath::startsWith)) {
+                try (var is = new JarInputStream(new ByteArrayInputStream(content))) {
+                    var mf = is.getManifest();
+                    var attrs = mf.getMainAttributes();
 
-                for (var entry : ENTRIES) {
-                    var srpmValue = entry.valueOf(sourceRpm);
-                    var attrValue = attrs.getValue(entry.name());
+                    for (var entry : ENTRIES) {
+                        var srpmValue = entry.valueOf(sourceRpm);
+                        var attrValue = attrs.getValue(entry.name());
 
-                    if (attrValue == null) {
-                        fail("{0}: {1}: Jar manifest attribute {2} is not present",
-                                Decorated.rpm(rpm),
-                                Decorated.custom(Common.getEntryPath(rpmEntry), JarValidator.DECORATION_JAR),
-                                Decorated.struct(entry.name()));
-                    } else if (srpmValue.equals(attrValue)) {
-                        pass("{0}: {1}: Jar manifest attribute {2} with value \"{3}\" matches the RPM attribute",
-                                Decorated.rpm(rpm),
-                                Decorated.custom(Common.getEntryPath(rpmEntry), JarValidator.DECORATION_JAR),
-                                Decorated.struct(entry.name()),
-                                Decorated.actual(attrValue));
-                    } else {
-                        fail("{0}: {1}: Jar manifest attribute {2} with value \"{3}\" does not match the RPM attribute value \"{4}\"",
-                                Decorated.rpm(rpm),
-                                Decorated.custom(Common.getEntryPath(rpmEntry), JarValidator.DECORATION_JAR),
-                                Decorated.struct(entry.name()),
-                                Decorated.actual(attrValue),
-                                Decorated.expected(srpmValue));
+                        if (attrValue == null) {
+                            fail("{0}: {1}: Jar manifest attribute {2} is not present",
+                                    Decorated.rpm(rpm),
+                                    Decorated.custom(Common.getEntryPath(rpmEntry), JarValidator.DECORATION_JAR),
+                                    Decorated.struct(entry.name()));
+                        } else if (srpmValue.equals(attrValue)) {
+                            pass("{0}: {1}: Jar manifest attribute {2} with value \"{3}\" matches the RPM attribute",
+                                    Decorated.rpm(rpm),
+                                    Decorated.custom(Common.getEntryPath(rpmEntry), JarValidator.DECORATION_JAR),
+                                    Decorated.struct(entry.name()),
+                                    Decorated.actual(attrValue));
+                        } else {
+                            fail("{0}: {1}: Jar manifest attribute {2} with value \"{3}\" does not match the RPM attribute value \"{4}\"",
+                                    Decorated.rpm(rpm),
+                                    Decorated.custom(Common.getEntryPath(rpmEntry), JarValidator.DECORATION_JAR),
+                                    Decorated.struct(entry.name()),
+                                    Decorated.actual(attrValue),
+                                    Decorated.expected(srpmValue));
+                        }
                     }
                 }
+            } else {
+                skip("{0}: Ignoring Jar file {1} installed in a non-standard location: none of {2}",
+                        Decorated.rpm(rpm),
+                        Decorated.custom(Common.getEntryPath(rpmEntry), JarValidator.DECORATION_JAR),
+                        Decorated.outer(standardLocations));
             }
         }
     }
