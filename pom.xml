@@ -109,6 +109,10 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
         <version>3.13.0</version>
         <configuration>
           <release>22</release>
+          <compilerArgs>
+            <arg>--add-reads</arg>
+            <arg>org.fedoraproject.javapackages.validator=ALL-UNNAMED</arg>
+          </compilerArgs>
         </configuration>
       </plugin>
       <plugin>

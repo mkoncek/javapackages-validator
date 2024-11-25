@@ -170,6 +170,7 @@ public class Main {
         try (var session = new SessionBuilderSupplier(aether).get()
                 .withLocalRepositoryBaseDirectories(parameters.outputDir.resolve("local-repo"))
                 .withRepositoryListener(new AbstractRepositoryListener() {
+                    @Override
                     public void artifactResolved(RepositoryEvent event) {
                         logger.debug("Resolved dependency {0} from repository {1}",
                                 Decorated.actual(event.getArtifact()), Decorated.struct(event.getRepository().getId()));
