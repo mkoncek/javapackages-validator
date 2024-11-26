@@ -10,12 +10,16 @@ RUN mvn -B clean install javadoc:javadoc
 COPY "src/" "/usr/local/src/javapackages-validator/src/"
 RUN mvn -B -U clean install javadoc:javadoc
 
+RUN jlink --output "/opt/jre" --strip-debug --no-man-pages --no-header-files \
+ --add-modules java.base,java.compiler,java.xml,java.naming,javax.tools
+
 ################################################################################
 
-FROM docker.io/library/eclipse-temurin:23-jdk-ubi9-minimal
+FROM registry.access.redhat.com/ubi9-minimal:latest
 RUN microdnf -y update
 RUN microdnf -y install rpm-libs
 
+COPY --from=builder "/opt/jre" "/opt/java/openjdk"
 COPY --from=builder "/usr/local/src/javapackages-validator/target/validator.jar" "/opt/javapackages-validator/validator.jar"
 
 ENTRYPOINT ["/opt/java/openjdk/bin/java", "--enable-native-access", "ALL-UNNAMED", "-cp", "/opt/javapackages-validator/validator.jar"]
