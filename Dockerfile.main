@@ -1,5 +1,6 @@
 FROM docker.io/library/eclipse-temurin:23-jdk-ubi9-minimal AS builder
 RUN microdnf -y install git-core maven rpm-libs
+RUN mkdir /opt/rpm-libs && cp /usr/lib64/librpm.so.9 $(ldd /usr/lib64/librpm.so.9 | awk '{print$3}') /opt/rpm-libs
 
 WORKDIR "/usr/local/src/javapackages-validator"
 
@@ -15,10 +16,9 @@ RUN jlink --output "/opt/jre" --strip-debug --no-man-pages --no-header-files \
 
 ################################################################################
 
-FROM registry.access.redhat.com/ubi9-minimal:latest
-RUN microdnf -y update
-RUN microdnf -y install rpm-libs
+FROM registry.access.redhat.com/ubi9-micro:latest
 
+COPY --from=builder "/opt/rpm-libs/*" "/usr/lib64"
 COPY --from=builder "/opt/jre" "/opt/java/openjdk"
 COPY --from=builder "/usr/local/src/javapackages-validator/target/validator.jar" "/opt/javapackages-validator/validator.jar"
 
