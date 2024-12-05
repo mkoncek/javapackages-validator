@@ -18,7 +18,7 @@ RUN jlink --output "/opt/jre" --strip-debug --no-man-pages --no-header-files \
 
 FROM registry.access.redhat.com/ubi9-micro:latest
 
-COPY --from=builder "/opt/rpm-libs/*" "/usr/lib64"
+COPY --from=builder "/opt/rpm-libs/" "/usr/lib64"
 COPY --from=builder "/opt/jre" "/opt/java/openjdk"
 COPY --from=builder "/usr/local/src/javapackages-validator/target/validator.jar" "/opt/javapackages-validator/validator.jar"
 
