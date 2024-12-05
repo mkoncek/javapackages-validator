@@ -85,6 +85,7 @@ public class Main {
         static final Flag CLASS_PATH = new Flag("-cp", "--class-path");
 
         static final Flag FILE = new Flag("-f", "--file");
+        static final Flag FILES = new Flag("--files");
         // static final Flag URL = new Flag("-u", "--url");
 
         static final Flag HELP = new Flag("-h", "--help");
@@ -101,7 +102,7 @@ public class Main {
         }
 
         static final Flag[] ALL_FLAGS = new Flag[] {
-            SOURCE_PATH, OUTPUT_DIRECTORY, CLASS_PATH, FILE, /*URL,*/ HELP, COLOR, DEBUG,
+            SOURCE_PATH, OUTPUT_DIRECTORY, CLASS_PATH, FILE, FILES, HELP, COLOR, DEBUG,
         };
     }
 
@@ -332,7 +333,7 @@ public class Main {
         }
 
         Flag lastFlag = null;
-        for (int i = 0; i != args.length; ++i) {
+        for (int i = 0; i < args.length; ++i) {
             if (args[i].startsWith("-")) {
                 lastFlag = null;
 
@@ -371,6 +372,11 @@ public class Main {
                 parameters.classPaths.add(resolveRelativePathCommon(args[i]));
             } else if (lastFlag == Flag.FILE) {
                 parameters.argPaths.add(Path.of(args[i]));
+            } else if (lastFlag == Flag.FILES) {
+                while (i != args.length) {
+                    parameters.argPaths.add(Path.of(args[i]));
+                    ++i;
+                }
             }
         }
 
