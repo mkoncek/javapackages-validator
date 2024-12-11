@@ -22,6 +22,11 @@ public abstract class BytecodeVersionJarValidator extends JarValidator {
         }
     }
 
+    @Override
+    protected RpmJarResultBuilder spawnValidator() {
+        return new BytecodeVersionJarResultBuilder();
+    }
+
     public static class BytecodeVersionJarResultBuilder extends RpmJarResultBuilder {
         @Override
         public void acceptJarEntry(RpmPackage rpm, CpioArchiveEntry rpmEntry, byte[] content) throws Exception {

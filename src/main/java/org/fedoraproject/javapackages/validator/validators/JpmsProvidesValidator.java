@@ -30,10 +30,10 @@ public class JpmsProvidesValidator extends JarValidator {
 
     @Override
     protected RpmJarResultBuilder spawnValidator() {
-        return new JpmsProvidesResultBuilder();
+        return new JpmsResultBuilder();
     }
 
-    protected static class JpmsProvidesResultBuilder extends RpmJarResultBuilder {
+    public static class JpmsResultBuilder extends RpmJarResultBuilder {
         private Map<String, String> jarModuleNames = new TreeMap<>();
 
         @Override
