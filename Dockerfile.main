@@ -1,23 +1,26 @@
 FROM quay.io/hummingbird/openjdk:25-builder AS builder
-USER root
 ENV JAVA_HOME=/usr/lib/jvm/jre-25-openjdk
-RUN dnf -y install git-core maven-unbound rpm-libs
-RUN mkdir /opt/rpm-libs && cp /usr/lib64/librpm.so.10 $(ldd /usr/lib64/librpm.so.10 | awk '{print$3}') /opt/rpm-libs
+USER root
+RUN dnf -y install awk git-core maven-unbound rpm-libs
+USER 65532
+RUN mkdir ${HOME}/rpm-libs && cp /usr/lib64/librpm.so.10 $(ldd /usr/lib64/librpm.so.10 | awk '{print$3}') ${HOME}/rpm-libs
 
-WORKDIR "/usr/local/src/javapackages-validator"
+WORKDIR "${HOME}/javapackages-validator"
+
+RUN ls -lR $HOME
 
 # First fetch dependencies without having sources
-COPY "pom.xml" "/usr/local/src/javapackages-validator/"
+COPY "pom.xml" "${HOME}/javapackages-validator/"
 RUN mvn -B clean install javadoc:javadoc
 
-COPY "src/" "/usr/local/src/javapackages-validator/src/"
+COPY "src/" "${HOME}/javapackages-validator/src/"
 RUN mvn -B -U clean install javadoc:javadoc
 
 ################################################################################
 
 FROM quay.io/hummingbird/openjdk:25
 
-COPY --from=builder "/opt/rpm-libs/" "/usr/lib64"
-COPY --from=builder "/usr/local/src/javapackages-validator/target/validator.jar" "/opt/javapackages-validator/validator.jar"
+COPY --from=builder "${HOME}/rpm-libs/" "/usr/lib64"
+COPY --from=builder "${HOME}/javapackages-validator/target/validator.jar" "/opt/javapackages-validator/validator.jar"
 
 ENTRYPOINT ["/usr/lib/jvm/jre-25-openjdk/bin/java", "--enable-native-access", "ALL-UNNAMED", "-cp", "/opt/javapackages-validator/validator.jar"]
